@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gym Tracker</title>
+  <title>iOS 26 Gym Tracker</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -11,13 +11,29 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700;800;900&display=swap');
+
     body {
       margin: 0;
-      background: #0f172a;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont;
+      background: #000;
+      font-family: 'SF Pro Display', system-ui, -apple-system, BlinkMacSystemFont;
+    }
+
+    .glass-nav {
+      backdrop-filter: blur(20px);
+      background: rgba(20, 20, 20, 0.6);
+    }
+
+    .neon-glow {
+      box-shadow: 0 0 25px -6px rgba(124, 255, 79, 0.35);
+    }
+
+    .neon-border {
+      border: 1px solid rgba(124, 255, 79, 0.25);
     }
   </style>
 </head>
+
 <body>
   <div id="root"></div>
 
@@ -26,53 +42,21 @@
 
     const weekDays = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
-    const defaultRoutines = [
+    const routines = [
       { name: "Leg Day", exercises: ["Squats", "Lunges", "Leg Press", "Calf Raises"] },
-      { name: "Upper Body", exercises: ["Bench Press", "Rows", "Bicep Curls", "Tricep Dips", "Shoulder Press", "Lat Pulldown"] },
-      { name: "Pull day", exercises: ["Deadlift", "Pull-ups", "Rows", "Face Pulls", "Hammer Curls"] },
+      { name: "Upper Body", exercises: ["Bench Press", "Rows", "Curls", "Dips", "Shoulder Press", "Lat Pulldown"] },
+      { name: "Pull Day", exercises: ["Deadlift", "Pull-ups", "Rows", "Face Pulls", "Hammer Curls"] },
       { name: "Full Body", exercises: ["Squats", "Push-ups", "Rows", "Plank", "Burpees"] },
-      { name: "Push day", exercises: ["Bench Press", "Shoulder Press", "Tricep Extensions", "Incline Press", "Chest Fly"] },
+      { name: "Push Day", exercises: ["Bench Press", "Shoulder Press", "Tricep Extensions", "Incline Press", "Chest Fly"] },
       { name: "Shoulders", exercises: ["Overhead Press", "Lateral Raises", "Front Raises", "Reverse Fly", "Shrugs"] }
     ];
 
-    // Simple month generator for calendar
-    function generateMonth(year, month) {
-      const date = new Date(year, month, 1);
-      const days = [];
-      while (date.getMonth() === month) {
-        days.push(new Date(date));
-        date.setDate(date.getDate() + 1);
-      }
-      return days;
-    }
-
     function App() {
-      const [tab, setTab] = useState(() => localStorage.getItem("tab") || "home");
-      const [routines] = useState(defaultRoutines);
-      const [completedCount, setCompletedCount] = useState(() => {
-        const saved = localStorage.getItem("completedCount");
-        return saved ? JSON.parse(saved) : 2;
-      });
+      const [tab, setTab] = useState("home");
       const [selectedRoutine, setSelectedRoutine] = useState(null);
       const [timer, setTimer] = useState(0);
       const [running, setRunning] = useState(false);
-      const [setsState, setSetsState] = useState([
-        { weight: "40 Kg", reps: 6, done: true },
-        { weight: "40 Kg", reps: 5, done: true },
-        { weight: "40 Kg", reps: 5, done: false },
-        { weight: "0 Kg", reps: 14, done: false }
-      ]);
-
-      // Fake history for calendar dots and stats
-      const [history] = useState([
-        { date: "2025-06-01", sets: 16 },
-        { date: "2025-06-03", sets: 10 },
-        { date: "2025-06-05", sets: 18 },
-        { date: "2025-06-07", sets: 8 }
-      ]);
-
-      useEffect(() => localStorage.setItem("tab", tab), [tab]);
-      useEffect(() => localStorage.setItem("completedCount", JSON.stringify(completedCount)), [completedCount]);
+      const [completed, setCompleted] = useState(2);
 
       useEffect(() => {
         if (!running) return;
@@ -81,89 +65,76 @@
       }, [running]);
 
       const today = new Date();
-      const todayIndex = today.getDay(); // 0-6
-      const currentDay = todayIndex === 0 ? 6 : todayIndex - 1;
+      const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
 
       const formatTime = s =>
         `${String(Math.floor(s / 60)).padStart(2,"0")}:${String(s % 60).padStart(2,"0")}`;
 
-      const progressPercent = Math.min(100, Math.round((completedCount / 4) * 100));
-
-      const monthDays = generateMonth(today.getFullYear(), today.getMonth());
-      const todayKey = today.toISOString().slice(0,10);
-      const historyDates = new Set(history.map(h => h.date));
-
-      const maxSets = Math.max(...history.map(h => h.sets), 1);
-
       return (
-        <div className="max-w-md mx-auto min-h-screen bg-[#0f172a] text-white pb-24">
+        <div className="max-w-md mx-auto min-h-screen text-white pb-28">
 
-          {/* Top header / motivational text */}
-          <div className="p-4">
+          {/* HEADER */}
+          <div className="px-6 pt-6 pb-2">
             {tab === "home" && (
               <>
-                <p className="text-sm text-gray-400 italic mb-1">Plan your routines</p>
-                <h2 className="text-xl font-semibold">Hey Alex!</h2>
+                <p className="text-gray-400 text-sm mb-1 italic">Plan your routines</p>
+                <h1 className="text-3xl font-bold">Hey Alex</h1>
               </>
             )}
+
             {tab === "calendar" && (
-              <h1 className="text-2xl font-bold">
-                <span>Stay </span>
-                <span className="italic text-gray-300">motivated</span>
+              <h1 className="text-3xl font-bold">
+                Stay <span className="text-gray-300 italic">motivated</span>
               </h1>
             )}
+
             {tab === "stats" && (
-              <h1 className="text-2xl font-bold">
-                Analyze your workouts <span className="italic text-gray-300">with science</span>
+              <h1 className="text-3xl font-bold">
+                Analyze your <span className="text-gray-300 italic">workouts</span>
               </h1>
             )}
+
             {tab === "workout" && (
-              <h1 className="text-2xl font-bold">
-                Train better, <span className="italic text-gray-300">Progress faster</span>
-              </h1>
-            )}
-            {tab === "summary" && (
-              <h1 className="text-2xl font-bold">
-                Never guess your <span className="italic text-gray-300">progress again</span>
+              <h1 className="text-3xl font-bold">
+                Train <span className="text-gray-300 italic">better</span>
               </h1>
             )}
           </div>
 
           {/* HOME TAB */}
           {tab === "home" && (
-            <>
-              {/* Weekly calendar strip */}
-              <div className="px-4 mb-4">
-                <div className="grid grid-cols-7 gap-2">
-                  {weekDays.map((day, index) => (
-                    <div
-                      key={day}
-                      className={`rounded-xl p-2 text-center text-xs ${
-                        index === currentDay
-                          ? "bg-red-600 text-white"
-                          : "bg-[#1e293b] text-gray-400"
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
+            <div className="px-6 space-y-8">
+
+              {/* WEEK STRIP */}
+              <div className="grid grid-cols-7 gap-2">
+                {weekDays.map((d, i) => (
+                  <div
+                    key={d}
+                    className={`text-center py-2 rounded-2xl text-sm ${
+                      i === todayIndex
+                        ? "bg-red-600 text-white"
+                        : "bg-[#0D0D0D] text-gray-400 neon-border"
+                    }`}
+                  >
+                    {d}
+                  </div>
+                ))}
               </div>
 
-              {/* Weekly progress circle */}
-              <div className="text-center mb-6">
-                <div className="w-24 h-24 mx-auto rounded-full border-4 border-green-500 flex items-center justify-center text-xl font-bold">
-                  {progressPercent}%
+              {/* PROGRESS CIRCLE */}
+              <div className="text-center">
+                <div className="w-28 h-28 mx-auto rounded-full border-4 border-lime-400 neon-glow flex items-center justify-center text-2xl font-bold">
+                  {Math.round((completed / 4) * 100)}%
                 </div>
-                <p className="mt-2 text-sm text-gray-400">
-                  Weekly progress: {completedCount} of 4 workouts completed
+                <p className="text-gray-400 text-sm mt-2">
+                  Weekly progress: {completed} of 4 workouts
                 </p>
               </div>
 
-              {/* Routines list */}
-              <div className="px-4">
-                <h3 className="text-lg font-semibold mb-4">Your routines</h3>
-                <div className="grid grid-cols-2 gap-3">
+              {/* ROUTINES */}
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Your routines</h2>
+                <div className="grid grid-cols-2 gap-4">
                   {routines.map(r => (
                     <button
                       key={r.name}
@@ -172,249 +143,149 @@
                         setTab("workout");
                         setTimer(0);
                         setRunning(false);
-                        setSetsState([
-                          { weight: "40 Kg", reps: 6, done: true },
-                          { weight: "40 Kg", reps: 5, done: true },
-                          { weight: "40 Kg", reps: 5, done: false },
-                          { weight: "0 Kg", reps: 14, done: false }
-                        ]);
                       }}
-                      className="bg-[#1e293b] rounded-xl p-3 text-left"
+                      className="bg-[#0D0D0D] neon-border neon-glow rounded-[28px] p-4 text-left transition active:scale-95"
                     >
-                      <h4 className="font-semibold">{r.name}</h4>
-                      <p className="text-sm text-gray-400">{r.exercises.length} exercises</p>
+                      <h3 className="font-semibold">{r.name}</h3>
+                      <p className="text-gray-400 text-sm">{r.exercises.length} exercises</p>
                     </button>
                   ))}
                 </div>
               </div>
-            </>
-          )}
-
-          {/* CALENDAR TAB */}
-          {tab === "calendar" && (
-            <div className="px-4">
-              <p className="text-sm text-gray-400 mb-2">
-                {today.toLocaleString("default", { month: "long" })} {today.getFullYear()}
-              </p>
-              <div className="grid grid-cols-7 text-xs text-gray-400 mb-2">
-                {["M","T","W","T","F","S","S"].map(d => (
-                  <div key={d} className="text-center">{d}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-2 text-center text-xs">
-                {monthDays.map(d => {
-                  const key = d.toISOString().slice(0,10);
-                  const isToday = key === todayKey;
-                  const hasWorkout = historyDates.has(key);
-                  return (
-                    <div
-                      key={key}
-                      className={`flex flex-col items-center justify-center rounded-full w-8 h-8 mx-auto ${
-                        isToday ? "bg-red-600 text-white" : "text-gray-300"
-                      }`}
-                    >
-                      <span>{d.getDate()}</span>
-                      {hasWorkout && (
-                        <span className="w-1 h-1 bg-black rounded-full mt-0.5"></span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
           )}
 
-          {/* STATS TAB */}
-          {tab === "stats" && (
-            <div className="px-4">
-              {/* Metrics */}
-              <div className="grid grid-cols-2 gap-4 mb-6 text-center text-sm">
-                <div className="bg-[#1e293b] p-4 rounded-xl">
-                  <p className="text-gray-400">Progress</p>
-                  <p className="text-2xl font-bold">5.6</p>
-                </div>
-                <div className="bg-[#1e293b] p-4 rounded-xl">
-                  <p className="text-gray-400">Consistency</p>
-                  <p className="text-2xl font-bold">10</p>
-                </div>
-                <div className="bg-[#1e293b] p-4 rounded-xl">
-                  <p className="text-gray-400">Intensity</p>
-                  <p className="text-2xl font-bold">9.3</p>
-                </div>
-                <div className="bg-[#1e293b] p-4 rounded-xl">
-                  <p className="text-gray-400">Volume</p>
-                  <p className="text-2xl font-bold">5.1</p>
-                </div>
-              </div>
-
-              {/* Time range pills (static) */}
-              <div className="flex gap-2 mb-4 text-xs">
-                {["1W","1M","1Y","All"].map(r => (
-                  <button
-                    key={r}
-                    className={`px-3 py-1 rounded-full border ${
-                      r === "1W" ? "bg-white text-black border-white" : "border-gray-600 text-gray-300"
-                    }`}
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-
-              {/* Simple bar chart */}
-              <div className="bg-[#020617] rounded-xl p-4">
-                <p className="text-sm mb-2">18 sets</p>
-                <div className="flex items-end gap-3 h-32">
-                  {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((day, idx) => {
-                    const daySets = history[idx]?.sets || 0;
-                    const height = (daySets / maxSets) * 100;
-                    return (
-                      <div key={day} className="flex flex-col items-center justify-end flex-1">
-                        <div
-                          className="w-4 bg-green-500 rounded-t"
-                          style={{ height: `${height || 5}%` }}
-                        ></div>
-                        <span className="text-xs text-gray-400 mt-1">{day}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* WORKOUT TAB (timer + sets) */}
+          {/* WORKOUT TAB */}
           {tab === "workout" && selectedRoutine && (
-            <div className="px-4">
-              <div className="flex justify-between items-center mb-4 text-sm text-gray-400">
+            <div className="px-6 space-y-6">
+
+              <div className="flex justify-between text-gray-400 text-sm">
                 <button onClick={() => setTab("home")}>← Back</button>
                 <button
                   className="text-red-400"
                   onClick={() => {
                     setRunning(false);
-                    setTimer(0);
-                    setTab("summary");
-                    setCompletedCount(c => c + 1);
+                    setCompleted(c => c + 1);
+                    setTab("home");
                   }}
                 >
                   Finish
                 </button>
               </div>
 
-              <p className="text-sm text-gray-400 mb-1">
-                {selectedRoutine.name}
-              </p>
-              <div className="text-center mb-4">
-                <p className="text-xs text-gray-400 mb-1">2 / 18</p>
-                <div className="text-4xl font-mono mb-1">{formatTime(timer)}</div>
-                <p className="text-xs text-gray-500">Total: 32:35</p>
-              </div>
-
-              <div className="flex justify-between items-center mb-4 text-gray-400 text-sm">
-                <button className="px-3 py-1 rounded-full border border-gray-600">⏮ Skip</button>
+              <div className="text-center">
+                <div className="text-5xl font-mono mb-2">{formatTime(timer)}</div>
                 <button
-                  className="px-3 py-1 rounded-full border border-gray-600"
                   onClick={() => setRunning(r => !r)}
+                  className="px-6 py-3 bg-lime-400 text-black rounded-full font-semibold neon-glow active:scale-95"
                 >
                   {running ? "Pause" : "Start"}
                 </button>
-                <button className="px-3 py-1 rounded-full border border-gray-600">Skip ⏭</button>
               </div>
 
-              <p className="text-sm font-semibold mb-2">Pull-up Weighted</p>
-              <ul className="space-y-2">
-                {setsState.map((s, idx) => (
-                  <li
-                    key={idx}
-                    className="flex justify-between items-center bg-[#1e293b] p-3 rounded-xl text-sm"
+              <div>
+                <h2 className="text-xl font-semibold mb-3">{selectedRoutine.name}</h2>
+                <ul className="space-y-3">
+                  {selectedRoutine.exercises.map(ex => (
+                    <li
+                      key={ex}
+                      className="bg-[#0D0D0D] neon-border rounded-2xl p-4 text-sm"
+                    >
+                      {ex}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* CALENDAR TAB */}
+          {tab === "calendar" && (
+            <div className="px-6">
+              <p className="text-gray-400 mb-3">
+                {today.toLocaleString("default", { month: "long" })} {today.getFullYear()}
+              </p>
+
+              <div className="grid grid-cols-7 gap-3 text-center text-sm">
+                {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
+                  <div
+                    key={day}
+                    className={`w-10 h-10 flex flex-col items-center justify-center rounded-2xl ${
+                      day === today.getDate()
+                        ? "bg-red-600 text-white"
+                        : "bg-[#0D0D0D] text-gray-300 neon-border"
+                    }`}
                   >
-                    <span>{s.weight}, {s.reps} reps</span>
-                    <input
-                      type="checkbox"
-                      checked={s.done}
-                      onChange={() => {
-                        setSetsState(prev => {
-                          const copy = [...prev];
-                          copy[idx] = { ...copy[idx], done: !copy[idx].done };
-                          return copy;
-                        });
-                      }}
-                    />
-                  </li>
+                    {day}
+                    {day % 3 === 0 && (
+                      <span className="w-1 h-1 bg-lime-400 rounded-full mt-1"></span>
+                    )}
+                  </div>
                 ))}
-              </ul>
-            </div>
-          )}
-
-          {/* SUMMARY TAB */}
-          {tab === "summary" && (
-            <div className="px-4">
-              <button className="text-gray-400 mb-4 text-sm" onClick={() => setTab("home")}>← Back</button>
-              <div className="bg-[#1e293b] rounded-xl p-4 mb-4">
-                <h2 className="text-lg font-semibold mb-1">Leg Day – Jun 1</h2>
-                <p className="text-sm text-gray-400 mb-2">Glutes • Legs</p>
-                <p className="text-sm mb-1">⏱ 01:07 • 16 sets • 131 reps</p>
-              </div>
-              <div className="bg-[#020617] rounded-xl p-4 text-sm space-y-2">
-                <div className="flex justify-between">
-                  <span>Squat</span>
-                  <span className="text-green-400">▲ 2.64%</span>
-                </div>
-                <p className="text-gray-400 text-xs mb-1">Barbell • 4 sets</p>
-
-                <div className="flex justify-between">
-                  <span>Leg Extension</span>
-                  <span className="text-green-400">▲ 2.44%</span>
-                </div>
-                <p className="text-gray-400 text-xs mb-1">Machine • 4 sets</p>
-
-                <div className="flex justify-between">
-                  <span>Seated Leg Curl</span>
-                  <span className="text-gray-300">—</span>
-                </div>
-                <p className="text-gray-400 text-xs mb-1">Machine • 3 sets</p>
-
-                <div className="flex justify-between">
-                  <span>Seated Calf Press</span>
-                  <span className="text-green-400">▲ 0.52%</span>
-                </div>
-                <p className="text-gray-400 text-xs">Machine • 3 sets</p>
               </div>
             </div>
           )}
 
-          {/* BOTTOM NAV */}
-          <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-4">
-            <div className="bg-[#020617] rounded-2xl border border-gray-700">
-              <div className="grid grid-cols-4 text-center text-sm text-gray-400">
-                <button
-                  className={`p-3 flex flex-col items-center ${tab === "home" ? "text-blue-400" : ""}`}
-                  onClick={() => setTab("home")}
-                >
-                  <span className="text-lg">🏠</span>
-                  <span className="text-[10px] mt-0.5">Home</span>
-                </button>
-                <button
-                  className={`p-3 flex flex-col items-center ${tab === "stats" ? "text-blue-400" : ""}`}
-                  onClick={() => setTab("stats")}
-                >
-                  <span className="text-lg">📈</span>
-                  <span className="text-[10px] mt-0.5">Stats</span>
-                </button>
-                <button
-                  className={`p-3 flex flex-col items-center ${tab === "calendar" ? "text-blue-400" : ""}`}
-                  onClick={() => setTab("calendar")}
-                >
-                  <span className="text-lg">📅</span>
-                  <span className="text-[10px] mt-0.5">Calendar</span>
-                </button>
-                <button
-                  className={`p-3 flex flex-col items-center ${tab === "summary" ? "text-blue-400" : ""}`}
-                  onClick={() => setTab("summary")}
-                >
-                  <span className="text-lg">📷</span>
-                  <span className="text-[10px] mt-0.5">Review</span>
-                </button>
+          {/* STATS TAB */}
+          {tab === "stats" && (
+            <div className="px-6 space-y-6">
+
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  ["Progress", "5.6"],
+                  ["Consistency", "10"],
+                  ["Intensity", "9.3"],
+                  ["Volume", "5.1"]
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="bg-[#0D0D0D] neon-border rounded-[28px] p-4 text-center neon-glow"
+                  >
+                    <p className="text-gray-400 text-sm">{label}</p>
+                    <p className="text-3xl font-bold">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-[#0D0D0D] neon-border rounded-[28px] p-4 neon-glow">
+                <p className="text-sm mb-3">Weekly Sets</p>
+                <div className="flex items-end gap-3 h-32">
+                  {[4, 8, 12, 18, 10, 6, 3].map((sets, i) => (
+                    <div key={i} className="flex flex-col items-center flex-1">
+                      <div
+                        className="w-4 bg-lime-400 rounded-full neon-glow"
+                        style={{ height: `${sets * 5}%` }}
+                      ></div>
+                      <span className="text-xs text-gray-500 mt-1">
+                        {weekDays[i][0]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* NAVIGATION BAR */}
+          <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-6">
+            <div className="glass-nav neon-border neon-glow rounded-[28px] py-3">
+              <div className="grid grid-cols-4 text-center text-sm">
+                {[
+                  ["home", "🏠"],
+                  ["stats", "📈"],
+                  ["calendar", "📅"],
+                  ["home", "📷"]
+                ].map(([key, icon]) => (
+                  <button
+                    key={key}
+                    onClick={() => setTab(key)}
+                    className={`flex flex-col items-center transition ${
+                      tab === key ? "text-lime-400" : "text-gray-500"
+                    }`}
+                  >
+                    <span className="text-xl">{icon}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
