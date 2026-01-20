@@ -27,14 +27,6 @@
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
     }
-
-    .sticky-month {
-      position: sticky;
-      top: 0;
-      background: black;
-      padding: 8px 0;
-      z-index: 20;
-    }
   </style>
 </head>
 
@@ -42,32 +34,50 @@
   <div id="root"></div>
 
   <script type="text/babel">
-
     const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-    function App() {
+    function getTodayNames() {
+      const now = new Date();
+      const todayIndex = (now.getDay() + 6) % 7; // Mon=0 ... Sun=6
+      const tomorrowIndex = (todayIndex + 1) % 7;
+      return {
+        todayName: WEEK_DAYS[todayIndex],
+        tomorrowName: WEEK_DAYS[tomorrowIndex],
+      };
+    }
 
+    function getCurrentMonth() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      const days = [];
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        const date = new Date(year, month, d);
+        days.push({
+          date,
+          key: `${year}-${month + 1}-${d}`,
+        });
+      }
+
+      return {
+        year,
+        month,
+        label: now.toLocaleString("default", { month: "long", year: "numeric" }),
+        days,
+      };
+    }
+
+    function App() {
       /* -------------------------
          NAVIGATION
       -------------------------- */
       const [tab, setTab] = React.useState("home");
 
       /* -------------------------
-         RUNNING SESSIONS (KEEP)
-      -------------------------- */
-      const [runs, setRuns] = React.useState(() => {
-        const saved = localStorage.getItem("runs_v1");
-        return saved ? JSON.parse(saved) : {};
-      });
-
-      const saveRuns = (updated) => {
-        setRuns(updated);
-        localStorage.setItem("runs_v1", JSON.stringify(updated));
-      };
-
-      /* -------------------------
-         GYM ROUTINES (KEEP)
-         — but workout execution removed
+         GYM ROUTINES
       -------------------------- */
       const [routines, setRoutines] = React.useState(() => {
         const saved = localStorage.getItem("routines_v1");
@@ -80,20 +90,21 @@
       };
 
       /* -------------------------
-         WEEKLY PLAN (KEEP but smaller)
-         — only show today + tomorrow
+         WEEKLY GYM PLAN
       -------------------------- */
       const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
         const saved = localStorage.getItem("weeklyPlan_v1");
-        return saved ? JSON.parse(saved) : {
-          Mon: null,
-          Tue: null,
-          Wed: null,
-          Thu: null,
-          Fri: null,
-          Sat: null,
-          Sun: null
-        };
+        return saved
+          ? JSON.parse(saved)
+          : {
+              Mon: null,
+              Tue: null,
+              Wed: null,
+              Thu: null,
+              Fri: null,
+              Sat: null,
+              Sun: null,
+            };
       });
 
       const saveWeeklyPlan = (updated) => {
@@ -102,89 +113,117 @@
       };
 
       /* -------------------------
-         CALENDAR STATE
+         RUNNING WEEKLY PLAN + ROUTINES
       -------------------------- */
-      const [calendarMonths, setCalendarMonths] = React.useState([]);
-      const calendarRef = React.useRef(null);
+      const [runPlan, setRunPlan] = React.useState(() => {
+        const saved = localStorage.getItem("runPlan_v1");
+        return saved
+          ? JSON.parse(saved)
+          : {
+              Mon: null,
+              Tue: null,
+              Wed: null,
+              Thu: null,
+              Fri: null,
+              Sat: null,
+              Sun: null,
+            };
+      });
 
-      React.useEffect(() => {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const months = [];
+      const saveRunPlan = (updated) => {
+        setRunPlan(updated);
+        localStorage.setItem("runPlan_v1", JSON.stringify(updated));
+      };
 
-        for (let i = -1; i <= 2; i++) {
-          const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-          months.push(generateMonth(d));
-        }
+      const [runRoutines, setRunRoutines] = React.useState(() => {
+        const saved = localStorage.getItem("runRoutines_v1");
+        return saved ? JSON.parse(saved) : [];
+      });
 
-        setCalendarMonths(months);
-      }, []);
+      const saveRunRoutines = (updated) => {
+        setRunRoutines(updated);
+        localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
+      };
 
-      function generateMonth(date) {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-
-        const days = [];
-        for (let d = 1; d <= lastDay.getDate(); d++) {
-          days.push({
-            date: new Date(year, month, d),
-            key: `${year}-${month + 1}-${d}`
-          });
-        }
-
-        return {
-          year,
-          month,
-          label: date.toLocaleString("default", { month: "long", year: "numeric" }),
-          days
-        };
-      }
-
-      function handleCalendarScroll(e) {
-        const el = e.target;
-        if (el.scrollTop < 200) {
-          prependMonth();
-        }
-        if (el.scrollHeight - el.scrollTop - el.clientHeight < 200) {
-          appendMonth();
-        }
-      }
-
-      function prependMonth() {
-        const first = calendarMonths[0];
-        const newDate = new Date(first.year, first.month - 1, 1);
-      
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        const currentMonth = now.getMonth();
-      
-        // Block if newDate is before current month/year
-        if (
-          newDate.getFullYear() < currentYear ||
-          (newDate.getFullYear() === currentYear && newDate.getMonth() < currentMonth)
-        ) {
-          return; // Don't prepend
-        }
-      
-        const newMonth = generateMonth(newDate);
-        setCalendarMonths([newMonth, ...calendarMonths]);
-      }
-
-      function appendMonth() {
-        const last = calendarMonths[calendarMonths.length - 1];
-        const newDate = new Date(last.year, last.month + 1, 1);
-        const newMonth = generateMonth(newDate);
-        setCalendarMonths([...calendarMonths, newMonth]);
-      }
-            /* -------------------------
-         DAY DETAILS PANEL
+      /* -------------------------
+         MODAL STATE
       -------------------------- */
+      const [showGymCreator, setShowGymCreator] = React.useState(false);
+      const [assigningDay, setAssigningDay] = React.useState(null);
+
+      const [showRunCreator, setShowRunCreator] = React.useState(false);
+      const [assigningRunDay, setAssigningRunDay] = React.useState(null);
+
+      const [showCreateChooser, setShowCreateChooser] = React.useState(false);
+
       const [selectedDay, setSelectedDay] = React.useState(null);
 
-      function openDayDetails(dateObj) {
-        setSelectedDay(dateObj);
+      /* -------------------------
+         GYM CREATOR FORM
+      -------------------------- */
+      const [newRoutineName, setNewRoutineName] = React.useState("");
+      const [newExerciseName, setNewExerciseName] = React.useState("");
+      const [newExerciseSets, setNewExerciseSets] = React.useState("");
+      const [newExerciseReps, setNewExerciseReps] = React.useState("");
+      const [tempExercises, setTempExercises] = React.useState([]);
+
+      const addTempExercise = () => {
+        if (!newExerciseName || !newExerciseSets || !newExerciseReps) return;
+        setTempExercises([
+          ...tempExercises,
+          {
+            name: newExerciseName,
+            sets: Number(newExerciseSets),
+            reps: Number(newExerciseReps),
+          },
+        ]);
+        setNewExerciseName("");
+        setNewExerciseSets("");
+        setNewExerciseReps("");
+      };
+
+      const saveNewRoutine = () => {
+        if (!newRoutineName || tempExercises.length === 0) return;
+        const updated = [
+          ...routines,
+          {
+            name: newRoutineName,
+            exercises: tempExercises,
+          },
+        ];
+        saveRoutines(updated);
+        setNewRoutineName("");
+        setTempExercises([]);
+        setShowGymCreator(false);
+      };
+
+      /* -------------------------
+         RUN CREATOR FORM
+      -------------------------- */
+      const [newRunType, setNewRunType] = React.useState("");
+      const [newRunDistance, setNewRunDistance] = React.useState("");
+      const [newRunPace, setNewRunPace] = React.useState("");
+
+      const saveNewRunRoutine = () => {
+        if (!newRunType || !newRunDistance || !newRunPace) return;
+        const routine = {
+          type: newRunType,
+          distance: Number(newRunDistance),
+          pace: newRunPace,
+        };
+        const updated = [...runRoutines, routine];
+        saveRunRoutines(updated);
+        setNewRunType("");
+        setNewRunDistance("");
+        setNewRunPace("");
+        setShowRunCreator(false);
+      };
+
+      /* -------------------------
+         DAY DETAILS PANEL
+      -------------------------- */
+      function openDayDetails(dayObj) {
+        setSelectedDay(dayObj);
       }
 
       function closeDayDetails() {
@@ -192,81 +231,142 @@
       }
 
       /* -------------------------
-         RENDER CALENDAR DAY DOTS
-         (runs + gym routines)
+         CALENDAR (SINGLE MONTH)
       -------------------------- */
+      const currentMonth = getCurrentMonth();
+
       function renderDots(dateKey) {
-        const dots = [];
+        const d = new Date(dateKey);
+        const weekdayIndex = d.getDay() === 0 ? 6 : d.getDay() - 1;
+        const weekday = WEEK_DAYS[weekdayIndex];
 
-        if (runs[dateKey]) {
-          dots.push(<div key="run" className="w-2 h-2 rounded-full bg-blue-400"></div>);
+        const gym = weeklyPlan[weekday];
+        const run = runPlan[weekday];
+
+        if (gym && run) {
+          return (
+            <div className="flex justify-center mt-1">
+              <div className="w-2 h-2 rounded-full bg-white"></div>
+            </div>
+          );
         }
 
-        const routine = weeklyPlan[
-          WEEK_DAYS[new Date(dateKey).getDay() === 0 ? 6 : new Date(dateKey).getDay() - 1]
-        ];
-
-        if (routine) {
-          dots.push(<div key="gym" className="w-2 h-2 rounded-full bg-green-400"></div>);
+        if (gym) {
+          return (
+            <div className="flex justify-center mt-1">
+              <div className="w-2 h-2 rounded-full bg-green-400"></div>
+            </div>
+          );
         }
 
-        return (
-          <div className="flex gap-1 mt-1">
-            {dots}
-          </div>
-        );
+        if (run) {
+          return (
+            <div className="flex justify-center mt-1">
+              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+            </div>
+          );
+        }
+
+        return null;
       }
 
       /* -------------------------
-         CALENDAR TAB (FULL SCREEN)
+         TODAY / TOMORROW NAMES
+      -------------------------- */
+      const { todayName, tomorrowName } = getTodayNames();
+
+      /* -------------------------
+         HOME TAB
+      -------------------------- */
+      const HomeTab = (
+        <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+          {/* TODAY */}
+          <h2 className="text-xl font-semibold mb-2">Today’s Run</h2>
+          {runPlan[todayName] ? (
+            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+              <p className="font-semibold">{runPlan[todayName].type}</p>
+              <p className="text-sm text-[#8E8E93]">
+                {runPlan[todayName].distance} km — {runPlan[todayName].pace}
+              </p>
+            </div>
+          ) : (
+            <p className="text-[#8E8E93] mb-6">No run today</p>
+          )}
+
+          <h2 className="text-xl font-semibold mb-2">Today’s Workout</h2>
+          {weeklyPlan[todayName] ? (
+            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+              <p className="font-semibold">{weeklyPlan[todayName].name}</p>
+            </div>
+          ) : (
+            <p className="text-[#8E8E93] mb-6">No workout today</p>
+          )}
+
+          {/* TOMORROW */}
+          <h2 className="text-xl font-semibold mb-2">Tomorrow’s Run</h2>
+          {runPlan[tomorrowName] ? (
+            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+              <p className="font-semibold">{runPlan[tomorrowName].type}</p>
+              <p className="text-sm text-[#8E8E93]">
+                {runPlan[tomorrowName].distance} km — {runPlan[tomorrowName].pace}
+              </p>
+            </div>
+          ) : (
+            <p className="text-[#8E8E93] mb-6">No run tomorrow</p>
+          )}
+
+          <h2 className="text-xl font-semibold mb-2">Tomorrow’s Workout</h2>
+          {weeklyPlan[tomorrowName] ? (
+            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+              <p className="font-semibold">{weeklyPlan[tomorrowName].name}</p>
+            </div>
+          ) : (
+            <p className="text-[#8E8E93] mb-6">No workout tomorrow</p>
+          )}
+        </div>
+      );
+
+      /* -------------------------
+         CALENDAR TAB
       -------------------------- */
       const CalendarTab = (
-        <div
-          className="w-full h-screen overflow-y-auto bg-black pb-32"
-          onScroll={handleCalendarScroll}
-          ref={calendarRef}
-        >
-          {calendarMonths.map((m, idx) => (
-            <div key={idx} className="px-4 pt-6">
-              
-              {/* Sticky Month Header */}
-              <div className="sticky-month text-xl font-semibold tracking-tight">
-                {m.label}
-              </div>
+        <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+          {/* Month Header */}
+          <div className="text-2xl font-semibold tracking-tight mb-4">
+            {currentMonth.label}
+          </div>
 
-              {/* Month Grid */}
-              <div className="grid grid-cols-7 gap-2 mt-4 text-center text-sm text-[#8E8E93]">
-                {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                  <div key={i}>{d}</div>
-                ))}
-              </div>
+          {/* Weekday Labels */}
+          <div className="grid grid-cols-7 gap-2 text-center text-sm text-[#8E8E93]">
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <div key={i}>{d}</div>
+            ))}
+          </div>
 
-              <div className="grid grid-cols-7 gap-2 mt-2 text-center">
-                {m.days.map((d) => {
-                  const key = d.key;
-                  const isToday =
-                    new Date().toDateString() === d.date.toDateString();
+          {/* Month Grid */}
+          <div className="grid grid-cols-7 gap-2 mt-2 text-center">
+            {currentMonth.days.map((d) => {
+              const isToday =
+                new Date().toDateString() === d.date.toDateString();
 
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => openDayDetails(d)}
-                      className={`py-2 rounded-xl ${
-                        isToday ? "bg-white text-black font-semibold" : "bg-[#1C1C1E]"
-                      }`}
-                    >
-                      {d.date.getDate()}
-                      {renderDots(key)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+              return (
+                <button
+                  key={d.key}
+                  onClick={() => openDayDetails(d)}
+                  className={`py-2 rounded-xl ${
+                    isToday ? "bg-white text-black font-semibold" : "bg-[#1C1C1E]"
+                  }`}
+                >
+                  {d.date.getDate()}
+                  {renderDots(d.key)}
+                </button>
+              );
+            })}
+          </div>
 
           {/* DAY DETAILS PANEL */}
           {selectedDay && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end">
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
               <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">
@@ -280,283 +380,352 @@
                   </button>
                 </div>
 
-                {/* Runs */}
-                {runs[selectedDay.key] ? (
-                  <div className="mb-4">
-                    <p className="text-sm text-blue-400">Run: {runs[selectedDay.key].distance} km</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-[#8E8E93] mb-4">No run logged</p>
-                )}
-
-                {/* Gym Routine */}
+                {/* RUNNING ROUTINE */}
                 {(() => {
-                  const weekdayIndex = selectedDay.date.getDay() === 0 ? 6 : selectedDay.date.getDay() - 1;
-                  const routine = weeklyPlan[WEEK_DAYS[weekdayIndex]];
+                  const weekdayIndex =
+                    selectedDay.date.getDay() === 0
+                      ? 6
+                      : selectedDay.date.getDay() - 1;
+                  const weekday = WEEK_DAYS[weekdayIndex];
+                  const routine = runPlan[weekday];
 
                   if (!routine) {
-                    return <p className="text-sm text-[#8E8E93]">No gym routine</p>;
+                    return (
+                      <p className="text-sm text-[#8E8E93] mb-4">
+                        No running routine
+                      </p>
+                    );
                   }
 
                   return (
-                    <div>
+                    <div className="mb-4">
+                      <p className="text-blue-400 text-sm font-semibold mb-1">
+                        Run: {routine.type}
+                      </p>
+                      <p className="text-sm text-[#8E8E93]">
+                        {routine.distance} km — {routine.pace}
+                      </p>
+                    </div>
+                  );
+                })()}
+
+                {/* GYM ROUTINE */}
+                {(() => {
+                  const weekdayIndex =
+                    selectedDay.date.getDay() === 0
+                      ? 6
+                      : selectedDay.date.getDay() - 1;
+                  const weekday = WEEK_DAYS[weekdayIndex];
+                  const routine = weeklyPlan[weekday];
+
+                  if (!routine) {
+                    return (
+                      <p className="text-sm text-[#8E8E93] mb-4">
+                        No gym routine
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="mb-4">
                       <p className="text-green-400 text-sm font-semibold mb-2">
                         Gym: {routine.name}
                       </p>
                       <ul className="text-sm text-[#8E8E93] space-y-1">
                         {routine.exercises.map((ex, i) => (
-                          <li key={i}>{ex.name} — {ex.sets}×{ex.reps}</li>
+                          <li key={i}>
+                            {ex.name} — {ex.sets}×{ex.reps}
+                          </li>
                         ))}
                       </ul>
                     </div>
                   );
                 })()}
+
+                {/* ASSIGN WORKOUT TO THIS DAY */}
+                <button
+                  onClick={() => {
+                    const weekdayIndex =
+                      selectedDay.date.getDay() === 0
+                        ? 6
+                        : selectedDay.date.getDay() - 1;
+                    const weekday = WEEK_DAYS[weekdayIndex];
+                    setAssigningDay(weekday);
+                  }}
+                  className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
+                >
+                  Assign Workout to This Day
+                </button>
+
+                {/* ASSIGN RUN TO THIS DAY */}
+                <button
+                  onClick={() => {
+                    const weekdayIndex =
+                      selectedDay.date.getDay() === 0
+                        ? 6
+                        : selectedDay.date.getDay() - 1;
+                    const weekday = WEEK_DAYS[weekdayIndex];
+                    setAssigningRunDay(weekday);
+                  }}
+                  className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
+                >
+                  Assign Run to This Day
+                </button>
               </div>
             </div>
           )}
         </div>
       );
-                      /* -------------------------
-         GET TODAY + TOMORROW
-      -------------------------- */
-      function getTodayTomorrow() {
-        const today = new Date();
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
-
-        const format = (d) =>
-          WEEK_DAYS[d.getDay() === 0 ? 6 : d.getDay() - 1];
-
-        return {
-          todayKey: format(today),
-          tomorrowKey: format(tomorrow),
-          todayDate: today,
-          tomorrowDate: tomorrow
-        };
-      }
 
       /* -------------------------
-         HOME TAB
+         MODALS
       -------------------------- */
-      const HomeTab = (() => {
-        const { todayKey, tomorrowKey } = getTodayTomorrow();
 
-        const todayPlan = weeklyPlan[todayKey];
-        const tomorrowPlan = weeklyPlan[tomorrowKey];
-
-        return (
-          <div className="px-6 pt-6 pb-28 space-y-8">
-
-            {/* HEADER */}
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Weekly Plan
-            </h1>
-
-            {/* TODAY */}
-            <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
-              <p className="text-xs text-[#8E8E93] uppercase mb-1">Today</p>
-              {todayPlan ? (
-                <div>
-                  <p className="font-semibold">{todayPlan.name}</p>
-                  <ul className="text-sm text-[#8E8E93] mt-1 space-y-1">
-                    {todayPlan.exercises.map((ex, i) => (
-                      <li key={i}>{ex.name} — {ex.sets}×{ex.reps}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="text-sm text-[#8E8E93]">No routine today</p>
-              )}
-            </div>
-
-            {/* TOMORROW */}
-            <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
-              <p className="text-xs text-[#8E8E93] uppercase mb-1">Tomorrow</p>
-              {tomorrowPlan ? (
-                <div>
-                  <p className="font-semibold">{tomorrowPlan.name}</p>
-                  <ul className="text-sm text-[#8E8E93] mt-1 space-y-1">
-                    {tomorrowPlan.exercises.map((ex, i) => (
-                      <li key={i}>{ex.name} — {ex.sets}×{ex.reps}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : (
-                <p className="text-sm text-[#8E8E93]">No routine tomorrow</p>
-              )}
-            </div>
-
-          </div>
-        );
-      })();
-
-      /* -------------------------
-         ROUTINE CREATION (KEPT)
-      -------------------------- */
-      const [creatingRoutine, setCreatingRoutine] = React.useState(false);
-      const [routineName, setRoutineName] = React.useState("");
-      const [routineExercises, setRoutineExercises] = React.useState([]);
-
-      function addExercise() {
-        const name = prompt("Exercise name:");
-        const sets = prompt("Sets:");
-        const reps = prompt("Reps:");
-
-        if (!name || !sets || !reps) return;
-
-        setRoutineExercises([
-          ...routineExercises,
-          { name, sets, reps }
-        ]);
-      }
-
-      function saveRoutine() {
-        if (!routineName.trim()) return;
-
-        const newRoutine = {
-          name: routineName,
-          exercises: routineExercises
-        };
-
-        saveRoutines([...routines, newRoutine]);
-
-        setRoutineName("");
-        setRoutineExercises([]);
-        setCreatingRoutine(false);
-      }
-
-      const RoutineCreator = creatingRoutine && (
-        <div className="px-6 pt-6 pb-28 space-y-6">
-          <h1 className="text-2xl font-semibold">New Routine</h1>
-
-          <input
-            value={routineName}
-            onChange={(e) => setRoutineName(e.target.value)}
-            placeholder="Routine name"
-            className="w-full bg-[#1C1C1E] soft-border rounded-xl p-3"
-          />
-
-          <div className="space-y-2">
-            {routineExercises.map((ex, i) => (
-              <div key={i} className="bg-[#1C1C1E] soft-border rounded-xl p-3">
-                {ex.name} — {ex.sets}×{ex.reps}
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={addExercise}
-            className="w-full bg-white text-black rounded-xl py-3 font-semibold"
-          >
-            Add Exercise
-          </button>
-
-          <button
-            onClick={saveRoutine}
-            className="w-full bg-green-500 text-black rounded-xl py-3 font-semibold"
-          >
-            Save Routine
-          </button>
-
-          <button
-            onClick={() => setCreatingRoutine(false)}
-            className="w-full text-[#8E8E93] py-2"
-          >
-            Cancel
-          </button>
-        </div>
-      );
-
-      /* -------------------------
-         RUN CREATION (KEPT)
-      -------------------------- */
-      const [creatingRun, setCreatingRun] = React.useState(false);
-      const [runDistance, setRunDistance] = React.useState("");
-
-      function saveRun(dateKey) {
-        if (!runDistance.trim()) return;
-
-        const updated = {
-          ...runs,
-          [dateKey]: { distance: runDistance }
-        };
-
-        saveRuns(updated);
-        setRunDistance("");
-        setCreatingRun(false);
-      }
-
-      const RunCreator = creatingRun && selectedDay && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end">
+      // CREATE GYM ROUTINE
+      const GymCreatorModal = showGymCreator && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
           <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-            <h2 className="text-xl font-semibold mb-4">Log Run</h2>
+            <h2 className="text-xl font-semibold mb-4">Create Workout</h2>
 
             <input
-              value={runDistance}
-              onChange={(e) => setRunDistance(e.target.value)}
-              placeholder="Distance (km)"
-              className="w-full bg-black soft-border rounded-xl p-3 mb-4"
+              type="text"
+              placeholder="Routine name"
+              className="w-full mb-3 p-3 rounded-xl bg-[#2C2C2E]"
+              value={newRoutineName}
+              onChange={(e) => setNewRoutineName(e.target.value)}
             />
 
+            <div className="mb-3">
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  placeholder="Exercise"
+                  className="flex-1 p-3 rounded-xl bg-[#2C2C2E]"
+                  value={newExerciseName}
+                  onChange={(e) => setNewExerciseName(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="Sets"
+                  className="w-20 p-3 rounded-xl bg-[#2C2C2E]"
+                  value={newExerciseSets}
+                  onChange={(e) => setNewExerciseSets(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="Reps"
+                  className="w-20 p-3 rounded-xl bg-[#2C2C2E]"
+                  value={newExerciseReps}
+                  onChange={(e) => setNewExerciseReps(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={addTempExercise}
+                className="w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
+              >
+                Add Exercise
+              </button>
+            </div>
+
+            {tempExercises.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm text-[#8E8E93] mb-1">Exercises:</p>
+                <ul className="text-sm text-[#E5E5EA] space-y-1">
+                  {tempExercises.map((ex, i) => (
+                    <li key={i}>
+                      {ex.name} — {ex.sets}×{ex.reps}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <button
-              onClick={() => saveRun(selectedDay.key)}
-              className="w-full bg-white text-black rounded-xl py-3 font-semibold"
+              onClick={saveNewRoutine}
+              className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
             >
-              Save Run
+              Save Workout
             </button>
 
             <button
-              onClick={() => setCreatingRun(false)}
-              className="w-full text-[#8E8E93] py-2 mt-2"
+              onClick={() => {
+                setShowGymCreator(false);
+                setTempExercises([]);
+              }}
+              className="w-full text-[#8E8E93] mt-3"
             >
               Cancel
             </button>
           </div>
         </div>
       );
-                    /* -------------------------
-         ASSIGN ROUTINES TO WEEKLY PLAN
-      -------------------------- */
-      const [assigningDay, setAssigningDay] = React.useState(null);
 
-      function assignRoutineToDay(dayKey, routine) {
-        const updated = {
-          ...weeklyPlan,
-          [dayKey]: routine
-        };
-        saveWeeklyPlan(updated);
-        setAssigningDay(null);
-      }
-
-      const RoutineAssigner = assigningDay && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end">
+      // ASSIGN WORKOUT TO DAY
+      const AssignWorkoutModal = assigningDay && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
           <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-
             <h2 className="text-xl font-semibold mb-4">
-              Assign Routine to {assigningDay}
+              Assign Workout to {assigningDay}
             </h2>
 
             {routines.length === 0 && (
-              <p className="text-sm text-[#8E8E93] mb-4">
-                No routines created yet.
-              </p>
+              <p className="text-[#8E8E93] mb-4">No workouts created yet.</p>
             )}
 
-            <div className="space-y-3">
-              {routines.map((r, i) => (
-                <button
-                  key={i}
-                  onClick={() => assignRoutineToDay(assigningDay, r)}
-                  className="w-full bg-white text-black rounded-xl py-3 font-semibold"
-                >
-                  {r.name}
-                </button>
-              ))}
-            </div>
+            {routines.map((routine, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  const updated = {
+                    ...weeklyPlan,
+                    [assigningDay]: routine,
+                  };
+                  saveWeeklyPlan(updated);
+                  setAssigningDay(null);
+                }}
+                className="w-full bg-[#2C2C2E] rounded-xl p-4 mb-3 text-left"
+              >
+                <p className="font-semibold">{routine.name}</p>
+                <p className="text-sm text-[#8E8E93]">
+                  {routine.exercises.length} exercises
+                </p>
+              </button>
+            ))}
 
             <button
               onClick={() => setAssigningDay(null)}
-              className="w-full text-[#8E8E93] py-3 mt-4"
+              className="w-full text-[#8E8E93] mt-3"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+
+      // CREATE RUNNING ROUTINE
+      const RunCreatorModal = showRunCreator && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+          <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+            <h2 className="text-xl font-semibold mb-4">Create Running Routine</h2>
+
+            <input
+              type="text"
+              placeholder="Type (e.g., Tempo, Easy, Long)"
+              className="w-full mb-3 p-3 rounded-xl bg-[#2C2C2E]"
+              value={newRunType}
+              onChange={(e) => setNewRunType(e.target.value)}
+            />
+
+            <input
+              type="number"
+              placeholder="Distance (km)"
+              className="w-full mb-3 p-3 rounded-xl bg-[#2C2C2E]"
+              value={newRunDistance}
+              onChange={(e) => setNewRunDistance(e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Pace (e.g., 5:00/km)"
+              className="w-full mb-3 p-3 rounded-xl bg-[#2C2C2E]"
+              value={newRunPace}
+              onChange={(e) => setNewRunPace(e.target.value)}
+            />
+
+            <button
+              onClick={saveNewRunRoutine}
+              className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
+            >
+              Save Running Routine
+            </button>
+
+            <button
+              onClick={() => setShowRunCreator(false)}
+              className="w-full text-[#8E8E93] mt-3"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+
+      // ASSIGN RUN TO DAY
+      const AssignRunModal = assigningRunDay && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+          <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+            <h2 className="text-xl font-semibold mb-4">
+              Assign Run to {assigningRunDay}
+            </h2>
+
+            {runRoutines.length === 0 && (
+              <p className="text-[#8E8E93] mb-4">No running routines created yet.</p>
+            )}
+
+            {runRoutines.map((routine, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  const updated = {
+                    ...runPlan,
+                    [assigningRunDay]: routine,
+                  };
+                  saveRunPlan(updated);
+                  setAssigningRunDay(null);
+                }}
+                className="w-full bg-[#2C2C2E] rounded-xl p-4 mb-3 text-left"
+              >
+                <p className="font-semibold">{routine.type}</p>
+                <p className="text-sm text-[#8E8E93]">
+                  {routine.distance} km — {routine.pace}
+                </p>
+              </button>
+            ))}
+
+            <button
+              onClick={() => setAssigningRunDay(null)}
+              className="w-full text-[#8E8E93] mt-3"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      );
+
+      // + CHOOSER MODAL
+      const CreateChooserModal = showCreateChooser && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+          <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+            <h2 className="text-xl font-semibold mb-4">Create</h2>
+
+            <button
+              onClick={() => {
+                setShowCreateChooser(false);
+                setShowGymCreator(true);
+              }}
+              className="w-full bg-[#2C2C2E] rounded-xl p-4 mb-3 text-left"
+            >
+              <p className="font-semibold">Gym Routine</p>
+              <p className="text-sm text-[#8E8E93]">
+                Build a strength workout with exercises
+              </p>
+            </button>
+
+            <button
+              onClick={() => {
+                setShowCreateChooser(false);
+                setShowRunCreator(true);
+              }}
+              className="w-full bg-[#2C2C2E] rounded-xl p-4 mb-3 text-left"
+            >
+              <p className="font-semibold">Running Routine</p>
+              <p className="text-sm text-[#8E8E93]">
+                Plan a structured run with distance and pace
+              </p>
+            </button>
+
+            <button
+              onClick={() => setShowCreateChooser(false)}
+              className="w-full text-[#8E8E93] mt-3"
             >
               Cancel
             </button>
@@ -565,51 +734,52 @@
       );
 
       /* -------------------------
-         MAIN APP RENDER
+         RENDER
       -------------------------- */
       return (
-        <div className="max-w-md mx-auto relative">
-
-          {/* TABS */}
-          {tab === "home" && !creatingRoutine && !creatingRun && HomeTab}
+        <div className="w-full h-screen relative overflow-hidden">
+          {/* MAIN CONTENT */}
+          {tab === "home" && HomeTab}
           {tab === "calendar" && CalendarTab}
-          {creatingRoutine && RoutineCreator}
-          {creatingRun && RunCreator}
-          {assigningDay && RoutineAssigner}
 
           {/* FLOATING + BUTTON */}
-          {!creatingRoutine && !creatingRun && tab === "home" && (
-            <button
-              onClick={() => setCreatingRoutine(true)}
-              className="fixed bottom-24 right-6 w-14 h-14 bg-white text-black rounded-full text-3xl flex items-center justify-center soft-glow active:scale-95"
-            >
-              +
-            </button>
-          )}
+          <button
+            onClick={() => setShowCreateChooser(true)}
+            className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg"
+          >
+            +
+          </button>
 
-          {/* NAVIGATION BAR (NO WORKOUT TAB) */}
-          <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-6">
-            <div className="glass-nav soft-border rounded-[24px] py-2.5">
-              <div className="grid grid-cols-2 text-center text-xs">
-                {[
-                  ["home", "Home", "🏠"],
-                  ["calendar", "Calendar", "📅"]
-                ].map(([key, label, icon], idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setTab(key)}
-                    className={`flex flex-col items-center gap-0.5 transition ${
-                      tab === key ? "text-white" : "text-[#8E8E93]"
-                    }`}
-                  >
-                    <span className="text-lg">{icon}</span>
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
+          {/* BOTTOM NAV */}
+          <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
+            <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-8 items-center">
+              <button
+                onClick={() => setTab("home")}
+                className={`flex flex-col items-center text-xs ${
+                  tab === "home" ? "text-white" : "text-[#8E8E93]"
+                }`}
+              >
+                <span className="mb-1">🏠</span>
+                <span>Home</span>
+              </button>
+              <button
+                onClick={() => setTab("calendar")}
+                className={`flex flex-col items-center text-xs ${
+                  tab === "calendar" ? "text-white" : "text-[#8E8E93]"
+                }`}
+              >
+                <span className="mb-1">📅</span>
+                <span>Calendar</span>
+              </button>
             </div>
           </div>
 
+          {/* MODALS */}
+          {GymCreatorModal}
+          {AssignWorkoutModal}
+          {RunCreatorModal}
+          {AssignRunModal}
+          {CreateChooserModal}
         </div>
       );
     }
