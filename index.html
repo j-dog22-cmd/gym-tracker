@@ -155,6 +155,19 @@
       function prependMonth() {
         const first = calendarMonths[0];
         const newDate = new Date(first.year, first.month - 1, 1);
+      
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+      
+        // Block if newDate is before current month/year
+        if (
+          newDate.getFullYear() < currentYear ||
+          (newDate.getFullYear() === currentYear && newDate.getMonth() < currentMonth)
+        ) {
+          return; // Don't prepend
+        }
+      
         const newMonth = generateMonth(newDate);
         setCalendarMonths([newMonth, ...calendarMonths]);
       }
