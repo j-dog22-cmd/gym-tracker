@@ -22,85 +22,179 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState } = React;
+    const { useState, useEffect } = React;
 
     const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const routines = [
-      { name: "Leg Day", count: 4 },
-      { name: "Upper Body", count: 6 },
-      { name: "Pull day", count: 5 },
-      { name: "Full Body", count: 5 },
-      { name: "Push day", count: 5 },
-      { name: "Shoulders", count: 5 },
+
+    const defaultRoutines = [
+      { name: "Leg Day", exercises: ["Squats", "Lunges", "Leg Press", "Calf Raises"] },
+      { name: "Upper Body", exercises: ["Bench Press", "Rows", "Bicep Curls", "Tricep Dips", "Shoulder Press", "Lat Pulldown"] },
+      { name: "Pull day", exercises: ["Deadlift", "Pull-ups", "Rows", "Face Pulls", "Hammer Curls"] },
+      { name: "Full Body", exercises: ["Squats", "Push-ups", "Rows", "Plank", "Burpees"] },
+      { name: "Push day", exercises: ["Bench Press", "Shoulder Press", "Tricep Extensions", "Incline Press", "Chest Fly"] },
+      { name: "Shoulders", exercises: ["Overhead Press", "Lateral Raises", "Front Raises", "Reverse Fly", "Shrugs"] }
     ];
 
-    function FitnessApp() {
-      const todayIndex = new Date().getDay(); // Sunday = 0
+    function App() {
+      const [tab, setTab] = useState(() => localStorage.getItem("tab") || "home");
+      const [routines, setRoutines] = useState(() => {
+        const saved = localStorage.getItem("routines");
+        return saved ? JSON.parse(saved) : defaultRoutines;
+      });
+      const [completed, setCompleted] = useState(() => {
+        const saved = localStorage.getItem("completed");
+        return saved ? JSON.parse(saved) : 2;
+      });
+      const [selectedRoutine, setSelectedRoutine] = useState(null);
+      const [timer, setTimer] = useState(0);
+      const [running, setRunning] = useState(false);
+
+      useEffect(() => localStorage.setItem("tab", tab), [tab]);
+      useEffect(() => localStorage.setItem("routines", JSON.stringify(routines)), [routines]);
+      useEffect(() => localStorage.setItem("completed", completed), [completed]);
+
+      useEffect(() => {
+        if (!running) return;
+        const id = setInterval(() => setTimer(t => t + 1), 1000);
+        return () => clearInterval(id);
+      }, [running]);
+
+      const todayIndex = new Date().getDay();
       const currentDay = todayIndex === 0 ? 6 : todayIndex - 1;
 
+      const formatTime = s =>
+        `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
       return (
-        <div className="max-w-md mx-auto min-h-screen bg-[#0f172a] text-white pb-24">
-          {/* Header */}
+        <div className="max-w-md mx-auto min-h-screen text-white pb-24">
+
+          {/* HEADER */}
           <div className="p-4">
-            <h2 className="text-xl font-semibold">Hey Alex!</h2>
+            <h2 className="text-xl font-semibold">Hey Pheebs!</h2>
             <p className="text-gray-400 text-sm">Plan your routines</p>
           </div>
 
-          {/* Calendar */}
-          <div className="px-4">
-            <div className="grid grid-cols-7 gap-2 mb-6">
-              {weekDays.map((day, index) => (
-                <div
-                  key={day}
-                  className={`rounded-xl p-2 text-center text-xs ${
-                    index === currentDay
-                      ? "bg-red-600 text-white"
-                      : "bg-[#1e293b] text-gray-400"
-                  }`}
-                >
-                  {day}
+          {/* HOME TAB */}
+          {tab === "home" && (
+            <>
+              {/* Calendar */}
+              <div className="px-4">
+                <div className="grid grid-cols-7 gap-2 mb-6">
+                  {weekDays.map((day, index) => (
+                    <div
+                      key={day}
+                      className={`rounded-xl p-2 text-center text-xs ${
+                        index === currentDay
+                          ? "bg-red-600 text-white"
+                          : "bg-[#1e293b] text-gray-400"
+                      }`}
+                    >
+                      {day}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Progress Tracker */}
-          <div className="text-center mb-6">
-            <div className="w-24 h-24 mx-auto rounded-full border-4 border-blue-600 flex items-center justify-center text-xl font-bold">
-              50%
-            </div>
-            <p className="mt-2 text-sm text-gray-400">Weekly progress: 2 of 4 workouts completed</p>
-          </div>
-
-          {/* Routine Cards */}
-          <div className="px-4">
-            <h3 className="text-lg font-semibold mb-4">Your routines</h3>
-            <div className="grid grid-cols-2 gap-3">
-              {routines.map(r => (
-                <div key={r.name} className="bg-[#1e293b] rounded-xl p-3">
-                  <h4 className="font-semibold">{r.name}</h4>
-                  <p className="text-sm text-gray-400">{r.count} exercises</p>
+              {/* Progress */}
+              <div className="text-center mb-6">
+                <div className="w-24 h-24 mx-auto rounded-full border-4 border-blue-600 flex items-center justify-center text-xl font-bold">
+                  {Math.round((completed / 4) * 100)}%
                 </div>
-              ))}
-            </div>
-          </div>
+                <p className="mt-2 text-sm text-gray-400">
+                  Weekly progress: {completed} of 4 workouts completed
+                </p>
+              </div>
 
-          {/* Bottom Navigation */}
+              {/* Routines */}
+              <div className="px-4">
+                <h3 className="text-lg font-semibold mb-4">Your routines</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {routines.map(r => (
+                    <button
+                      key={r.name}
+                      onClick={() => {
+                        setSelectedRoutine(r);
+                        setTab("routine");
+                      }}
+                      className="bg-[#1e293b] rounded-xl p-3 text-left"
+                    >
+                      <h4 className="font-semibold">{r.name}</h4>
+                      <p className="text-sm text-gray-400">{r.exercises.length} exercises</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ROUTINE DETAIL */}
+          {tab === "routine" && selectedRoutine && (
+            <div className="px-4">
+              <button className="text-gray-400 mb-4" onClick={() => setTab("home")}>← Back</button>
+              <h2 className="text-xl font-semibold mb-2">{selectedRoutine.name}</h2>
+
+              <ul className="space-y-2 mb-6">
+                {selectedRoutine.exercises.map(ex => (
+                  <li key={ex} className="bg-[#1e293b] p-3 rounded-xl">{ex}</li>
+                ))}
+              </ul>
+
+              <button
+                onClick={() => {
+                  setTimer(0);
+                  setRunning(true);
+                  setTab("timer");
+                }}
+                className="w-full bg-blue-600 py-3 rounded-xl font-medium"
+              >
+                Start Workout
+              </button>
+            </div>
+          )}
+
+          {/* TIMER */}
+          {tab === "timer" && (
+            <div className="px-4 text-center">
+              <div className="text-5xl font-mono mb-8">{formatTime(timer)}</div>
+
+              <button
+                onClick={() => {
+                  setRunning(false);
+                  setCompleted(c => c + 1);
+                  setTab("home");
+                }}
+                className="w-full bg-green-600 py-3 rounded-xl font-medium"
+              >
+                Finish Workout
+              </button>
+            </div>
+          )}
+
+          {/* SETTINGS */}
+          {tab === "settings" && (
+            <div className="px-4">
+              <h2 className="text-xl font-semibold mb-4">Settings</h2>
+              <p className="text-gray-400">More settings coming soon</p>
+            </div>
+          )}
+
+          {/* BOTTOM NAV */}
           <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-4">
             <div className="bg-[#020617] rounded-2xl border border-gray-700">
               <div className="grid grid-cols-4 text-center text-sm text-gray-400">
-                <button className="p-3 text-blue-500">🏠</button>
-                <button className="p-3">📊</button>
-                <button className="p-3">📋</button>
-                <button className="p-3">⚙️</button>
+                <button className={`p-3 ${tab === "home" ? "text-blue-500" : ""}`} onClick={() => setTab("home")}>🏠</button>
+                <button className={`p-3 ${tab === "stats" ? "text-blue-500" : ""}`} onClick={() => setTab("stats")}>📊</button>
+                <button className={`p-3 ${tab === "home" ? "" : ""}`} onClick={() => setTab("home")}>📋</button>
+                <button className={`p-3 ${tab === "settings" ? "text-blue-500" : ""}`} onClick={() => setTab("settings")}>⚙️</button>
               </div>
             </div>
           </div>
+
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<FitnessApp />);
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
 </body>
 </html>
