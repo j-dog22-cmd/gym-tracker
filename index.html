@@ -45,4 +45,78 @@
       }, [running]);
 
       const formatTime = (s) => {
-        const m = Math
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return `${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+      };
+
+      return (
+        <div className="max-w-md mx-auto min-h-screen bg-white">
+          {/* Header */}
+          <div className="bg-blue-600 text-white p-4 text-xl font-bold">
+            Gym Tracker
+          </div>
+
+          {/* Content */}
+          <div className="p-4 pb-24">
+            {tab === "workout" && (
+              <button
+                onClick={() => {
+                  setSeconds(0);
+                  setRunning(true);
+                  setTab("active");
+                }}
+                className="w-full bg-green-500 text-white py-3 rounded-lg"
+              >
+                Start Workout
+              </button>
+            )}
+
+            {tab === "active" && (
+              <>
+                <div className="text-center text-5xl font-mono mb-6">
+                  {formatTime(seconds)}
+                </div>
+                <button
+                  onClick={() => {
+                    setRunning(false);
+                    setTab("calendar");
+                  }}
+                  className="w-full bg-blue-500 text-white py-3 rounded-lg"
+                >
+                  Finish Workout
+                </button>
+              </>
+            )}
+
+            {tab === "calendar" && (
+              <p className="text-center text-gray-500">
+                Calendar coming next ✅
+              </p>
+            )}
+          </div>
+
+          {/* Bottom Nav */}
+          <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t">
+            <div className="grid grid-cols-3 text-center">
+              <button onClick={() => setTab("workout")} className="p-3">
+                Workout
+              </button>
+              <button onClick={() => setTab("active")} className="p-3">
+                Active
+              </button>
+              <button onClick={() => setTab("calendar")} className="p-3">
+                Calendar
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ✅ React 18 correct mounting
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<GymApp />);
+  </script>
+</body>
+</html>
