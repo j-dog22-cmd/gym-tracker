@@ -24,7 +24,7 @@
         }
         #root {
             min-height: 100vh;
-            background: #202123;
+            background: #f3f4f6;
         }
     </style>
 </head>
@@ -80,11 +80,24 @@
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
         );
+        
+        const getStartOfWeek = (dateStr) => {
+          const d = new Date(dateStr);
+          const day = d.getDay(); // 0 = Sunday
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
+          d.setDate(diff);
+          return d;
+        };
+        
+        const formatDate = (date) => {
+          return date.toISOString().split("T")[0];
+        };
 
         const GymApp = () => {
             const [activeTab, setActiveTab] = useState('workout');
             const [timerSeconds, setTimerSeconds] = useState(0);
             const [isTimerRunning, setIsTimerRunning] = useState(false);
+            const [calendarMode, setCalendarMode] = useState("week");
             const [workouts, setWorkouts] = useState(() => {
                 const saved = localStorage.getItem('gymWorkouts');
                 return saved ? JSON.parse(saved) : [];
@@ -411,6 +424,58 @@
                 );
             };
 
+            const WeeklyCalendar = ({ workouts, selectedDate, setSelectedDate }) => {
+              const weekStart = getStartOfWeek(selectedDate);
+            
+              const days = [...Array(7)].map((_, i) => {
+                const d = new Date(weekStart);
+                d.setDate(weekStart.getDate() + i);
+                return d;
+              });
+            
+              return (
+                <div className="p-4 pb-24">
+                  <h2 className="text-2xl font-bold mb-4">Weekly Workout Planner</h2>
+            
+                  <div className="grid grid-cols-7 gap-2">
+                    {days.map(day => {
+                      const dateStr = formatDate(day);
+                      const dayWorkouts = workouts.filter(w => w.date === dateStr);
+            
+                      return (
+                        <div
+                          key={dateStr}
+                          onClick={() => setSelectedDate(dateStr)}
+                          className="bg-white border rounded-lg p-2 text-center cursor-pointer hover:border-blue-400"
+                        >
+                          <div className="font-semibold text-sm">
+                            {day.toLocaleDateString("en-GB", { weekday: "short" })}
+                          </div>
+            
+                          <div className="text-xs text-gray-500 mb-1">
+                            {day.getDate()}
+                          </div>
+            
+                          {dayWorkouts.length === 0 ? (
+                            <div className="text-gray-400 text-xs">Rest</div>
+                          ) : (
+                            dayWorkouts.map(w => (
+                              <div
+                                key={w.id}
+                                className="bg-blue-100 text-blue-800 text-xs rounded px-1 py-0.5 mb-1"
+                              >
+                                {w.muscleGroups.join(", ")}
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            };
+
             const TimerTab = () => {
                 const [restTime, setRestTime] = useState(60);
                 const [restTimer, setRestTimer] = useState(0);
@@ -502,7 +567,44 @@
                     <div className="bg-white min-h-screen">
                         {activeTab === 'workout' && <WorkoutStarter />}
                         {activeTab === 'active' && <ActiveWorkout />}
-                        {activeTab === 'calendar' && <CalendarView />}
+                        {activeTab === 'calendar' && (
+                          <>
+                            <div className="flex gap-2 p-4">
+                              <button
+                                onClick={() => setCalendarMode("day")}
+                                className={`flex-1 py-2 rounded ${
+                                  calendarMode === "day"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-200"
+                                }`}
+                              >
+                                Day
+                              </button>
+                        
+                              <button
+                                onClick={() => setCalendarMode("week")}
+                                className={`flex-1 py-2 rounded ${
+                                  calendarMode === "week"
+                                    ? "bg-blue-500 text-white"
+                                    : "bg-gray-200"
+                                }`}
+                              >
+                                Week
+                              </button>
+                            </div>
+                        
+                            {calendarMode === "day" ? (
+                              <CalendarView />
+                            ) : (
+                              <WeeklyCalendar
+                                workouts={workouts}
+                                selectedDate={selectedDate}
+                                setSelectedDate={setSelectedDate}
+                              />
+                            )}
+                          </>
+                        )}
+
                         {activeTab === 'timer' && <TimerTab />}
                     </div>
 
