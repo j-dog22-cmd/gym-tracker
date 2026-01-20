@@ -16,150 +16,164 @@
   <style>
     body {
       margin: 0;
-      background: #0f172a; /* FORCE dark background */
+      background: #0f172a;
       font-family: system-ui, -apple-system, BlinkMacSystemFont;
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect } = React;
+<script type="text/babel">
+const { useState, useEffect } = React;
 
-    const getWeek = () => {
-      const start = new Date();
-      start.setDate(start.getDate() - start.getDay() + 1);
-      return [...Array(7)].map((_, i) => {
-        const d = new Date(start);
-        d.setDate(start.getDate() + i);
-        return d;
-      });
-    };
+const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
-    function GymApp() {
-      const [tab, setTab] = useState("workout");
-      const [seconds, setSeconds] = useState(0);
-      const [running, setRunning] = useState(false);
-      const [workouts, setWorkouts] = useState([]);
+function GymApp() {
+  const [tab, setTab] = useState("workout");
+  const [seconds, setSeconds] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [schedule, setSchedule] = useState({});
+  const [workoutName, setWorkoutName] = useState("");
+  const [selectedDay, setSelectedDay] = useState("Mon");
 
-      useEffect(() => {
-        if (!running) return;
-        const i = setInterval(() => setSeconds(s => s + 1), 1000);
-        return () => clearInterval(i);
-      }, [running]);
+  useEffect(() => {
+    if (!running) return;
+    const i = setInterval(() => setSeconds(s => s + 1), 1000);
+    return () => clearInterval(i);
+  }, [running]);
 
-      const finishWorkout = () => {
-        setWorkouts([...workouts, { date: new Date() }]);
-        setRunning(false);
-        setSeconds(0);
-        setTab("calendar");
-      };
+  const formatTime = s =>
+    `${String(Math.floor(s / 60)).padStart(2,"0")}:${String(s % 60).padStart(2,"0")}`;
 
-      const formatTime = s =>
-        `${String(Math.floor(s / 60)).padStart(2,"0")}:${String(s % 60).padStart(2,"0")}`;
+  const addSchedule = () => {
+    if (!workoutName) return;
+    setSchedule({ ...schedule, [selectedDay]: workoutName });
+    setWorkoutName("");
+  };
 
-      return (
-        <div className="max-w-md mx-auto min-h-screen bg-[#0f172a] text-white">
+  return (
+    <div className="max-w-md mx-auto min-h-screen bg-[#0f172a] text-white">
 
-          {/* Header */}
-          <div className="p-4">
-            <div className="bg-[#020617] rounded-2xl p-4 shadow">
-              <h1 className="text-xl font-semibold">Gym Tracker</h1>
-              <p className="text-gray-400 text-sm">Weekly training planner</p>
-            </div>
-          </div>
+      {/* Header */}
+      <div className="p-4">
+        <div className="bg-[#020617] rounded-2xl p-4 shadow">
+          <h1 className="text-xl font-semibold">Gym Tracker</h1>
+          <p className="text-gray-400 text-sm">Plan your week</p>
+        </div>
+      </div>
 
-          {/* Main Card */}
-          <div className="px-4 pb-32">
-            <div className="bg-[#020617] rounded-2xl p-6 min-h-[60vh]">
+      {/* Main Card */}
+      <div className="px-4 pb-32">
+        <div className="bg-[#020617] rounded-2xl p-6 min-h-[60vh]">
 
-              {tab === "workout" && (
-                <button
-                  onClick={() => {
-                    setSeconds(0);
-                    setRunning(true);
-                    setTab("active");
-                  }}
-                  className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-medium"
-                >
-                  Start Workout
-                </button>
-              )}
+          {tab === "workout" && (
+            <button
+              onClick={() => {
+                setSeconds(0);
+                setRunning(true);
+                setTab("active");
+              }}
+              className="w-full bg-blue-600 py-3 rounded-xl font-medium"
+            >
+              Start Workout
+            </button>
+          )}
 
-              {tab === "active" && (
-                <>
-                  <div className="text-center text-5xl font-mono mb-8">
-                    {formatTime(seconds)}
-                  </div>
-                  <button
-                    onClick={finishWorkout}
-                    className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-medium"
+          {tab === "active" && (
+            <>
+              <div className="text-center text-5xl font-mono mb-8">
+                {formatTime(seconds)}
+              </div>
+              <button
+                onClick={() => {
+                  setRunning(false);
+                  setTab("calendar");
+                }}
+                className="w-full bg-blue-600 py-3 rounded-xl font-medium"
+              >
+                Finish Workout
+              </button>
+            </>
+          )}
+
+          {tab === "calendar" && (
+            <>
+              <h2 className="text-lg font-semibold mb-4">Weekly Schedule</h2>
+              <div className="grid grid-cols-7 gap-2">
+                {days.map(d => (
+                  <div
+                    key={d}
+                    className="bg-[#020617] border border-gray-700 rounded-xl p-2 text-center"
                   >
-                    Finish Workout
-                  </button>
-                </>
-              )}
-
-              {tab === "calendar" && (
-                <>
-                  <h2 className="text-lg font-semibold mb-4">This Week</h2>
-                  <div className="grid grid-cols-7 gap-2">
-                    {getWeek().map((d, i) => {
-                      const hasWorkout = workouts.some(
-                        w => new Date(w.date).toDateString() === d.toDateString()
-                      );
-                      return (
-                        <div
-                          key={i}
-                          className="bg-[#020617] border border-gray-700 rounded-xl p-2 text-center"
-                        >
-                          <div className="text-xs text-gray-400">
-                            {d.toLocaleDateString("en-GB", { weekday: "short" })}
-                          </div>
-                          <div className="text-sm font-semibold">
-                            {d.getDate()}
-                          </div>
-                          <div className={`text-xs mt-1 ${
-                            hasWorkout ? "text-blue-400" : "text-gray-500"
-                          }`}>
-                            {hasWorkout ? "Workout" : "Rest"}
-                          </div>
-                        </div>
-                      );
-                    })}
+                    <div className="text-xs text-gray-400">{d}</div>
+                    <div className="text-xs mt-1">
+                      {schedule[d] || <span className="text-gray-500">Rest</span>}
+                    </div>
                   </div>
-                </>
-              )}
-
-            </div>
-          </div>
-
-          {/* Bottom Nav */}
-          <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-4">
-            <div className="bg-[#020617] border border-gray-700 rounded-2xl shadow">
-              <div className="grid grid-cols-3 text-center">
-                {["workout","active","calendar"].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`p-3 text-sm ${
-                      tab === t ? "text-blue-500" : "text-gray-500"
-                    }`}
-                  >
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
-                  </button>
                 ))}
               </div>
-            </div>
-          </div>
+            </>
+          )}
+
+          {tab === "schedule" && (
+            <>
+              <h2 className="text-lg font-semibold mb-4">Add Workout</h2>
+
+              <select
+                value={selectedDay}
+                onChange={e => setSelectedDay(e.target.value)}
+                className="w-full mb-3 bg-[#020617] border border-gray-700 rounded-xl p-3"
+              >
+                {days.map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+
+              <input
+                value={workoutName}
+                onChange={e => setWorkoutName(e.target.value)}
+                placeholder="Workout name (e.g. Push)"
+                className="w-full mb-3 bg-[#020617] border border-gray-700 rounded-xl p-3 text-white"
+              />
+
+              <button
+                onClick={addSchedule}
+                className="w-full bg-blue-600 py-3 rounded-xl font-medium"
+              >
+                Save Workout
+              </button>
+            </>
+          )}
 
         </div>
-      );
-    }
+      </div>
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<GymApp />);
-  </script>
+      {/* Bottom Nav */}
+      <div className="fixed bottom-4 left-0 right-0 max-w-md mx-auto px-4">
+        <div className="bg-[#020617] border border-gray-700 rounded-2xl shadow">
+          <div className="grid grid-cols-4 text-center">
+            {["workout","active","calendar","schedule"].map(t => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`p-3 text-sm ${
+                  tab === t ? "text-blue-500" : "text-gray-500"
+                }`}
+              >
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<GymApp />);
+</script>
 </body>
 </html>
 
