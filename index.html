@@ -1,651 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gym Tracker">
-    <title>Gym Tracker</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            overscroll-behavior: none;
-        }
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
-        #root {
-          min-height: 100vh;
-          background: #ffffff;
-        }
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+  />
+  <title>Gym Tracker</title>
 
-    </style>
+  <!-- React -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      background: #f3f4f6;
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-        // Icon components
-        const Play = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-        );
+    /* ------------------ Icons ------------------ */
+    const Icon = ({ children }) => (
+      <svg
+        className="w-6 h-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        {children}
+      </svg>
+    );
 
-        const Calendar = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-        );
+    const Dumbbell = () => (
+      <Icon>
+        <path d="M6 7h12M6 17h12M4 7v10M20 7v10" />
+      </Icon>
+    );
 
-        const Clock = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-        );
+    const Play = () => (
+      <Icon>
+        <polygon points="5 3 19 12 5 21" />
+      </Icon>
+    );
 
-        const Dumbbell = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14.4 14.4L9.6 9.6"></path>
-                <path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"></path>
-                <path d="M21.5 21.5l-1.4-1.4"></path>
-                <path d="M3.9 3.9l1.4 1.4"></path>
-                <path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"></path>
-            </svg>
-        );
+    const CalendarIcon = () => (
+      <Icon>
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <line x1="16" y1="2" x2="16" y2="6" />
+        <line x1="8" y1="2" x2="8" y2="6" />
+        <line x1="3" y1="10" x2="21" y2="10" />
+      </Icon>
+    );
 
-        const Plus = () => (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-        );
+    const Clock = () => (
+      <Icon>
+        <circle cx="12" cy="12" r="10" />
 
-        const CheckCircle = () => (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
-        );
-        
-        const getStartOfWeek = (dateStr) => {
-          const d = new Date(dateStr);
-          const day = d.getDay(); // 0 = Sunday
-          const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
-          d.setDate(diff);
-          return d;
-        };
-        
-        const formatDate = (date) => {
-          return date.toISOString().split("T")[0];
-        };
-
-        const GymApp = () => {
-            const [activeTab, setActiveTab] = useState('workout');
-            const [timerSeconds, setTimerSeconds] = useState(0);
-            const [isTimerRunning, setIsTimerRunning] = useState(false);
-            const [calendarMode, setCalendarMode] = useState("week");
-            const [workouts, setWorkouts] = useState(() => {
-                const saved = localStorage.getItem('gymWorkouts');
-                return saved ? JSON.parse(saved) : [];
-            });
-            const [currentWorkout, setCurrentWorkout] = useState(null);
-            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-
-            // Exercise library organized by muscle group
-            const exerciseLibrary = {
-                chest: ['Bench Press', 'Incline Press', 'Chest Fly', 'Push-ups', 'Dips'],
-                back: ['Pull-ups', 'Barbell Row', 'Lat Pulldown', 'Seated Row', 'Deadlift'],
-                shoulders: ['Overhead Press', 'Lateral Raise', 'Front Raise', 'Face Pulls', 'Shrugs'],
-                legs: ['Squat', 'Leg Press', 'Lunges', 'Leg Curl', 'Leg Extension', 'Calf Raise'],
-                arms: ['Bicep Curl', 'Hammer Curl', 'Tricep Extension', 'Skull Crusher', 'Cable Curl'],
-                core: ['Plank', 'Crunches', 'Russian Twist', 'Leg Raise', 'Mountain Climbers']
-            };
-
-            // Warm-up routines based on muscle groups
-            const warmupRoutines = {
-                chest: ['Arm Circles', 'Band Pull-Aparts', 'Light Push-ups', 'Shoulder Dislocations'],
-                back: ['Cat-Cow Stretch', 'Band Pull-Aparts', 'Scapular Retractions', 'Dead Hangs'],
-                shoulders: ['Arm Circles', 'Band Pull-Aparts', 'Shoulder Dislocations', 'Wall Slides'],
-                legs: ['Ankle Circles', 'Leg Swings', 'Bodyweight Squats', 'Hip Circles', 'Calf Pumps'],
-                arms: ['Arm Circles', 'Wrist Circles', 'Light Band Curls', 'Tricep Stretch'],
-                core: ['Cat-Cow Stretch', 'Standing Twists', 'Leg Swings', 'Hip Circles']
-            };
-
-            // Save workouts to localStorage
-            useEffect(() => {
-                localStorage.setItem('gymWorkouts', JSON.stringify(workouts));
-            }, [workouts]);
-
-            // Timer effect
-            useEffect(() => {
-                let interval;
-                if (isTimerRunning) {
-                    interval = setInterval(() => {
-                        setTimerSeconds(s => s + 1);
-                    }, 1000);
-                }
-                return () => clearInterval(interval);
-            }, [isTimerRunning]);
-
-            const formatTime = (seconds) => {
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            };
-
-            const startWorkout = (muscleGroups) => {
-                const workout = {
-                    id: Date.now(),
-                    date: selectedDate,
-                    muscleGroups,
-                    exercises: [],
-                    warmup: [...new Set(muscleGroups.flatMap(mg => warmupRoutines[mg] || []))],
-                    startTime: new Date().toISOString(),
-                    completed: false
-                };
-                setCurrentWorkout(workout);
-                setTimerSeconds(0);
-                setIsTimerRunning(true);
-                setActiveTab('active');
-            };
-
-            const addExerciseToWorkout = (exercise, sets, reps, weight) => {
-                if (!currentWorkout) return;
-                
-                const newExercise = {
-                    id: Date.now(),
-                    name: exercise,
-                    sets: parseInt(sets) || 3,
-                    reps: parseInt(reps) || 10,
-                    weight: parseFloat(weight) || 0,
-                    completed: false
-                };
-                
-                setCurrentWorkout({
-                    ...currentWorkout,
-                    exercises: [...currentWorkout.exercises, newExercise]
-                });
-            };
-
-            const completeWorkout = () => {
-                if (!currentWorkout) return;
-                
-                const completedWorkout = {
-                    ...currentWorkout,
-                    endTime: new Date().toISOString(),
-                    duration: timerSeconds,
-                    completed: true
-                };
-                
-                setWorkouts([...workouts, completedWorkout]);
-                setCurrentWorkout(null);
-                setIsTimerRunning(false);
-                setTimerSeconds(0);
-                setActiveTab('calendar');
-            };
-
-            const WorkoutStarter = () => {
-                const [selected, setSelected] = useState([]);
-                
-                const toggleMuscleGroup = (group) => {
-                    setSelected(prev => 
-                        prev.includes(group) 
-                            ? prev.filter(g => g !== group)
-                            : [...prev, group]
-                    );
-                };
-
-                return (
-                    <div className="p-4">
-                        <h2 className="text-2xl font-bold mb-4">Start New Workout</h2>
-                        <p className="text-gray-600 mb-4">Select muscle groups you'll train today:</p>
-                        
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            {Object.keys(exerciseLibrary).map(group => (
-                                <button
-                                    key={group}
-                                    onClick={() => toggleMuscleGroup(group)}
-                                    className={`p-4 rounded-lg border-2 capitalize font-medium transition ${
-                                        selected.includes(group)
-                                            ? 'bg-blue-500 text-white border-blue-600'
-                                            : 'bg-white border-gray-300 hover:border-blue-400'
-                                    }`}
-                                >
-                                    {group}
-                                </button>
-                            ))}
-                        </div>
-
-                        <button
-                            onClick={() => selected.length > 0 && startWorkout(selected)}
-                            disabled={selected.length === 0}
-                            className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-green-600 transition"
-                        >
-                            Start Workout
-                        </button>
-                    </div>
-                );
-            };
-
-            const ActiveWorkout = () => {
-                const [showExerciseForm, setShowExerciseForm] = useState(false);
-                const [newExercise, setNewExercise] = useState({ name: '', sets: 3, reps: 10, weight: 0 });
-                
-                if (!currentWorkout) {
-                    return <WorkoutStarter />;
-                }
-
-                const availableExercises = currentWorkout.muscleGroups.flatMap(mg => 
-                    exerciseLibrary[mg] || []
-                );
-
-                return (
-                    <div className="p-4 pb-24">
-                        <div className="bg-blue-500 text-white p-4 rounded-lg mb-4">
-                            <div className="flex justify-between items-center mb-2">
-                                <h2 className="text-xl font-bold">Active Workout</h2>
-                                <div className="flex items-center gap-2">
-                                    <Clock />
-                                    <span className="text-2xl font-mono">{formatTime(timerSeconds)}</span>
-                                </div>
-                            </div>
-                            <div className="flex gap-2 flex-wrap">
-                                {currentWorkout.muscleGroups.map(mg => (
-                                    <span key={mg} className="bg-white/20 px-2 py-1 rounded text-sm capitalize">
-                                        {mg}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Warm-up Section */}
-                        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 mb-4">
-                            <h3 className="font-bold text-yellow-800 mb-2">Recommended Warm-up</h3>
-                            <ul className="space-y-1">
-                                {currentWorkout.warmup.map((exercise, idx) => (
-                                    <li key={idx} className="text-yellow-900">• {exercise}</li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Exercises */}
-                        <div className="mb-4">
-                            <h3 className="font-bold text-lg mb-3">Exercises</h3>
-                            {currentWorkout.exercises.length === 0 ? (
-                                <p className="text-gray-500 text-center py-4">No exercises added yet</p>
-                            ) : (
-                                <div className="space-y-2">
-                                    {currentWorkout.exercises.map(ex => (
-                                        <div key={ex.id} className="bg-gray-50 p-3 rounded-lg border">
-                                            <div className="font-semibold">{ex.name}</div>
-                                            <div className="text-sm text-gray-600">
-                                                {ex.sets} sets × {ex.reps} reps @ {ex.weight}kg
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Add Exercise Form */}
-                        {showExerciseForm ? (
-                            <div className="bg-white border-2 border-blue-300 rounded-lg p-4 mb-4">
-                                <select
-                                    value={newExercise.name}
-                                    onChange={(e) => setNewExercise({...newExercise, name: e.target.value})}
-                                    className="w-full p-2 border rounded mb-2"
-                                >
-                                    <option value="">Select Exercise</option>
-                                    {availableExercises.map(ex => (
-                                        <option key={ex} value={ex}>{ex}</option>
-                                    ))}
-                                </select>
-                                <div className="grid grid-cols-3 gap-2 mb-2">
-                                    <input
-                                        type="number"
-                                        placeholder="Sets"
-                                        value={newExercise.sets}
-                                        onChange={(e) => setNewExercise({...newExercise, sets: e.target.value})}
-                                        className="p-2 border rounded"
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder="Reps"
-                                        value={newExercise.reps}
-                                        onChange={(e) => setNewExercise({...newExercise, reps: e.target.value})}
-                                        className="p-2 border rounded"
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder="Weight"
-                                        value={newExercise.weight}
-                                        onChange={(e) => setNewExercise({...newExercise, weight: e.target.value})}
-                                        className="p-2 border rounded"
-                                    />
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            if (newExercise.name) {
-                                                addExerciseToWorkout(newExercise.name, newExercise.sets, newExercise.reps, newExercise.weight);
-                                                setNewExercise({ name: '', sets: 3, reps: 10, weight: 0 });
-                                                setShowExerciseForm(false);
-                                            }
-                                        }}
-                                        className="flex-1 bg-blue-500 text-white py-2 rounded font-medium"
-                                    >
-                                        Add
-                                    </button>
-                                    <button
-                                        onClick={() => setShowExerciseForm(false)}
-                                        className="flex-1 bg-gray-300 py-2 rounded font-medium"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setShowExerciseForm(true)}
-                                className="w-full bg-blue-500 text-white py-3 rounded-lg font-semibold mb-4 flex items-center justify-center gap-2"
-                            >
-                                <Plus /> Add Exercise
-                            </button>
-                        )}
-
-                        <button
-                            onClick={completeWorkout}
-                            className="w-full bg-green-500 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"
-                        >
-                            <CheckCircle /> Complete Workout
-                        </button>
-                    </div>
-                );
-            };
-
-            const CalendarView = () => {
-                const workoutsForDate = workouts.filter(w => w.date === selectedDate);
-
-                return (
-                    <div className="p-4 pb-24">
-                        <h2 className="text-2xl font-bold mb-4">Workout Calendar</h2>
-                        
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full p-2 border-2 rounded-lg mb-4"
-                        />
-
-                        {workoutsForDate.length === 0 ? (
-                            <p className="text-gray-500 text-center py-8">No workouts on this date</p>
-                        ) : (
-                            <div className="space-y-4">
-                                {workoutsForDate.map(workout => (
-                                    <div key={workout.id} className="bg-white border-2 rounded-lg p-4">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex gap-2 flex-wrap">
-                                                {workout.muscleGroups.map(mg => (
-                                                    <span key={mg} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm capitalize">
-                                                        {mg}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                            <span className="text-sm text-gray-500">
-                                                {formatTime(workout.duration)}
-                                            </span>
-                                        </div>
-                                        <div className="space-y-1">
-                                            {workout.exercises.map(ex => (
-                                                <div key={ex.id} className="text-sm">
-                                                    <span className="font-medium">{ex.name}</span> - {ex.sets}×{ex.reps} @ {ex.weight}kg
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                );
-            };
-
-            const WeeklyCalendar = ({ workouts, selectedDate, setSelectedDate }) => {
-              const weekStart = getStartOfWeek(selectedDate);
-            
-              const days = [...Array(7)].map((_, i) => {
-                const d = new Date(weekStart);
-                d.setDate(weekStart.getDate() + i);
-                return d;
-              });
-            
-              return (
-                <div className="p-4 pb-24">
-                  <h2 className="text-2xl font-bold mb-4">Weekly Workout Planner</h2>
-            
-                  <div className="grid grid-cols-7 gap-2">
-                    {days.map(day => {
-                      const dateStr = formatDate(day);
-                      const dayWorkouts = workouts.filter(w => w.date === dateStr);
-            
-                      return (
-                        <div
-                          key={dateStr}
-                          onClick={() => setSelectedDate(dateStr)}
-                          className="bg-white border rounded-lg p-2 text-center cursor-pointer hover:border-blue-400"
-                        >
-                          <div className="font-semibold text-sm">
-                            {day.toLocaleDateString("en-GB", { weekday: "short" })}
-                          </div>
-            
-                          <div className="text-xs text-gray-500 mb-1">
-                            {day.getDate()}
-                          </div>
-            
-                          {dayWorkouts.length === 0 ? (
-                            <div className="text-gray-400 text-xs">Rest</div>
-                          ) : (
-                            dayWorkouts.map(w => (
-                              <div
-                                key={w.id}
-                                className="bg-blue-100 text-blue-800 text-xs rounded px-1 py-0.5 mb-1"
-                              >
-                                {w.muscleGroups.join(", ")}
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            };
-
-            const TimerTab = () => {
-                const [restTime, setRestTime] = useState(60);
-                const [restTimer, setRestTimer] = useState(0);
-                const [isResting, setIsResting] = useState(false);
-
-                useEffect(() => {
-                    let interval;
-                    if (isResting && restTimer > 0) {
-                        interval = setInterval(() => {
-                            setRestTimer(t => {
-                                if (t <= 1) {
-                                    setIsResting(false);
-                                    return 0;
-                                }
-                                return t - 1;
-                            });
-                        }, 1000);
-                    }
-                    return () => clearInterval(interval);
-                }, [isResting, restTimer]);
-
-                return (
-                    <div className="p-4 pb-24">
-                        <h2 className="text-2xl font-bold mb-4">Rest Timer</h2>
-                        
-                        <div className="bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl p-8 mb-6 text-center">
-                            <div className="text-6xl font-bold mb-4">
-                                {formatTime(restTimer)}
-                            </div>
-                            {isResting && (
-                                <div className="text-sm opacity-90">Rest Period Active</div>
-                            )}
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium mb-2">Rest Duration (seconds)</label>
-                            <input
-                                type="number"
-                                value={restTime}
-                                onChange={(e) => setRestTime(parseInt(e.target.value) || 60)}
-                                className="w-full p-3 border-2 rounded-lg"
-                                disabled={isResting}
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-6">
-                            <button
-                                onClick={() => {
-                                    setRestTimer(restTime);
-                                    setIsResting(true);
-                                }}
-                                className="bg-green-500 text-white py-4 rounded-lg font-semibold disabled:bg-gray-300"
-                                disabled={isResting}
-                            >
-                                Start Rest
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setIsResting(false);
-                                    setRestTimer(0);
-                                }}
-                                className="bg-red-500 text-white py-4 rounded-lg font-semibold"
-                            >
-                                Reset
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-2">
-                            {[30, 60, 90, 120, 180, 300].map(time => (
-                                <button
-                                    key={time}
-                                    onClick={() => setRestTime(time)}
-                                    className="bg-gray-200 py-2 rounded font-medium hover:bg-gray-300 active:bg-gray-400"
-                                >
-                                    {time}s
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                );
-            };
-
-            return (
-                <div className="max-w-md mx-auto bg-gray-100 min-h-screen">
-                    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
-                        <h1 className="text-2xl font-bold">Gym Tracker</h1>
-                    </div>
-
-                    <div className="bg-white min-h-screen">
-                        {activeTab === 'workout' && <WorkoutStarter />}
-                        {activeTab === 'active' && <ActiveWorkout />}
-                        {activeTab === 'calendar' && (
-                          <>
-                            <div className="flex gap-2 p-4">
-                              <button
-                                onClick={() => setCalendarMode("day")}
-                                className={`flex-1 py-2 rounded ${
-                                  calendarMode === "day"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-200"
-                                }`}
-                              >
-                                Day
-                              </button>
-                        
-                              <button
-                                onClick={() => setCalendarMode("week")}
-                                className={`flex-1 py-2 rounded ${
-                                  calendarMode === "week"
-                                    ? "bg-blue-500 text-white"
-                                    : "bg-gray-200"
-                                }`}
-                              >
-                                Week
-                              </button>
-                            </div>
-                        
-                            {calendarMode === "day" ? (
-                              <CalendarView />
-                            ) : (
-                              <WeeklyCalendar
-                                workouts={workouts}
-                                selectedDate={selectedDate}
-                                setSelectedDate={setSelectedDate}
-                              />
-                            )}
-                          </>
-                        )}
-
-                        {activeTab === 'timer' && <TimerTab />}
-                    </div>
-
-                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 max-w-md mx-auto">
-                        <div className="grid grid-cols-4">
-                            <button
-                                onClick={() => setActiveTab('workout')}
-                                className={`p-4 flex flex-col items-center gap-1 ${activeTab === 'workout' ? 'text-blue-600' : 'text-gray-400'}`}
-                            >
-                                <Dumbbell />
-                                <span className="text-xs">Workout</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('active')}
-                                className={`p-4 flex flex-col items-center gap-1 ${activeTab === 'active' ? 'text-blue-600' : 'text-gray-400'}`}
-                            >
-                                <Play />
-                                <span className="text-xs">Active</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('calendar')}
-                                className={`p-4 flex flex-col items-center gap-1 ${activeTab === 'calendar' ? 'text-blue-600' : 'text-gray-400'}`}
-                            >
-                                <Calendar />
-                                <span className="text-xs">Calendar</span>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('timer')}
-                                className={`p-4 flex flex-col items-center gap-1 ${activeTab === 'timer' ? 'text-blue-600' : 'text-gray-400'}`}
-                            >
-                                <Clock />
-                                <span className="text-xs">Timer</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        ReactDOM.render(<GymApp />, document.getElementById('root'));
-    </script>
-</body>
-</html>
