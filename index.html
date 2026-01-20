@@ -176,8 +176,10 @@
                       }}
                       className="bg-[#0D0D0D] neon-border neon-glow rounded-[28px] p-4 text-left transition active:scale-95"
                     >
-                      <h3 className="font-semibold">{name}</h3>
-                      <p className="text-gray-400 text-sm">{ex.length} exercises</p>
+                      <h3 className="font-semibold text-lg">{name}</h3>
+                      <p className="text-gray-500 text-xs mt-1">
+                        {ex.length} exercises
+                      </p>
                     </button>
                   ))}
                 </div>
@@ -201,9 +203,8 @@
               <div className="space-y-3">
                 {exercises.map((ex, i) => (
                   <div key={i} className="bg-[#0D0D0D] neon-border rounded-2xl p-4">
-                    <p className="font-semibold">{ex.name}</p>
-                    <p className="text-gray-400 text-sm">{ex.equipment}</p>
-                    <p className="text-gray-500 text-xs">
+                    <p className="font-semibold text-lg">{ex.name}</p>
+                    <p className="text-gray-500 text-xs mt-1">
                       {ex.sets} sets • {ex.reps} reps • {ex.weight || "Bodyweight"}
                     </p>
                   </div>
@@ -268,9 +269,8 @@
                       key={i}
                       className="bg-[#0D0D0D] neon-border rounded-2xl p-4 text-sm"
                     >
-                      <p className="font-semibold">{ex.name}</p>
-                      <p className="text-gray-400">{ex.equipment}</p>
-                      <p className="text-gray-500 text-xs">
+                      <p className="font-semibold text-lg">{ex.name}</p>
+                      <p className="text-gray-500 text-xs mt-1">
                         {ex.sets} sets • {ex.reps} reps • {ex.weight || "Bodyweight"}
                       </p>
                     </li>
@@ -292,13 +292,6 @@
                     placeholder="Exercise name"
                     value={exerciseForm.name}
                     onChange={e => setExerciseForm({ ...exerciseForm, name: e.target.value })}
-                    className="w-full bg-black rounded-full px-4 py-3 neon-border"
-                  />
-
-                  <input
-                    placeholder="Equipment"
-                    value={exerciseForm.equipment}
-                    onChange={e => setExerciseForm({ ...exerciseForm, equipment: e.target.value })}
                     className="w-full bg-black rounded-full px-4 py-3 neon-border"
                   />
 
