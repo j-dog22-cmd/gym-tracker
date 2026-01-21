@@ -374,26 +374,49 @@
           </div>
 
           {/* Month Grid */}
-          <div className="grid grid-cols-7 gap-2 mt-2 text-center">
-            {currentMonth.days.map((d) => {
-              const isToday =
-                new Date().toDateString() === d.date.toDateString();
+          <div className="flex flex-col gap-10">
 
-              return (
-                <button
-                  key={d.key}
-                  onClick={() => openDayDetails(d)}
-                  className={`py-2 rounded-xl ${
-                    isToday ? "bg-white text-black font-semibold" : "bg-[#1C1C1E]"
-                  }`}
-                >
-                  {d.date.getDate()}
-                  {renderDots(d.key)}
-                </button>
-              );
-            })}
+            {/* Month 1 — Current Month */}
+            <div>
+              <h2 className="text-xl font-bold text-center mb-2">
+                {currentMonth.label}
+              </h2>
+          
+              <div className="grid grid-cols-7 gap-2 mt-2 text-center">
+                {currentMonth.days.map((d) => {
+                  const isToday =
+                    new Date().toDateString() === d.date.toDateString();
+          
+                  return (
+                    <div key={d.key}>
+                      {d.date.getDate()}
+                      {renderDots(d.key)}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          
+            {/* Month 2 — Next Month */}
+            <div>
+              <h2 className="text-xl font-bold text-center mb-2">
+                {nextMonth.label}
+              </h2>
+          
+              <div className="grid grid-cols-7 gap-2 mt-2 text-center">
+                {nextMonth.days.map((d) => {
+                  return (
+                    <div key={d.key}>
+                      {d.date.getDate()}
+                      {renderDots(d.key)}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          
           </div>
-
+  
           {/* DAY DETAILS PANEL */}
           {selectedDay && (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
