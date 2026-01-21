@@ -211,69 +211,94 @@ function App() {
     setTempExercises([]);
     setShowGymCreator(false);
   }
+  function saveNewRunRoutineToDay(day) {
+  if (!newRunType || !newRunDistance || !newRunPace) return;
 
-  /********************************************
-   * TEMP STATE FOR RUN CREATOR
-   ********************************************/
-  const [newRunType, setNewRunType] = React.useState("");
-  const [newRunDistance, setNewRunDistance] = React.useState("");
-  const [newRunPace, setNewRunPace] = React.useState("");
-
-  function saveNewRunRoutine() {
-    if (!newRunType || !newRunDistance || !newRunPace) return;
-
-    const routine = {
-      type: newRunType,
-      distance: Number(newRunDistance),
-      pace: newRunPace,
-    };
-
-    const updated = [...runRoutines, routine];
-    saveRunRoutines(updated);
-
-    autoAssignRun(routine);
-
-    setNewRunType("");
-    setNewRunDistance("");
-    setNewRunPace("");
-    setShowRunCreator(false);
-  }
-
-  /********************************************
-   * GYM ROUTINES
-   ********************************************/
-  const [routines, setRoutines] = React.useState(() => {
-    const saved = localStorage.getItem("routines_v1");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const saveRoutines = (updated) => {
-    setRoutines(updated);
-    localStorage.setItem("routines_v1", JSON.stringify(updated));
+  const routine = {
+    type: newRunType,
+    distance: Number(newRunDistance),
+    pace: newRunPace,
   };
 
-  /********************************************
-   * WEEKLY GYM PLAN
-   ********************************************/
-  const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
-    const saved = localStorage.getItem("weeklyPlan_v1");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          Mon: null,
-          Tue: null,
-          Wed: null,
-          Thu: null,
-          Fri: null,
-          Sat: null,
-          Sun: null,
-        };
+  const updated = [...runRoutines, routine];
+  saveRunRoutines(updated);
+
+  saveRunPlan({
+    ...runPlan,
+    [day]: routine,
   });
 
-  const saveWeeklyPlan = (updated) => {
-    setWeeklyPlan(updated);
-    localStorage.setItem("weeklyPlan_v1", JSON.stringify(updated));
+  setNewRunType("");
+  setNewRunDistance("");
+  setNewRunPace("");
+  setShowRunCreator(false);
+}
+
+  /********************************************
+ * TEMP STATE FOR RUN CREATOR
+ ********************************************/
+const [newRunType, setNewRunType] = React.useState("");
+const [newRunDistance, setNewRunDistance] = React.useState("");
+const [newRunPace, setNewRunPace] = React.useState("");
+
+function saveNewRunRoutine() {
+  if (!newRunType || !newRunDistance || !newRunPace) return;
+
+  const routine = {
+    type: newRunType,
+    distance: Number(newRunDistance),
+    pace: newRunPace,
   };
+
+  const updated = [...runRoutines, routine];
+  saveRunRoutines(updated);
+
+  autoAssignRun(routine);
+
+  setNewRunType("");
+  setNewRunDistance("");
+  setNewRunPace("");
+  setShowRunCreator(false);
+}
+
+/********************************************
+ * ASSIGN RUN ROUTINE TO SPECIFIC DAY
+ ********************************************/
+function saveNewRunRoutineToDay(day) {
+  if (!newRunType || !newRunDistance || !newRunPace) return;
+
+  const routine = {
+    type: newRunType,
+    distance: Number(newRunDistance),
+    pace: newRunPace,
+  };
+
+  const updated = [...runRoutines, routine];
+  saveRunRoutines(updated);
+
+  saveRunPlan({
+    ...runPlan,
+    [day]: routine,
+  });
+
+  setNewRunType("");
+  setNewRunDistance("");
+  setNewRunPace("");
+  setShowRunCreator(false);
+}
+
+/********************************************
+ * GYM ROUTINES
+ ********************************************/
+const [routines, setRoutines] = React.useState(() => {
+  const saved = localStorage.getItem("routines_v1");
+  return saved ? JSON.parse(saved) : [];
+});
+
+const saveRoutines = (updated) => {
+  setRoutines(updated);
+  localStorage.setItem("routines_v1", JSON.stringify(updated));
+};
 
   /********************************************
    * RUNNING PLAN + ROUTINES
