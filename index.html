@@ -39,6 +39,7 @@
 
   <script type="text/babel">
     const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    
 
     function getTodayNames() {
       const now = new Date();
@@ -262,6 +263,7 @@
          CALENDAR (SINGLE MONTH)
       -------------------------- */
       const currentMonth = getCurrentMonth();
+      const nextMonth = getNextMonth(currentMonth);
 
       function renderDots(dateKey) {
         const d = new Date(dateKey);
