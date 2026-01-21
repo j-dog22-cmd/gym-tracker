@@ -74,6 +74,30 @@
       };
     }
 
+    function getNextMonth(current) {
+      const nextDate = new Date(current.year, current.month + 1, 1);
+      const year = nextDate.getFullYear();
+      const month = nextDate.getMonth();
+    
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+    
+      const days = [];
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        const date = new Date(year, month, d);
+        days.push({
+          date,
+          key: `${year}-${month + 1}-${d}`,
+        });
+      }
+    
+      return {
+        year,
+        month,
+        label: firstDay.toLocaleString("default", { month: "long", year: "numeric" }),
+        days,
+      };
+    }
     function App() {
       /* -------------------------
          NAVIGATION
