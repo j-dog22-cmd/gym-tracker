@@ -327,13 +327,40 @@
       );
 
       /* -------------------------
-         CALENDAR TAB
-      -------------------------- */
-      const CalendarTab = (
-        <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+   CALENDAR TAB (TWO MONTHS)
+-------------------------- */
+const CalendarTab = (
+  <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+
+    {/* Generate current + next month */}
+    {[0, 1].map((offset) => {
+      const base = new Date();
+      const year = base.getFullYear();
+      const month = base.getMonth() + offset;
+
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      const label = firstDay.toLocaleString("default", {
+        month: "long",
+        year: "numeric",
+      });
+
+      const days = [];
+      for (let d = 1; d <= lastDay.getDate(); d++) {
+        const date = new Date(year, month, d);
+        days.push({
+          date,
+          key: `${year}-${month + 1}-${d}`,
+        });
+      }
+
+      return (
+        <div key={offset} className="mb-10">
+
           {/* Month Header */}
           <div className="text-2xl font-semibold tracking-tight mb-4">
-            {currentMonth.label}
+            {label}
           </div>
 
           {/* Weekday Labels */}
@@ -345,7 +372,7 @@
 
           {/* Month Grid */}
           <div className="grid grid-cols-7 gap-2 mt-2 text-center">
-            {currentMonth.days.map((d) => {
+            {days.map((d) => {
               const isToday =
                 new Date().toDateString() === d.date.toDateString();
 
@@ -354,7 +381,9 @@
                   key={d.key}
                   onClick={() => openDayDetails(d)}
                   className={`py-2 rounded-xl ${
-                    isToday ? "bg-white text-black font-semibold" : "bg-[#1C1C1E]"
+                    isToday
+                      ? "bg-white text-black font-semibold"
+                      : "bg-[#1C1C1E]"
                   }`}
                 >
                   {d.date.getDate()}
@@ -364,118 +393,125 @@
             })}
           </div>
 
-          {/* DAY DETAILS PANEL */}
-          {selectedDay && (
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
-              <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">
-                    {selectedDay.date.toDateString()}
-                  </h2>
-                  <button
-                    onClick={closeDayDetails}
-                    className="text-sm text-[#8E8E93]"
-                  >
-                    Close
-                  </button>
-                </div>
-
-                {/* RUNNING ROUTINE */}
-                {(() => {
-                  const weekdayIndex =
-                    selectedDay.date.getDay() === 0
-                      ? 6
-                      : selectedDay.date.getDay() - 1;
-                  const weekday = WEEK_DAYS[weekdayIndex];
-                  const routine = runPlan[weekday];
-
-                  if (!routine) {
-                    return (
-                      <p className="text-sm text-[#8E8E93] mb-4">
-                        No running routine
-                      </p>
-                    );
-                  }
-
-                  return (
-                    <div className="mb-4">
-                      <p className="text-blue-400 text-sm font-semibold mb-1">
-                        Run: {routine.type}
-                      </p>
-                      <p className="text-sm text-[#8E8E93]">
-                        {routine.distance} km — {routine.pace}
-                      </p>
-                    </div>
-                  );
-                })()}
-
-                {/* GYM ROUTINE */}
-                {(() => {
-                  const weekdayIndex =
-                    selectedDay.date.getDay() === 0
-                      ? 6
-                      : selectedDay.date.getDay() - 1;
-                  const weekday = WEEK_DAYS[weekdayIndex];
-                  const routine = weeklyPlan[weekday];
-
-                  if (!routine) {
-                    return (
-                      <p className="text-sm text-[#8E8E93] mb-4">
-                        No gym routine
-                      </p>
-                    );
-                  }
-
-                  return (
-                    <div className="mb-4">
-                      <p className="text-green-400 text-sm font-semibold mb-2">
-                        Gym: {routine.name}
-                      </p>
-                      <ul className="text-sm text-[#8E8E93] space-y-1">
-                        {routine.exercises.map((ex, i) => (
-                          <li key={i}>
-                            {ex.name} — {ex.sets}×{ex.reps}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })()}
-
-                {/* ASSIGN WORKOUT TO THIS DAY */}
-                <button
-                  onClick={() => {
-                    const weekdayIndex =
-                      selectedDay.date.getDay() === 0
-                        ? 6
-                        : selectedDay.date.getDay() - 1;
-                    const weekday = WEEK_DAYS[weekdayIndex];
-                    setAssigningDay(weekday);
-                  }}
-                  className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
-                >
-                  Assign Workout to This Day
-                </button>
-
-                {/* ASSIGN RUN TO THIS DAY */}
-                <button
-                  onClick={() => {
-                    const weekdayIndex =
-                      selectedDay.date.getDay() === 0
-                        ? 6
-                        : selectedDay.date.getDay() - 1;
-                    const weekday = WEEK_DAYS[weekdayIndex];
-                    setAssigningRunDay(weekday);
-                  }}
-                  className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
-                >
-                  Assign Run to This Day
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       );
+    })}
+
+    {/* DAY DETAILS PANEL (unchanged) */}
+    {selectedDay && (
+      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+        <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">
+              {selectedDay.date.toDateString()}
+            </h2>
+            <button
+              onClick={closeDayDetails}
+              className="text-sm text-[#8E8E93]"
+            >
+              Close
+            </button>
+          </div>
+
+          {/* RUNNING ROUTINE */}
+          {(() => {
+            const weekdayIndex =
+              selectedDay.date.getDay() === 0
+                ? 6
+                : selectedDay.date.getDay() - 1;
+            const weekday = WEEK_DAYS[weekdayIndex];
+            const routine = runPlan[weekday];
+
+            if (!routine) {
+              return (
+                <p className="text-sm text-[#8E8E93] mb-4">
+                  No running routine
+                </p>
+              );
+            }
+
+            return (
+              <div className="mb-4">
+                <p className="text-blue-400 text-sm font-semibold mb-1">
+                  Run: {routine.type}
+                </p>
+                <p className="text-sm text-[#8E8E93]">
+                  {routine.distance} km — {routine.pace}
+                </p>
+              </div>
+            );
+          })()}
+
+          {/* GYM ROUTINE */}
+          {(() => {
+            const weekdayIndex =
+              selectedDay.date.getDay() === 0
+                ? 6
+                : selectedDay.date.getDay() - 1;
+            const weekday = WEEK_DAYS[weekdayIndex];
+            const routine = weeklyPlan[weekday];
+
+            if (!routine) {
+              return (
+                <p className="text-sm text-[#8E8E93] mb-4">
+                  No gym routine
+                </p>
+              );
+            }
+
+            return (
+              <div className="mb-4">
+                <p className="text-green-400 text-sm font-semibold mb-2">
+                  Gym: {routine.name}
+                </p>
+                <ul className="text-sm text-[#8E8E93] space-y-1">
+                  {routine.exercises.map((ex, i) => (
+                    <li key={i}>
+                      {ex.name} — {ex.sets}×{ex.reps}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
+
+          {/* ASSIGN WORKOUT */}
+          <button
+            onClick={() => {
+              const weekdayIndex =
+                selectedDay.date.getDay() === 0
+                  ? 6
+                  : selectedDay.date.getDay() - 1;
+              const weekday = WEEK_DAYS[weekdayIndex];
+              setAssigningDay(weekday);
+            }}
+            className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
+          >
+            Assign Workout to This Day
+          </button>
+
+          {/* ASSIGN RUN */}
+          <button
+            onClick={() => {
+              const weekdayIndex =
+                selectedDay.date.getDay() === 0
+                  ? 6
+                  : selectedDay.date.getDay() - 1;
+              const weekday = WEEK_DAYS[weekdayIndex];
+              setAssigningRunDay(weekday);
+            }}
+            className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
+          >
+            Assign Run to This Day
+          </button>
+
+        </div>
+      </div>
+    )}
+
+  </div>
+);
 
       /* -------------------------
          MODALS
