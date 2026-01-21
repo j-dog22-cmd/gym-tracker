@@ -1537,19 +1537,12 @@ return (
     {tab === "calendar" && CalendarTab}
     {tab === "settings" && SettingsPage}
     {tab === "workout" && WorkoutTab}
-
-    {/* FLOATING + BUTTON */}
-    <button
-      onClick={() => setShowCreateChooser(true)}
-      className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg z-[60]"
-    >
-      +
-    </button>
-
+    
     {/* BOTTOM NAVIGATION */}
     <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
-  <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-8 items-center">
+  <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-10 items-center">
 
+    {/* HOME */}
     <button
       onClick={() => setTab("home")}
       className={`flex flex-col items-center text-xs ${
@@ -1560,6 +1553,16 @@ return (
       <span>Home</span>
     </button>
 
+    {/* ADD (CENTER BUTTON) */}
+    <button
+      onClick={() => setShowCreateChooser(true)}
+      className="flex flex-col items-center text-xs text-white"
+    >
+      <span className="mb-1 text-2xl">＋</span>
+      <span>Add</span>
+    </button>
+
+    {/* CALENDAR */}
     <button
       onClick={() => setTab("calendar")}
       className={`flex flex-col items-center text-xs ${
@@ -1570,6 +1573,7 @@ return (
       <span>Calendar</span>
     </button>
 
+    {/* SETTINGS */}
     <button
       onClick={() => setTab("settings")}
       className={`flex flex-col items-center text-xs ${
