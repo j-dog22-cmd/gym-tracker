@@ -418,6 +418,35 @@ const CalendarTab = (
             </button>
           </div>
 
+          {/* GYM WORKOUT FOR THIS DAY */}
+{weeklyPlan[selectedDay.weekday] && (
+  <div className="mb-6">
+    <h3 className="text-lg font-semibold mb-2">Workout</h3>
+
+    <div className="bg-[#2C2C2E] p-4 rounded-xl soft-border mb-3">
+      <p className="font-semibold mb-1">
+        {weeklyPlan[selectedDay.weekday].name}
+      </p>
+
+      <ul className="text-sm text-[#E5E5EA] space-y-1">
+        {weeklyPlan[selectedDay.weekday].exercises.map((ex, i) => (
+          <li key={i}>
+            {ex.name} — {ex.sets}×{ex.reps}
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    {/* Start Workout Button */}
+    <button
+      onClick={() => startWorkout(weeklyPlan[selectedDay.weekday])}
+      className="w-full bg-white text-black rounded-xl py-3 font-semibold"
+    >
+      Start Workout
+    </button>
+  </div>
+)}
+
           {/* RUNNING ROUTINE */}
           {(() => {
             const weekdayIndex =
