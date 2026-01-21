@@ -773,58 +773,62 @@ const CalendarTab = (
         </div>
       );
 
-      /* -------------------------
-         RENDER
-      -------------------------- */
-      return (
-        <div className="w-full h-screen relative overflow-hidden">
-          {/* MAIN CONTENT */}
-          {tab === "home" && HomeTab}
-          {tab === "calendar" && CalendarTab}
+     /* -------------------------
+   RENDER
+-------------------------- */
+return (
+  <div className="w-full h-screen relative overflow-hidden">
 
-         <div className="glass-nav soft-border rounded-[24px] py-2.5 px-8 flex items-center justify-between w-[260px]">
+    {/* MAIN CONTENT */}
+    {tab === "home" && HomeTab}
+    {tab === "calendar" && CalendarTab}
 
-      {/* Home */}
-      <button
-        onClick={() => setTab("home")}
-        className={`flex flex-col items-center text-xs ${
-          tab === "home" ? "text-white" : "text-[#8E8E93]"
-        }`}
-      >
-        <span className="mb-1">🏠</span>
-        <span>Home</span>
-      </button>
-    
-      {/* Add Button (INTEGRATED) */}
-      <button
-        onClick={() => setShowCreateChooser(true)}
-        className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg"
-      >
-        +
-      </button>
-    
-      {/* Calendar */}
-      <button
-        onClick={() => setTab("calendar")}
-        className={`flex flex-col items-center text-xs ${
-          tab === "calendar" ? "text-white" : "text-[#8E8E93]"
-        }`}
-      >
-        <span className="mb-1">📅</span>
-        <span>Calendar</span>
-      </button>
-    
+    {/* BOTTOM NAV (with integrated + button) */}
+    <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
+      <div className="glass-nav soft-border rounded-[24px] py-2.5 px-8 flex items-center justify-between w-[300px]">
+
+        {/* Home */}
+        <button
+          onClick={() => setTab("home")}
+          className={`flex flex-col items-center text-xs ${
+            tab === "home" ? "text-white" : "text-[#8E8E93]"
+          }`}
+        >
+          <span className="mb-1">🏠</span>
+          <span>Home</span>
+        </button>
+
+        {/* Add Button (INTEGRATED) */}
+        <button
+          onClick={() => setShowCreateChooser(true)}
+          className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg"
+        >
+          +
+        </button>
+
+        {/* Calendar */}
+        <button
+          onClick={() => setTab("calendar")}
+          className={`flex flex-col items-center text-xs ${
+            tab === "calendar" ? "text-white" : "text-[#8E8E93]"
+          }`}
+        >
+          <span className="mb-1">📅</span>
+          <span>Calendar</span>
+        </button>
+
+      </div>
     </div>
-    
-              {/* MODALS */}
-              {GymCreatorModal}
-              {AssignWorkoutModal}
-              {RunCreatorModal}
-              {AssignRunModal}
-              {CreateChooserModal}
-            </div>
-          );
-        }
+
+    {/* MODALS */}
+    {GymCreatorModal}
+    {AssignWorkoutModal}
+    {RunCreatorModal}
+    {AssignRunModal}
+    {CreateChooserModal}
+
+  </div>
+);
 
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
