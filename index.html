@@ -92,6 +92,21 @@
         setRoutines(updated);
         localStorage.setItem("routines_v1", JSON.stringify(updated));
       };
+      /* -------------------------
+   ACTIVE WORKOUT (LIVE WORKOUT MODE)
+-------------------------- */
+const [activeWorkout, setActiveWorkout] = React.useState(null);
+
+function startWorkout(routine) {
+  setActiveWorkout({
+    routine,
+    currentExercise: 0,
+    currentSet: 1,
+    logs: [],
+    restTime: 0,
+    resting: false,
+  });
+}
 /* -------------------------
    WEEKLY GYM PLAN
 -------------------------- */
