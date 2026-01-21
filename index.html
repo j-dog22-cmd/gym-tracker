@@ -1420,6 +1420,27 @@ const RunCreatorModal = showRunCreator && (
         onChange={(e) => setNewRunPace(e.target.value)}
       />
 
+      {/* WEEKDAY SELECTOR */}
+      {newRunType && newRunDistance && newRunPace && (
+        <>
+          <p className="text-sm text-[#8E8E93] mb-2">
+            Assign to day (optional)
+          </p>
+
+          <div className="grid grid-cols-7 gap-2 mb-4">
+            {WEEK_DAYS.map((day) => (
+              <button
+                key={day}
+                onClick={() => saveNewRunRoutineToDay(day)}
+                className="bg-[#2C2C2E] rounded-xl py-2 text-sm"
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+
       <button
         onClick={saveNewRunRoutine}
         className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
@@ -1436,7 +1457,6 @@ const RunCreatorModal = showRunCreator && (
     </div>
   </div>
 );
-
 const SettingsModal = showSettings && (
   <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
     <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
