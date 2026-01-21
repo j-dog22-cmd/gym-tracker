@@ -148,32 +148,6 @@ const saveRunRoutines = (updated) => {
   localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
 };
 
-/* -------------------------
-   AUTO‑ASSIGN HELPERS
--------------------------- */
-const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-/* Auto‑assign gym routine to first empty day */
-const autoAssignGym = (routine) => {
-  for (let d of WEEK_ORDER) {
-    if (!weeklyPlan[d]) {
-      const updated = { ...weeklyPlan, [d]: routine };
-      saveWeeklyPlan(updated);
-      return;
-    }
-  }
-};
-
-/* Auto‑assign running routine to first empty day */
-const autoAssignRun = (routine) => {
-  for (let d of WEEK_ORDER) {
-    if (!runPlan[d]) {
-      const updated = { ...runPlan, [d]: routine };
-      saveRunPlan(updated);
-      return;
-    }
-  }
-};
 
       /* -------------------------
          MODAL STATE
