@@ -40,9 +40,18 @@
   <script type="text/babel">
     const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+    function getWeekdayIndex(date) {
+      const js = date.getDay(); // 0 = Sun, 1 = Mon, ...
+      return js === 0 ? 6 : js - 1; // 0=Mon, 6=Sun
+    }
+
+    function getWeekdayName(date) {
+      return WEEK_DAYS[getWeekdayIndex(date)];
+    }
+
     function getTodayNames() {
       const now = new Date();
-      const todayIndex = (now.getDay() + 6) % 7; // Mon=0 ... Sun=6
+      const todayIndex = getWeekdayIndex(now); // 0..6, Mon-first
       const tomorrowIndex = (todayIndex + 1) % 7;
       return {
         todayName: WEEK_DAYS[todayIndex],
@@ -54,7 +63,7 @@
       /* -------------------------
          NAVIGATION
       -------------------------- */
-      const [tab, setTab] = React.useState("home");
+      const [tab, setTab] = React.useState("home"); // home, calendar, workout
 
       /* -------------------------
          GYM ROUTINES
@@ -160,44 +169,90 @@
         return saved ? JSON.parse(saved) : [];
       });
 
+      function buildCompletedStructure(routine) {
+        const completed = {};
+        routine.exercises.forEach((ex, idx) => {
+          completed[idx] = Array(ex.sets).fill(false);
+        });
+        return completed;
+      }
+
       function startWorkout(routine) {
         setActiveWorkout({
           routine,
-          currentExercise: 0,
-          currentSet: 1,
+          completed: buildCompletedStructure(routine),
           logs: [],
           restTime: 0,
           resting: false,
+          lastExerciseIndex: null,
+          lastSetIndex: null,
         });
+        setTab("workout");
       }
 
       function finishWorkout() {
-        if (!activeWorkout) return;
+        if (!activeWorkout) {
+          setTab("home");
+          return;
+        }
         const updated = [...workoutLogs, ...activeWorkout.logs];
         setWorkoutLogs(updated);
         localStorage.setItem("workoutLogs_v1", JSON.stringify(updated));
         setActiveWorkout(null);
+        setTab("home");
       }
 
-      function completeSet() {
+      function completeSet(exIndex, setIndex) {
         if (!activeWorkout) return;
-        const ex =
-          activeWorkout.routine.exercises[activeWorkout.currentExercise];
+
+        const currentCompleted = activeWorkout.completed[exIndex];
+        if (!currentCompleted || currentCompleted[setIndex]) return; // already done
+
+        const newCompleted = {
+          ...activeWorkout.completed,
+          [exIndex]: [...currentCompleted],
+        };
+        newCompleted[exIndex][setIndex] = true;
+
+        const ex = activeWorkout.routine.exercises[exIndex];
 
         const newLogs = [
           ...activeWorkout.logs,
           {
             exercise: ex.name,
-            set: activeWorkout.currentSet,
+            set: setIndex + 1,
             timestamp: Date.now(),
           },
         ];
 
+        // Check if all sets of all exercises are done
+        const allDone = activeWorkout.routine.exercises.every((_, eIdx) =>
+          newCompleted[eIdx].every(Boolean)
+        );
+
+        if (allDone) {
+          const tempWorkout = {
+            ...activeWorkout,
+            completed: newCompleted,
+            logs: newLogs,
+          };
+          setActiveWorkout(tempWorkout);
+          const updated = [...workoutLogs, ...newLogs];
+          setWorkoutLogs(updated);
+          localStorage.setItem("workoutLogs_v1", JSON.stringify(updated));
+          setActiveWorkout(null);
+          setTab("home");
+          return;
+        }
+
         setActiveWorkout({
           ...activeWorkout,
+          completed: newCompleted,
           logs: newLogs,
           resting: true,
-          restTime: 60, // 60s rest
+          restTime: 60,
+          lastExerciseIndex: exIndex,
+          lastSetIndex: setIndex,
         });
       }
 
@@ -215,31 +270,10 @@
           return () => clearTimeout(timer);
         }
 
-        // Rest finished → move to next set or exercise
-        const ex =
-          activeWorkout.routine.exercises[activeWorkout.currentExercise];
-
-        if (activeWorkout.currentSet < ex.sets) {
-          setActiveWorkout({
-            ...activeWorkout,
-            currentSet: activeWorkout.currentSet + 1,
-            resting: false,
-          });
-        } else {
-          if (
-            activeWorkout.currentExercise <
-            activeWorkout.routine.exercises.length - 1
-          ) {
-            setActiveWorkout({
-              ...activeWorkout,
-              currentExercise: activeWorkout.currentExercise + 1,
-              currentSet: 1,
-              resting: false,
-            });
-          } else {
-            finishWorkout();
-          }
-        }
+        // Rest finished
+        setActiveWorkout((prev) =>
+          prev ? { ...prev, resting: false } : prev
+        );
       }, [activeWorkout]);
 
       /* -------------------------
@@ -295,6 +329,28 @@
         setTempExercises([]);
         setShowGymCreator(false);
       };
+
+      function saveNewRoutineToDay(day) {
+        if (!newRoutineName || tempExercises.length === 0) return;
+
+        const routine = {
+          name: newRoutineName,
+          exercises: tempExercises,
+        };
+
+        const updatedRoutines = [...routines, routine];
+        saveRoutines(updatedRoutines);
+
+        const updatedPlan = {
+          ...weeklyPlan,
+          [day]: routine,
+        };
+        saveWeeklyPlan(updatedPlan);
+
+        setNewRoutineName("");
+        setTempExercises([]);
+        setShowGymCreator(false);
+      }
 
       /* -------------------------
          RUN CREATOR FORM
@@ -360,6 +416,12 @@
           {weeklyPlan[todayName] ? (
             <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
               <p className="font-semibold">{weeklyPlan[todayName].name}</p>
+              <button
+                onClick={() => startWorkout(weeklyPlan[todayName])}
+                className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
+              >
+                Start Workout
+              </button>
             </div>
           ) : (
             <p className="text-[#8E8E93] mb-6">No workout today</p>
@@ -418,8 +480,7 @@
 
             const renderDots = (dateKey) => {
               const d = new Date(dateKey);
-              const weekdayIndex = d.getDay() === 0 ? 6 : d.getDay() - 1;
-              const weekday = WEEK_DAYS[weekdayIndex];
+              const weekday = WEEK_DAYS[getWeekdayIndex(d)];
 
               const gym = weeklyPlan[weekday];
               const run = runPlan[weekday];
@@ -509,11 +570,7 @@
 
                 {/* GYM WORKOUT FOR THIS DAY (with Start Workout) */}
                 {(() => {
-                  const weekdayIndex =
-                    selectedDay.date.getDay() === 0
-                      ? 6
-                      : selectedDay.date.getDay() - 1;
-                  const weekday = WEEK_DAYS[weekdayIndex];
+                  const weekday = WEEK_DAYS[getWeekdayIndex(selectedDay.date)];
                   const dayRoutine = weeklyPlan[weekday];
 
                   if (!dayRoutine) return null;
@@ -548,11 +605,7 @@
 
                 {/* RUNNING ROUTINE */}
                 {(() => {
-                  const weekdayIndex =
-                    selectedDay.date.getDay() === 0
-                      ? 6
-                      : selectedDay.date.getDay() - 1;
-                  const weekday = WEEK_DAYS[weekdayIndex];
+                  const weekday = WEEK_DAYS[getWeekdayIndex(selectedDay.date)];
                   const routine = runPlan[weekday];
 
                   if (!routine) {
@@ -577,11 +630,7 @@
 
                 {/* GYM ROUTINE SUMMARY */}
                 {(() => {
-                  const weekdayIndex =
-                    selectedDay.date.getDay() === 0
-                      ? 6
-                      : selectedDay.date.getDay() - 1;
-                  const weekday = WEEK_DAYS[weekdayIndex];
+                  const weekday = WEEK_DAYS[getWeekdayIndex(selectedDay.date)];
                   const routine = weeklyPlan[weekday];
 
                   if (!routine) {
@@ -611,11 +660,7 @@
                 {/* ASSIGN WORKOUT */}
                 <button
                   onClick={() => {
-                    const weekdayIndex =
-                      selectedDay.date.getDay() === 0
-                        ? 6
-                        : selectedDay.date.getDay() - 1;
-                    const weekday = WEEK_DAYS[weekdayIndex];
+                    const weekday = WEEK_DAYS[getWeekdayIndex(selectedDay.date)];
                     setAssigningDay(weekday);
                   }}
                   className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-2"
@@ -626,11 +671,7 @@
                 {/* ASSIGN RUN */}
                 <button
                   onClick={() => {
-                    const weekdayIndex =
-                      selectedDay.date.getDay() === 0
-                        ? 6
-                        : selectedDay.date.getDay() - 1;
-                    const weekday = WEEK_DAYS[weekdayIndex];
+                    const weekday = WEEK_DAYS[getWeekdayIndex(selectedDay.date)];
                     setAssigningRunDay(weekday);
                   }}
                   className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
@@ -640,6 +681,71 @@
               </div>
             </div>
           )}
+        </div>
+      );
+
+      /* -------------------------
+         WORKOUT TAB
+      -------------------------- */
+      const WorkoutTab = activeWorkout && (
+        <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+          <h2 className="text-2xl font-semibold mb-4">
+            {activeWorkout.routine.name}
+          </h2>
+
+          {activeWorkout.routine.exercises.map((ex, exIndex) => (
+            <div
+              key={exIndex}
+              className="mb-4 bg-[#1C1C1E] p-4 rounded-xl soft-border"
+            >
+              <p className="font-semibold mb-1">{ex.name}</p>
+              <p className="text-xs text-[#8E8E93] mb-2">
+                {ex.sets} sets — {ex.reps} reps
+              </p>
+
+              <div className="space-y-2">
+                {Array.from({ length: ex.sets }).map((_, setIndex) => {
+                  const done =
+                    activeWorkout.completed[exIndex] &&
+                    activeWorkout.completed[exIndex][setIndex];
+
+                  return (
+                    <button
+                      key={setIndex}
+                      onClick={() => completeSet(exIndex, setIndex)}
+                      disabled={done || activeWorkout.resting}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
+                        done
+                          ? "bg-green-500 text-black"
+                          : "bg-[#2C2C2E] text-white"
+                      }`}
+                    >
+                      <span>
+                        Set {setIndex + 1} — {ex.reps} reps
+                      </span>
+                      <span>{done ? "✅" : "Tap to complete"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {activeWorkout.resting && (
+            <div className="text-center mt-4 mb-4">
+              <p className="text-lg mb-2">Resting...</p>
+              <p className="text-4xl font-bold">
+                {activeWorkout.restTime}s
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={finishWorkout}
+            className="w-full text-[#8E8E93] mt-4"
+          >
+            End Workout
+          </button>
         </div>
       );
 
@@ -704,6 +810,26 @@
                   ))}
                 </ul>
               </div>
+            )}
+
+            {/* Assign to a day (optional) */}
+            {tempExercises.length > 0 && newRoutineName && (
+              <>
+                <p className="text-sm text-[#8E8E93] mb-2">
+                  Assign to day (optional)
+                </p>
+                <div className="grid grid-cols-7 gap-2 mb-4">
+                  {WEEK_DAYS.map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => saveNewRoutineToDay(day)}
+                      className="bg-[#2C2C2E] rounded-xl py-2 text-sm"
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
 
             <button
@@ -911,6 +1037,7 @@
           {/* MAIN CONTENT */}
           {tab === "home" && HomeTab}
           {tab === "calendar" && CalendarTab}
+          {tab === "workout" && WorkoutTab}
 
           {/* FLOATING + BUTTON */}
           <button
@@ -919,58 +1046,6 @@
           >
             +
           </button>
-
-          {/* ACTIVE WORKOUT OVERLAY */}
-          {activeWorkout && (
-            <div className="fixed inset-0 bg-black z-[999] p-6 overflow-y-auto">
-              <h2 className="text-2xl font-semibold mb-4">
-                {activeWorkout.routine.name}
-              </h2>
-
-              <div className="mb-6">
-                <p className="text-lg font-semibold">
-                  {
-                    activeWorkout.routine.exercises[
-                      activeWorkout.currentExercise
-                    ].name
-                  }
-                </p>
-                <p className="text-[#8E8E93]">
-                  Set {activeWorkout.currentSet} of{" "}
-                  {
-                    activeWorkout.routine.exercises[
-                      activeWorkout.currentExercise
-                    ].sets
-                  }
-                </p>
-              </div>
-
-              {!activeWorkout.resting && (
-                <button
-                  onClick={completeSet}
-                  className="w-full bg-white text-black rounded-xl py-4 font-semibold text-lg"
-                >
-                  Complete Set
-                </button>
-              )}
-
-              {activeWorkout.resting && (
-                <div className="text-center mt-4">
-                  <p className="text-lg mb-2">Resting...</p>
-                  <p className="text-4xl font-bold">
-                    {activeWorkout.restTime}s
-                  </p>
-                </div>
-              )}
-
-              <button
-                onClick={finishWorkout}
-                className="w-full text-[#8E8E93] mt-6"
-              >
-                End Workout
-              </button>
-            </div>
-          )}
 
           {/* BOTTOM NAV */}
           <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
