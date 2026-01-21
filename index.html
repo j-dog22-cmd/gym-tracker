@@ -464,43 +464,95 @@
       );
 
       /* -------------------------
-   CALENDAR TAB (FULLY PATCHED)
+   SWIPEABLE CALENDAR TAB
 -------------------------- */
-const CalendarTab = (
-  <div className="w-full h-screen overflow-hidden bg-black px-4 pt-6">
 
-    {[0, 1].map((offset) => {
-      const base = new Date();
-      const year = base.getFullYear();
-      const month = base.getMonth() + offset;
+const today = new Date();
+const MIN_MONTH = new Date(today.getFullYear(), today.getMonth(), 1);
+
+const [currentMonth, setCurrentMonth] = React.useState(
+  new Date(today.getFullYear(), today.getMonth(), 1)
+);
+
+let touchStartX = 0;
+let touchEndX = 0;
+
+function handleTouchStart(e) {
+  touchStartX = e.changedTouches[0].screenX;
+}
+
+function handleTouchEnd(e) {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+}
+
+function handleSwipe() {
+  const diff = touchEndX - touchStartX;
+
+  if (Math.abs(diff) < 50) return; // ignore tiny swipes
+
+  if (diff < 0) goNextMonth(); // swipe left → next month
+  if (diff > 0) goPrevMonth(); // swipe right → previous month
+}
+
+function goNextMonth() {
+  const next = new Date(currentMonth);
+  next.setMonth(next.getMonth() + 1);
+  setCurrentMonth(next);
+}
+
+function goPrevMonth() {
+  const prev = new Date(currentMonth);
+  prev.setMonth(prev.getMonth() - 1);
+
+  // ⭐ Prevent going earlier than the current real month
+  if (prev < MIN_MONTH) return;
+
+  setCurrentMonth(prev);
+}
+
+const CalendarTab = (
+  <div
+    className="w-full h-screen overflow-hidden bg-black px-4 pt-6"
+    onTouchStart={handleTouchStart}
+    onTouchEnd={handleTouchEnd}
+  >
+    {/* Month Label */}
+    <div className="text-xl font-semibold tracking-tight mb-2 text-center">
+      {currentMonth.toLocaleString("default", { month: "long", year: "numeric" })}
+    </div>
+
+    {/* Weekday Labels */}
+    <div className="grid grid-cols-7 gap-1 text-center text-xs text-[#8E8E93] mb-1">
+      {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+        <div key={i}>{d}</div>
+      ))}
+    </div>
+
+    {/* Build days */}
+    {(() => {
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
 
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
 
-      const label = firstDay.toLocaleString("default", {
-        month: "long",
-        year: "numeric",
-      });
-
-      /* Build day objects */
       const days = [];
       for (let d = 1; d <= lastDay.getDate(); d++) {
         const date = new Date(year, month, d);
         days.push({
           date,
           key: `${year}-${month + 1}-${d}`,
-          weekday: WEEK_DAYS[getWeekdayIndex(date)], // FIXED
+          weekday: WEEK_DAYS[getWeekdayIndex(date)],
         });
       }
 
-      /* ⭐ Add leading blanks so the 1st aligns correctly */
-      const leadingBlanks = getWeekdayIndex(firstDay); // 0 = Mon, 6 = Sun
+      const leadingBlanks = getWeekdayIndex(firstDay);
       const paddedDays = [
         ...Array(leadingBlanks).fill({ blank: true }),
-        ...days
+        ...days,
       ];
 
-      /* Dot logic */
       const renderDots = (dayObj) => {
         if (dayObj.blank) return null;
 
@@ -508,79 +560,44 @@ const CalendarTab = (
         const gym = weeklyPlan[weekday];
         const run = runPlan[weekday];
 
-        if (gym && run) {
-          return (
-            <div className="flex justify-center mt-1">
-              <div className="w-2 h-2 rounded-full bg-white"></div>
-            </div>
-          );
-        }
+        if (gym && run)
+          return <div className="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1"></div>;
 
-        if (gym) {
-          return (
-            <div className="flex justify-center mt-1">
-              <div className="w-2 h-2 rounded-full bg-green-400"></div>
-            </div>
-          );
-        }
+        if (gym)
+          return <div className="w-1.5 h-1.5 bg-green-400 rounded-full mx-auto mt-1"></div>;
 
-        if (run) {
-          return (
-            <div className="flex justify-center mt-1">
-              <div className="w-2 h-2 rounded-full bg-blue-400"></div>
-            </div>
-          );
-        }
+        if (run)
+          return <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mx-auto mt-1"></div>;
 
         return null;
       };
 
       return (
-        <div key={offset} className="mb-10">
+        <div className="grid grid-cols-7 gap-1 text-center">
+          {paddedDays.map((d, index) => {
+            if (d.blank) return <div key={"blank-" + index}></div>;
 
-          {/* Month Header */}
-          <div className="text-2xl font-semibold tracking-tight mb-4">
-            {label}
-          </div>
+            const isToday =
+              new Date().toDateString() === d.date.toDateString();
 
-          {/* Weekday Labels */}
-          <div className="grid grid-cols-7 gap-2 text-center text-sm text-[#8E8E93]">
-            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-              <div key={i}>{d}</div>
-            ))}
-          </div>
-
-          {/* Month Grid */}
-          <div className="grid grid-cols-7 gap-2 mt-2 text-center">
-            {paddedDays.map((d, index) => {
-
-              /* Blank placeholder cell */
-              if (d.blank) {
-                return <div key={"blank-" + index}></div>;
-              }
-
-              const isToday =
-                new Date().toDateString() === d.date.toDateString();
-
-              return (
-                <button
-                  key={d.key}
-                  onClick={() => openDayDetails(d)}
-                  className={`py-2 rounded-xl ${
-                    isToday
-                      ? "bg-white text-black font-semibold"
-                      : "bg-[#1C1C1E]"
-                  }`}
-                >
-                  {d.date.getDate()}
-                  {renderDots(d)}
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={d.key}
+                onClick={() => openDayDetails(d)}
+                className={`py-1 rounded-lg text-sm ${
+                  isToday
+                    ? "bg-red-500 text-white font-semibold"
+                    : "bg-[#1C1C1E] text-white"
+                }`}
+              >
+                {d.date.getDate()}
+                {renderDots(d)}
+              </button>
+            );
+          })}
         </div>
       );
-    })}
+    })()}
 
     {/* DAY DETAILS PANEL (unchanged) */}
     {selectedDay && (
@@ -600,18 +617,13 @@ const CalendarTab = (
             </button>
           </div>
 
-          {/* WORKOUT PREVIEW + START BUTTON */}
+          {/* WORKOUT PREVIEW */}
           {(() => {
             const weekday = selectedDay.weekday;
             const routine = weeklyPlan[weekday];
 
-            if (!routine) {
-              return (
-                <p className="text-sm text-[#8E8E93] mb-4">
-                  No gym routine
-                </p>
-              );
-            }
+            if (!routine)
+              return <p className="text-sm text-[#8E8E93] mb-4">No gym routine</p>;
 
             return (
               <div className="mb-6">
@@ -644,13 +656,8 @@ const CalendarTab = (
             const weekday = selectedDay.weekday;
             const routine = runPlan[weekday];
 
-            if (!routine) {
-              return (
-                <p className="text-sm text-[#8E8E93] mb-4">
-                  No running routine
-                </p>
-              );
-            }
+            if (!routine)
+              return <p className="text-sm text-[#8E8E93] mb-4">No running routine</p>;
 
             return (
               <div className="mb-4">
