@@ -411,64 +411,47 @@ const { todayName, tomorrowName } = getTodayNames();
 const HomeTab = (
   <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
 
-    {/* ⭐ WEEK SLIDER ADDED HERE ⭐ */}
-    <h2 className="text-xl font-semibold mb-3">This Week</h2>
-
-    <div className="overflow-x-auto no-scrollbar mb-6">
-      <div className="flex gap-3 pb-2">
-        {WEEK_DAYS.map((day) => {
-          const gym = weeklyPlan[day];
-          const run = runPlan[day];
-
-          const isToday =
-            WEEK_DAYS[getWeekdayIndex(new Date())] === day;
-
-          // dot color logic (same as calendar)
-          let dotColor = null;
-          if (gym && run) dotColor = "bg-white";
-          else if (gym) dotColor = "bg-green-400";
-          else if (run) dotColor = "bg-blue-400";
-
-          return (
-            <button
-              key={day}
-              onClick={() =>
-                openDayDetails({
-                  weekday: day,
-                  date: new Date(), // can replace with actual date if needed
-                })
-              }
-              className={`min-w-[90px] p-3 rounded-xl soft-border bg-[#1C1C1E] text-left ${
-                isToday ? "border border-red-500" : ""
-              }`}
-            >
-              <p className="text-sm font-semibold mb-1">{day}</p>
-
-              {/* Workout */}
-              {gym ? (
-                <p className="text-xs text-green-400">🏋️ {gym.name}</p>
-              ) : (
-                <p className="text-xs text-[#8E8E93]">🏋️ No workout</p>
-              )}
-
-              {/* Run */}
-              {run ? (
-                <p className="text-xs text-blue-400 mt-1">🏃 {run.type}</p>
-              ) : (
-                <p className="text-xs text-[#8E8E93] mt-1">🏃 No run</p>
-              )}
-
-              {/* Dot */}
-              {dotColor && (
-                <div
-                  className={`w-2 h-2 ${dotColor} rounded-full mt-2 mx-auto`}
-                ></div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
+	   {/* FULL-WIDTH WEEK VIEW */}
+	<h2 className="text-xl font-semibold mb-3">This Week</h2>
+	
+	<div className="grid grid-cols-7 gap-2 mb-6">
+	  {WEEK_DAYS.map((day) => {
+	    const gym = weeklyPlan[day];
+	    const run = runPlan[day];
+	
+	    const isToday =
+	      WEEK_DAYS[getWeekdayIndex(new Date())] === day;
+	
+	    // dot color logic (same as calendar)
+	    let dotColor = null;
+	    if (gym && run) dotColor = "bg-white";
+	    else if (gym) dotColor = "bg-green-400";
+	    else if (run) dotColor = "bg-blue-400";
+	
+	    return (
+	      <button
+	        key={day}
+	        onClick={() =>
+	          openDayDetails({
+	            weekday: day,
+	            date: new Date(), // can be replaced with actual date if needed
+	          })
+	        }
+	        className={`p-2 rounded-xl soft-border bg-[#1C1C1E] flex flex-col items-center ${
+	          isToday ? "border border-red-500" : ""
+	        }`}
+	      >
+	        {/* Day label */}
+	        <p className="text-sm font-semibold">{day.slice(0, 2)}</p>
+	
+	        {/* Dot under day */}
+	        {dotColor && (
+	          <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`}></div>
+	        )}
+	      </button>
+	    );
+	  })}
+	</div>
 
     {/* -------------------------
         TODAY’S RUN
