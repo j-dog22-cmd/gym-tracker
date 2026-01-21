@@ -92,62 +92,88 @@
         setRoutines(updated);
         localStorage.setItem("routines_v1", JSON.stringify(updated));
       };
-
-      /* -------------------------
-         WEEKLY GYM PLAN
-      -------------------------- */
-      const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
-        const saved = localStorage.getItem("weeklyPlan_v1");
-        return saved
-          ? JSON.parse(saved)
-          : {
-              Mon: null,
-              Tue: null,
-              Wed: null,
-              Thu: null,
-              Fri: null,
-              Sat: null,
-              Sun: null,
-            };
-      });
-
-      const saveWeeklyPlan = (updated) => {
-        setWeeklyPlan(updated);
-        localStorage.setItem("weeklyPlan_v1", JSON.stringify(updated));
+/* -------------------------
+   WEEKLY GYM PLAN
+-------------------------- */
+const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
+  const saved = localStorage.getItem("weeklyPlan_v1");
+  return saved
+    ? JSON.parse(saved)
+    : {
+        Mon: null,
+        Tue: null,
+        Wed: null,
+        Thu: null,
+        Fri: null,
+        Sat: null,
+        Sun: null,
       };
+});
 
-      /* -------------------------
-         RUNNING WEEKLY PLAN + ROUTINES
-      -------------------------- */
-      const [runPlan, setRunPlan] = React.useState(() => {
-        const saved = localStorage.getItem("runPlan_v1");
-        return saved
-          ? JSON.parse(saved)
-          : {
-              Mon: null,
-              Tue: null,
-              Wed: null,
-              Thu: null,
-              Fri: null,
-              Sat: null,
-              Sun: null,
-            };
-      });
+const saveWeeklyPlan = (updated) => {
+  setWeeklyPlan(updated);
+  localStorage.setItem("weeklyPlan_v1", JSON.stringify(updated));
+};
 
-      const saveRunPlan = (updated) => {
-        setRunPlan(updated);
-        localStorage.setItem("runPlan_v1", JSON.stringify(updated));
+/* -------------------------
+   RUNNING WEEKLY PLAN + ROUTINES
+-------------------------- */
+const [runPlan, setRunPlan] = React.useState(() => {
+  const saved = localStorage.getItem("runPlan_v1");
+  return saved
+    ? JSON.parse(saved)
+    : {
+        Mon: null,
+        Tue: null,
+        Wed: null,
+        Thu: null,
+        Fri: null,
+        Sat: null,
+        Sun: null,
       };
+});
 
-      const [runRoutines, setRunRoutines] = React.useState(() => {
-        const saved = localStorage.getItem("runRoutines_v1");
-        return saved ? JSON.parse(saved) : [];
-      });
+const saveRunPlan = (updated) => {
+  setRunPlan(updated);
+  localStorage.setItem("runPlan_v1", JSON.stringify(updated));
+};
 
-      const saveRunRoutines = (updated) => {
-        setRunRoutines(updated);
-        localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
-      };
+const [runRoutines, setRunRoutines] = React.useState(() => {
+  const saved = localStorage.getItem("runRoutines_v1");
+  return saved ? JSON.parse(saved) : [];
+});
+
+const saveRunRoutines = (updated) => {
+  setRunRoutines(updated);
+  localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
+};
+
+/* -------------------------
+   AUTO‑ASSIGN HELPERS
+-------------------------- */
+const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/* Auto‑assign gym routine to first empty day */
+const autoAssignGym = (routine) => {
+  for (let d of WEEK_ORDER) {
+    if (!weeklyPlan[d]) {
+      const updated = { ...weeklyPlan, [d]: routine };
+      saveWeeklyPlan(updated);
+      return;
+    }
+  }
+};
+
+/* Auto‑assign running routine to first empty day */
+const autoAssignRun = (routine) => {
+  for (let d of WEEK_ORDER) {
+    if (!runPlan[d]) {
+      const updated = { ...runPlan, [d]: routine };
+      saveRunPlan(updated);
+      return;
+    }
+  }
+};
 
       /* -------------------------
          MODAL STATE
@@ -772,10 +798,9 @@ const CalendarTab = (
           </div>
         </div>
       );
-
-         /* -------------------------
-       RENDER
-    -------------------------- */
+    /* -------------------------
+   RENDER
+-------------------------- */
     return (
       <div className="w-full h-screen relative overflow-hidden">
     
@@ -783,11 +808,18 @@ const CalendarTab = (
         {tab === "home" && HomeTab}
         {tab === "calendar" && CalendarTab}
     
-        {/* BOTTOM NAV (with integrated + button) */}
-        <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
-          <div className="glass-nav soft-border rounded-[24px] py-2.5 px-8 flex items-center justify-between w-[300px]">
+        {/* FLOATING + BUTTON */}
+        <button
+          onClick={() => setShowCreateChooser(true)}
+          className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg z-[60]"
+        >
+          +
+        </button>
     
-            {/* Home */}
+        {/* BOTTOM NAV */}
+        <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
+          <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-8 items-center">
+    
             <button
               onClick={() => setTab("home")}
               className={`flex flex-col items-center text-xs ${
@@ -797,8 +829,7 @@ const CalendarTab = (
               <span className="mb-1">🏠</span>
               <span>Home</span>
             </button>
-            
-            {/* Calendar */}
+    
             <button
               onClick={() => setTab("calendar")}
               className={`flex flex-col items-center text-xs ${
@@ -807,14 +838,6 @@ const CalendarTab = (
             >
               <span className="mb-1">📅</span>
               <span>Calendar</span>
-            </button>
-
-            {/* Add Button */}
-            <button
-              onClick={() => setShowCreateChooser(true)}
-              className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg"
-            >
-              +
             </button>
     
           </div>
@@ -828,7 +851,7 @@ const CalendarTab = (
         {CreateChooserModal}
     
       </div>
-    );
+    );     
     }
     ReactDOM.createRoot(document.getElementById("root")).render(<App />);
   </script>
