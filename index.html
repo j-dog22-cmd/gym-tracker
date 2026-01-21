@@ -1146,6 +1146,64 @@ const CalendarTab = (
     )}
   </div>
 );
+
+  /********************************************
+ * SETTINGS PAGE — FULL SCREEN
+ ********************************************/
+
+const SettingsPage = (
+  <div className="w-full h-screen overflow-y-auto bg-black px-4 pt-6 pb-32">
+
+    <h1 className="text-3xl font-semibold mb-6">Settings</h1>
+
+    {/* NAME */}
+    <label className="text-sm text-[#8E8E93]">Your Name</label>
+    <input
+      type="text"
+      placeholder="Enter your name"
+      className="w-full mb-4 p-3 rounded-xl bg-[#1C1C1E] soft-border"
+      value={userName}
+      onChange={(e) => setUserName(e.target.value)}
+    />
+
+    {/* WEEKLY GYM GOAL */}
+    <label className="text-sm text-[#8E8E93]">Weekly Gym Goal</label>
+    <input
+      type="number"
+      className="w-full mb-4 p-3 rounded-xl bg-[#1C1C1E] soft-border"
+      value={weeklyGymGoal}
+      onChange={(e) => setWeeklyGymGoal(Number(e.target.value))}
+    />
+
+    {/* WEEKLY RUN GOAL */}
+    <label className="text-sm text-[#8E8E93]">Weekly Run Goal</label>
+    <input
+      type="number"
+      className="w-full mb-4 p-3 rounded-xl bg-[#1C1C1E] soft-border"
+      value={weeklyRunGoal}
+      onChange={(e) => setWeeklyRunGoal(Number(e.target.value))}
+    />
+
+    {/* MONTHLY WORKOUT GOAL */}
+    <label className="text-sm text-[#8E8E93]">Monthly Workout Goal</label>
+    <input
+      type="number"
+      className="w-full mb-6 p-3 rounded-xl bg-[#1C1C1E] soft-border"
+      value={monthlyWorkoutGoal}
+      onChange={(e) => setMonthlyWorkoutGoal(Number(e.target.value))}
+    />
+
+    <button
+      onClick={() => {
+        saveSettings();
+        setTab("home");
+      }}
+      className="w-full bg-white text-black rounded-xl py-3 font-semibold"
+    >
+      Save Settings
+    </button>
+  </div>
+);
 /********************************************
  * WORKOUT TAB — SET COMPLETION + REST TIMER
  ********************************************/
@@ -1479,6 +1537,7 @@ return (
     {/* ACTIVE TAB */}
     {tab === "home" && HomeTab}
     {tab === "calendar" && CalendarTab}
+    {tab === "settings" && SettingsPage}
     {tab === "workout" && WorkoutTab}
 
     {/* FLOATING + BUTTON */}
@@ -1491,30 +1550,40 @@ return (
 
     {/* BOTTOM NAVIGATION */}
     <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
-      <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-8 items-center">
+  <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-8 items-center">
 
-        <button
-          onClick={() => setTab("home")}
-          className={`flex flex-col items-center text-xs ${
-            tab === "home" ? "text-white" : "text-[#8E8E93]"
-          }`}
-        >
-          <span className="mb-1">🏠</span>
-          <span>Home</span>
-        </button>
+    <button
+      onClick={() => setTab("home")}
+      className={`flex flex-col items-center text-xs ${
+        tab === "home" ? "text-white" : "text-[#8E8E93]"
+      }`}
+    >
+      <span className="mb-1">🏠</span>
+      <span>Home</span>
+    </button>
 
-        <button
-          onClick={() => setTab("calendar")}
-          className={`flex flex-col items-center text-xs ${
-            tab === "calendar" ? "text-white" : "text-[#8E8E93]"
-          }`}
-        >
-          <span className="mb-1">📅</span>
-          <span>Calendar</span>
-        </button>
+    <button
+      onClick={() => setTab("calendar")}
+      className={`flex flex-col items-center text-xs ${
+        tab === "calendar" ? "text-white" : "text-[#8E8E93]"
+      }`}
+    >
+      <span className="mb-1">📅</span>
+      <span>Calendar</span>
+    </button>
 
-      </div>
-    </div>
+    <button
+      onClick={() => setTab("settings")}
+      className={`flex flex-col items-center text-xs ${
+        tab === "settings" ? "text-white" : "text-[#8E8E93]"
+      }`}
+    >
+      <span className="mb-1">⚙️</span>
+      <span>Settings</span>
+    </button>
+
+  </div>
+</div>
 
     {/* MODALS */}
     {GymCreatorModal}
