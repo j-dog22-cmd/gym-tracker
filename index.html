@@ -389,85 +389,156 @@
         setShowRunCreator(false);
       };
 
-      /* -------------------------
-         DAY DETAILS PANEL
-      -------------------------- */
-      function openDayDetails(dayObj) {
-        setSelectedDay(dayObj);
-      }
+  /* -------------------------
+   DAY DETAILS PANEL
+-------------------------- */
+function openDayDetails(dayObj) {
+  setSelectedDay(dayObj);
+}
 
-      function closeDayDetails() {
-        setSelectedDay(null);
-      }
+function closeDayDetails() {
+  setSelectedDay(null);
+}
 
-      /* -------------------------
-         TODAY / TOMORROW
-      -------------------------- */
-      const { todayName, tomorrowName } = getTodayNames();
+/* -------------------------
+   TODAY / TOMORROW
+-------------------------- */
+const { todayName, tomorrowName } = getTodayNames();
 
-      /* -------------------------
-         HOME TAB
-      -------------------------- */
-      const HomeTab = (
-        <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+/* -------------------------
+   HOME TAB
+-------------------------- */
+const HomeTab = (
+  <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
 
-          <h2 className="text-xl font-semibold mb-2">Today’s Run</h2>
-          {runPlan[todayName] ? (
-            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-              <p className="font-semibold">{runPlan[todayName].type}</p>
-              <p className="text-sm text-[#8E8E93]">
-                {runPlan[todayName].distance} km — {runPlan[todayName].pace}
-              </p>
-            </div>
-          ) : (
-            <p className="text-[#8E8E93] mb-6">No run today</p>
-          )}
+    {/* ⭐ WEEK SLIDER ADDED HERE ⭐ */}
+    <h2 className="text-xl font-semibold mb-3">This Week</h2>
 
-          <h2 className="text-xl font-semibold mb-2">Today’s Workout</h2>
-          {weeklyPlan[todayName] ? (
-            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-              <p className="font-semibold">{weeklyPlan[todayName].name}</p>
+    <div className="overflow-x-auto no-scrollbar mb-6">
+      <div className="flex gap-3 pb-2">
+        {WEEK_DAYS.map((day) => {
+          const gym = weeklyPlan[day];
+          const run = runPlan[day];
 
-              <button
-                onClick={() => startWorkout(weeklyPlan[todayName])}
-                className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
-              >
-                Start Today’s Workout
-              </button>
-            </div>
-          ) : (
-            <p className="text-[#8E8E93] mb-6">No workout today</p>
-          )}
+          const isToday =
+            WEEK_DAYS[getWeekdayIndex(new Date())] === day;
 
-          <h2 className="text-xl font-semibold mb-2">Tomorrow’s Run</h2>
-          {runPlan[tomorrowName] ? (
-            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-              <p className="font-semibold">{runPlan[tomorrowName].type}</p>
-              <p className="text-sm text-[#8E8E93]">
-                {runPlan[tomorrowName].distance} km — {runPlan[tomorrowName].pace}
-              </p>
-            </div>
-          ) : (
-            <p className="text-[#8E8E93] mb-6">No run tomorrow</p>
-          )}
+          // dot color logic (same as calendar)
+          let dotColor = null;
+          if (gym && run) dotColor = "bg-white";
+          else if (gym) dotColor = "bg-green-400";
+          else if (run) dotColor = "bg-blue-400";
 
-          <h2 className="text-xl font-semibold mb-2">Tomorrow’s Workout</h2>
-          {weeklyPlan[tomorrowName] ? (
-            <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-              <p className="font-semibold">{weeklyPlan[tomorrowName].name}</p>
+          return (
+            <button
+              key={day}
+              onClick={() =>
+                openDayDetails({
+                  weekday: day,
+                  date: new Date(), // can replace with actual date if needed
+                })
+              }
+              className={`min-w-[90px] p-3 rounded-xl soft-border bg-[#1C1C1E] text-left ${
+                isToday ? "border border-red-500" : ""
+              }`}
+            >
+              <p className="text-sm font-semibold mb-1">{day}</p>
 
-              <button
-                onClick={() => startWorkout(weeklyPlan[tomorrowName])}
-                className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
-              >
-                Start Tomorrow’s Workout
-              </button>
-            </div>
-          ) : (
-            <p className="text-[#8E8E93] mb-6">No workout tomorrow</p>
-          )}
-        </div>
-      );
+              {/* Workout */}
+              {gym ? (
+                <p className="text-xs text-green-400">🏋️ {gym.name}</p>
+              ) : (
+                <p className="text-xs text-[#8E8E93]">🏋️ No workout</p>
+              )}
+
+              {/* Run */}
+              {run ? (
+                <p className="text-xs text-blue-400 mt-1">🏃 {run.type}</p>
+              ) : (
+                <p className="text-xs text-[#8E8E93] mt-1">🏃 No run</p>
+              )}
+
+              {/* Dot */}
+              {dotColor && (
+                <div
+                  className={`w-2 h-2 ${dotColor} rounded-full mt-2 mx-auto`}
+                ></div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+
+    {/* -------------------------
+        TODAY’S RUN
+    -------------------------- */}
+    <h2 className="text-xl font-semibold mb-2">Today’s Run</h2>
+    {runPlan[todayName] ? (
+      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+        <p className="font-semibold">{runPlan[todayName].type}</p>
+        <p className="text-sm text-[#8E8E93]">
+          {runPlan[todayName].distance} km — {runPlan[todayName].pace}
+        </p>
+      </div>
+    ) : (
+      <p className="text-[#8E8E93] mb-6">No run today</p>
+    )}
+
+    {/* -------------------------
+        TODAY’S WORKOUT
+    -------------------------- */}
+    <h2 className="text-xl font-semibold mb-2">Today’s Workout</h2>
+    {weeklyPlan[todayName] ? (
+      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+        <p className="font-semibold">{weeklyPlan[todayName].name}</p>
+
+        <button
+          onClick={() => startWorkout(weeklyPlan[todayName])}
+          className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
+        >
+          Start Today’s Workout
+        </button>
+      </div>
+    ) : (
+      <p className="text-[#8E8E93] mb-6">No workout today</p>
+    )}
+
+    {/* -------------------------
+        TOMORROW’S RUN
+    -------------------------- */}
+    <h2 className="text-xl font-semibold mb-2">Tomorrow’s Run</h2>
+    {runPlan[tomorrowName] ? (
+      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+        <p className="font-semibold">{runPlan[tomorrowName].type}</p>
+        <p className="text-sm text-[#8E8E93]">
+          {runPlan[tomorrowName].distance} km — {runPlan[tomorrowName].pace}
+        </p>
+      </div>
+    ) : (
+      <p className="text-[#8E8E93] mb-6">No run tomorrow</p>
+    )}
+
+    {/* -------------------------
+        TOMORROW’S WORKOUT
+    -------------------------- */}
+    <h2 className="text-xl font-semibold mb-2">Tomorrow’s Workout</h2>
+    {weeklyPlan[tomorrowName] ? (
+      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
+        <p className="font-semibold">{weeklyPlan[tomorrowName].name}</p>
+
+        <button
+          onClick={() => startWorkout(weeklyPlan[tomorrowName])}
+          className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
+        >
+          Start Tomorrow’s Workout
+        </button>
+      </div>
+    ) : (
+      <p className="text-[#8E8E93] mb-6">No workout tomorrow</p>
+    )}
+  </div>
+);
 
       /* -------------------------
          SWIPEABLE CALENDAR TAB
