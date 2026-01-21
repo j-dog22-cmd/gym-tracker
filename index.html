@@ -22,11 +22,9 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
       overscroll-behavior: none;
     }
-
     .soft-border {
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
-
     .glass-nav {
       background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(20px);
@@ -40,19 +38,14 @@
   <script type="text/babel">
 
     /* -------------------------------------------
-       WEEKDAY HELPERS — FULLY FIXED (MONDAY FIRST)
+       WEEKDAY HELPERS — MONDAY FIRST
     -------------------------------------------- */
 
     const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-    // Convert JS weekday → Monday-first index
     function getWeekdayIndex(date) {
-      const js = date.getDay(); // 0 = Sun, 1 = Mon, ...
-      return js === 0 ? 6 : js - 1; // 0=Mon, 6=Sun
-    }
-
-    function getWeekdayName(date) {
-      return WEEK_DAYS[getWeekdayIndex(date)];
+      const js = date.getDay(); // 0 = Sun
+      return js === 0 ? 6 : js - 1;
     }
 
     function getTodayNames() {
@@ -74,7 +67,7 @@
       /* -------------------------
          NAVIGATION
       -------------------------- */
-      const [tab, setTab] = React.useState("home"); // home, calendar, workout
+      const [tab, setTab] = React.useState("home");
 
       /* -------------------------
          GYM ROUTINES
@@ -144,47 +137,44 @@
         setRunRoutines(updated);
         localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
       };
+
       /* -------------------------------------------
-   DELETE GYM ROUTINE
--------------------------------------------- */
-function deleteGymRoutine(routineName) {
-  // 1. Remove from routines list
-  const updatedRoutines = routines.filter(r => r.name !== routineName);
-  saveRoutines(updatedRoutines);
+         DELETE FUNCTIONS — CORRECT POSITION
+      -------------------------------------------- */
+      const [showGymCreator, setShowGymCreator] = React.useState(false);
+      const [showRunCreator, setShowRunCreator] = React.useState(false);
+      const [showCreateChooser, setShowCreateChooser] = React.useState(false);
+      const [selectedDay, setSelectedDay] = React.useState(null);
 
-  // 2. Remove from weekly plan
-  const updatedPlan = { ...weeklyPlan };
-  WEEK_DAYS.forEach(day => {
-    if (updatedPlan[day] && updatedPlan[day].name === routineName) {
-      updatedPlan[day] = null;
-    }
-  });
-  saveWeeklyPlan(updatedPlan);
+      function deleteGymRoutine(routineName) {
+        const updatedRoutines = routines.filter(r => r.name !== routineName);
+        saveRoutines(updatedRoutines);
 
-  // 3. Close any open day panel
-  setSelectedDay(null);
-}
+        const updatedPlan = { ...weeklyPlan };
+        WEEK_DAYS.forEach(day => {
+          if (updatedPlan[day] && updatedPlan[day].name === routineName) {
+            updatedPlan[day] = null;
+          }
+        });
+        saveWeeklyPlan(updatedPlan);
 
-/* -------------------------------------------
-   DELETE RUN ROUTINE
--------------------------------------------- */
-function deleteRunRoutine(runType) {
-  // 1. Remove from run routines list
-  const updatedRoutines = runRoutines.filter(r => r.type !== runType);
-  saveRunRoutines(updatedRoutines);
+        setSelectedDay(null);
+      }
 
-  // 2. Remove from run plan
-  const updatedPlan = { ...runPlan };
-  WEEK_DAYS.forEach(day => {
-    if (updatedPlan[day] && updatedPlan[day].type === runType) {
-      updatedPlan[day] = null;
-    }
-  });
-  saveRunPlan(updatedPlan);
+      function deleteRunRoutine(runType) {
+        const updatedRoutines = runRoutines.filter(r => r.type !== runType);
+        saveRunRoutines(updatedRoutines);
 
-  // 3. Close any open day panel
-  setSelectedDay(null);
-}
+        const updatedPlan = { ...runPlan };
+        WEEK_DAYS.forEach(day => {
+          if (updatedPlan[day] && updatedPlan[day].type === runType) {
+            updatedPlan[day] = null;
+          }
+        });
+        saveRunPlan(updatedPlan);
+
+        setSelectedDay(null);
+      }
 
       /* -------------------------
          AUTO-ASSIGN HELPERS
@@ -194,8 +184,7 @@ function deleteRunRoutine(runType) {
       const autoAssignGym = (routine) => {
         for (let d of WEEK_ORDER) {
           if (!weeklyPlan[d]) {
-            const updated = { ...weeklyPlan, [d]: routine };
-            saveWeeklyPlan(updated);
+            saveWeeklyPlan({ ...weeklyPlan, [d]: routine });
             return;
           }
         }
@@ -204,8 +193,7 @@ function deleteRunRoutine(runType) {
       const autoAssignRun = (routine) => {
         for (let d of WEEK_ORDER) {
           if (!runPlan[d]) {
-            const updated = { ...runPlan, [d]: routine };
-            saveRunPlan(updated);
+            saveRunPlan({ ...runPlan, [d]: routine });
             return;
           }
         }
@@ -327,14 +315,6 @@ function deleteRunRoutine(runType) {
       }, [activeWorkout]);
 
       /* -------------------------
-         MODAL + UI STATE
-      -------------------------- */
-      const [showGymCreator, setShowGymCreator] = React.useState(false);
-      const [showRunCreator, setShowRunCreator] = React.useState(false);
-      const [showCreateChooser, setShowCreateChooser] = React.useState(false);
-      const [selectedDay, setSelectedDay] = React.useState(null);
-
-      /* -------------------------
          GYM CREATOR FORM
       -------------------------- */
       const [newRoutineName, setNewRoutineName] = React.useState("");
@@ -364,11 +344,8 @@ function deleteRunRoutine(runType) {
           name: newRoutineName,
           exercises: tempExercises,
         };
-        const updated = [...routines, routine];
-        saveRoutines(updated);
-
+        saveRoutines([...routines, routine]);
         autoAssignGym(routine);
-
         setNewRoutineName("");
         setTempExercises([]);
         setShowGymCreator(false);
@@ -382,14 +359,8 @@ function deleteRunRoutine(runType) {
           exercises: tempExercises,
         };
 
-        const updatedRoutines = [...routines, routine];
-        saveRoutines(updatedRoutines);
-
-        const updatedPlan = {
-          ...weeklyPlan,
-          [day]: routine,
-        };
-        saveWeeklyPlan(updatedPlan);
+        saveRoutines([...routines, routine]);
+        saveWeeklyPlan({ ...weeklyPlan, [day]: routine });
 
         setNewRoutineName("");
         setTempExercises([]);
@@ -410,11 +381,8 @@ function deleteRunRoutine(runType) {
           distance: Number(newRunDistance),
           pace: newRunPace,
         };
-        const updated = [...runRoutines, routine];
-        saveRunRoutines(updated);
-
+        saveRunRoutines([...runRoutines, routine]);
         autoAssignRun(routine);
-
         setNewRunType("");
         setNewRunDistance("");
         setNewRunPace("");
@@ -436,13 +404,13 @@ function deleteRunRoutine(runType) {
          TODAY / TOMORROW
       -------------------------- */
       const { todayName, tomorrowName } = getTodayNames();
+
       /* -------------------------
          HOME TAB
       -------------------------- */
       const HomeTab = (
         <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
 
-          {/* TODAY’S RUN */}
           <h2 className="text-xl font-semibold mb-2">Today’s Run</h2>
           {runPlan[todayName] ? (
             <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
@@ -455,7 +423,6 @@ function deleteRunRoutine(runType) {
             <p className="text-[#8E8E93] mb-6">No run today</p>
           )}
 
-          {/* TODAY’S WORKOUT */}
           <h2 className="text-xl font-semibold mb-2">Today’s Workout</h2>
           {weeklyPlan[todayName] ? (
             <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
@@ -472,7 +439,6 @@ function deleteRunRoutine(runType) {
             <p className="text-[#8E8E93] mb-6">No workout today</p>
           )}
 
-          {/* TOMORROW’S RUN */}
           <h2 className="text-xl font-semibold mb-2">Tomorrow’s Run</h2>
           {runPlan[tomorrowName] ? (
             <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
@@ -485,7 +451,6 @@ function deleteRunRoutine(runType) {
             <p className="text-[#8E8E93] mb-6">No run tomorrow</p>
           )}
 
-          {/* TOMORROW’S WORKOUT */}
           <h2 className="text-xl font-semibold mb-2">Tomorrow’s Workout</h2>
           {weeklyPlan[tomorrowName] ? (
             <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
@@ -505,242 +470,244 @@ function deleteRunRoutine(runType) {
       );
 
       /* -------------------------
-   SWIPEABLE CALENDAR TAB
--------------------------- */
+         SWIPEABLE CALENDAR TAB
+      -------------------------- */
 
-const today = new Date();
-const MIN_MONTH = new Date(today.getFullYear(), today.getMonth(), 1);
+      const today = new Date();
+      const MIN_MONTH = new Date(today.getFullYear(), today.getMonth(), 1);
 
-const [currentMonth, setCurrentMonth] = React.useState(
-  new Date(today.getFullYear(), today.getMonth(), 1)
-);
+      const [currentMonth, setCurrentMonth] = React.useState(
+        new Date(today.getFullYear(), today.getMonth(), 1)
+      );
 
-let touchStartX = 0;
-let touchEndX = 0;
+      let touchStartX = 0;
+      let touchEndX = 0;
 
-function handleTouchStart(e) {
-  touchStartX = e.changedTouches[0].screenX;
-}
-
-function handleTouchEnd(e) {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
-}
-
-function handleSwipe() {
-  const diff = touchEndX - touchStartX;
-
-  if (Math.abs(diff) < 50) return; // ignore tiny swipes
-
-  if (diff < 0) goNextMonth(); // swipe left → next month
-  if (diff > 0) goPrevMonth(); // swipe right → previous month
-}
-
-function goNextMonth() {
-  const next = new Date(currentMonth);
-  next.setMonth(next.getMonth() + 1);
-  setCurrentMonth(next);
-}
-
-function goPrevMonth() {
-  const prev = new Date(currentMonth);
-  prev.setMonth(prev.getMonth() - 1);
-
-  // ⭐ Prevent going earlier than the current real month
-  if (prev < MIN_MONTH) return;
-
-  setCurrentMonth(prev);
-}
-
-const CalendarTab = (
-  <div
-    className="w-full h-screen overflow-hidden bg-black px-4 pt-6"
-    onTouchStart={handleTouchStart}
-    onTouchEnd={handleTouchEnd}
-  >
-    {/* Month Label */}
-    <div className="text-xl font-semibold tracking-tight mb-2 text-center">
-      {currentMonth.toLocaleString("default", { month: "long", year: "numeric" })}
-    </div>
-
-    {/* Weekday Labels */}
-    <div className="grid grid-cols-7 gap-1 text-center text-xs text-[#8E8E93] mb-1">
-      {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-        <div key={i}>{d}</div>
-      ))}
-    </div>
-
-    {/* Build days */}
-    {(() => {
-      const year = currentMonth.getFullYear();
-      const month = currentMonth.getMonth();
-
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-
-      const days = [];
-      for (let d = 1; d <= lastDay.getDate(); d++) {
-        const date = new Date(year, month, d);
-        days.push({
-          date,
-          key: `${year}-${month + 1}-${d}`,
-          weekday: WEEK_DAYS[getWeekdayIndex(date)],
-        });
+      function handleTouchStart(e) {
+        touchStartX = e.changedTouches[0].screenX;
       }
 
-      const leadingBlanks = getWeekdayIndex(firstDay);
-      const paddedDays = [
-        ...Array(leadingBlanks).fill({ blank: true }),
-        ...days,
-      ];
+      function handleTouchEnd(e) {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+      }
 
-      const renderDots = (dayObj) => {
-        if (dayObj.blank) return null;
+      function handleSwipe() {
+        const diff = touchEndX - touchStartX;
+        if (Math.abs(diff) < 50) return;
+        if (diff < 0) goNextMonth();
+        if (diff > 0) goPrevMonth();
+      }
 
-        const weekday = dayObj.weekday;
-        const gym = weeklyPlan[weekday];
-        const run = runPlan[weekday];
+      function goNextMonth() {
+        const next = new Date(currentMonth);
+        next.setMonth(next.getMonth() + 1);
+        setCurrentMonth(next);
+      }
 
-        if (gym && run)
-          return <div className="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1"></div>;
+      function goPrevMonth() {
+        const prev = new Date(currentMonth);
+        prev.setMonth(prev.getMonth() - 1);
+        if (prev < MIN_MONTH) return;
+        setCurrentMonth(prev);
+      }
 
-        if (gym)
-          return <div className="w-1.5 h-1.5 bg-green-400 rounded-full mx-auto mt-1"></div>;
+      const CalendarTab = (
+        <div
+          className="w-full h-screen overflow-hidden bg-black px-4 pt-6"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="text-xl font-semibold tracking-tight mb-2 text-center">
+            {currentMonth.toLocaleString("default", {
+              month: "long",
+              year: "numeric",
+            })}
+          </div>
 
-        if (run)
-          return <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mx-auto mt-1"></div>;
+          <div className="grid grid-cols-7 gap-1 text-center text-xs text-[#8E8E93] mb-1">
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <div key={i}>{d}</div>
+            ))}
+          </div>
 
-        return null;
-      };
+          {(() => {
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
 
-      return (
-        <div className="grid grid-cols-7 gap-1 text-center">
-          {paddedDays.map((d, index) => {
-            if (d.blank) return <div key={"blank-" + index}></div>;
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
 
-            const isToday =
-              new Date().toDateString() === d.date.toDateString();
+            const days = [];
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+              const date = new Date(year, month, d);
+              days.push({
+                date,
+                key: `${year}-${month + 1}-${d}`,
+                weekday: WEEK_DAYS[getWeekdayIndex(date)],
+              });
+            }
+
+            const leadingBlanks = getWeekdayIndex(firstDay);
+                        const paddedDays = [
+              ...Array(leadingBlanks).fill({ blank: true }),
+              ...days,
+            ];
+
+            const renderDots = (dayObj) => {
+              if (dayObj.blank) return null;
+
+              const weekday = dayObj.weekday;
+              const gym = weeklyPlan[weekday];
+              const run = runPlan[weekday];
+
+              if (gym && run)
+                return (
+                  <div className="w-1.5 h-1.5 bg-white rounded-full mx-auto mt-1"></div>
+                );
+
+              if (gym)
+                return (
+                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full mx-auto mt-1"></div>
+                );
+
+              if (run)
+                return (
+                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mx-auto mt-1"></div>
+                );
+
+              return null;
+            };
 
             return (
-              <button
-                key={d.key}
-                onClick={() => openDayDetails(d)}
-                className={`py-1 rounded-lg text-sm ${
-                  isToday
-                    ? "bg-red-500 text-white font-semibold"
-                    : "bg-[#1C1C1E] text-white"
-                }`}
-              >
-                {d.date.getDate()}
-                {renderDots(d)}
-              </button>
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {paddedDays.map((d, index) => {
+                  if (d.blank) return <div key={"blank-" + index}></div>;
+
+                  const isToday =
+                    new Date().toDateString() === d.date.toDateString();
+
+                  return (
+                    <button
+                      key={d.key}
+                      onClick={() => openDayDetails(d)}
+                      className={`py-1 rounded-lg text-sm ${
+                        isToday
+                          ? "bg-red-500 text-white font-semibold"
+                          : "bg-[#1C1C1E] text-white"
+                      }`}
+                    >
+                      {d.date.getDate()}
+                      {renderDots(d)}
+                    </button>
+                  );
+                })}
+              </div>
             );
-          })}
+          })()}
+
+          {/* DAY DETAILS PANEL */}
+          {selectedDay && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+              <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">
+                    {selectedDay.date.toDateString()}
+                  </h2>
+
+                  <button
+                    onClick={closeDayDetails}
+                    className="text-sm text-[#8E8E93]"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* WORKOUT PREVIEW */}
+                {(() => {
+                  const weekday = selectedDay.weekday;
+                  const routine = weeklyPlan[weekday];
+
+                  if (!routine) {
+                    return (
+                      <p className="text-sm text-[#8E8E93] mb-4">
+                        No gym routine
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold mb-2">Workout</h3>
+
+                      <div className="bg-[#2C2C2E] p-4 rounded-xl soft-border mb-3">
+                        <p className="font-semibold mb-1">{routine.name}</p>
+
+                        <ul className="text-sm text-[#E5E5EA] space-y-1">
+                          {routine.exercises.map((ex, i) => (
+                            <li key={i}>
+                              {ex.name} — {ex.sets}×{ex.reps}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <button
+                        onClick={() => deleteGymRoutine(routine.name)}
+                        className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
+                      >
+                        Delete Workout
+                      </button>
+
+                      <button
+                        onClick={() => startWorkout(routine)}
+                        className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
+                      >
+                        Start Today’s Workout
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* RUN PREVIEW */}
+                {(() => {
+                  const weekday = selectedDay.weekday;
+                  const routine = runPlan[weekday];
+
+                  if (!routine) {
+                    return (
+                      <p className="text-sm text-[#8E8E93] mb-4">
+                        No running routine
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="mb-4">
+                      <p className="text-blue-400 text-sm font-semibold mb-1">
+                        Run: {routine.type}
+                      </p>
+                      <p className="text-sm text-[#8E8E93]">
+                        {routine.distance} km — {routine.pace}
+                      </p>
+
+                      <button
+                        onClick={() => deleteRunRoutine(routine.type)}
+                        className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
+                      >
+                        Delete Run
+                      </button>
+                    </div>
+                  );
+                })()}
+
+              </div>
+            </div>
+          )}
         </div>
       );
-    })()}
-{/* DAY DETAILS PANEL */}
-{selectedDay && (
-  <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
-    <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">
-          {selectedDay.date.toDateString()}
-        </h2>
-
-        <button
-          onClick={closeDayDetails}
-          className="text-sm text-[#8E8E93]"
-        >
-          Close
-        </button>
-      </div>
-
-      {/* WORKOUT PREVIEW */}
-      {(() => {
-        const weekday = selectedDay.weekday;
-        const routine = weeklyPlan[weekday];
-
-        if (!routine) {
-          return (
-            <p className="text-sm text-[#8E8E93] mb-4">
-              No gym routine
-            </p>
-          );
-        }
-
-        return (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Workout</h3>
-
-            <div className="bg-[#2C2C2E] p-4 rounded-xl soft-border mb-3">
-              <p className="font-semibold mb-1">{routine.name}</p>
-
-              <ul className="text-sm text-[#E5E5EA] space-y-1">
-                {routine.exercises.map((ex, i) => (
-                  <li key={i}>
-                    {ex.name} — {ex.sets}×{ex.reps}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* ⭐ DELETE WORKOUT BUTTON GOES HERE */}
-            <button
-              onClick={() => deleteGymRoutine(routine.name)}
-              className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
-            >
-              Delete Workout
-            </button>
-
-            <button
-              onClick={() => startWorkout(routine)}
-              className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
-            >
-              Start Today’s Workout
-            </button>
-          </div>
-        );
-      })()}
-
-      {/* RUN PREVIEW */}
-      {(() => {
-        const weekday = selectedDay.weekday;
-        const routine = runPlan[weekday];
-
-        if (!routine) {
-          return (
-            <p className="text-sm text-[#8E8E93] mb-4">
-              No running routine
-            </p>
-          );
-        }
-
-        return (
-          <div className="mb-4">
-            <p className="text-blue-400 text-sm font-semibold mb-1">
-              Run: {routine.type}
-            </p>
-            <p className="text-sm text-[#8E8E93]">
-              {routine.distance} km — {routine.pace}
-            </p>
-
-            {/* ⭐ DELETE RUN BUTTON GOES HERE */}
-            <button
-              onClick={() => deleteRunRoutine(routine.type)}
-              className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
-            >
-              Delete Run
-            </button>
-          </div>
-        );
-      })()}
-
-    </div>
-  </div>
-)}
-       /* -------------------------
+	      /* -------------------------
          WORKOUT TAB
       -------------------------- */
       const WorkoutTab = activeWorkout && (
@@ -804,12 +771,10 @@ const CalendarTab = (
           </button>
         </div>
       );
-
-      /* -------------------------
+	      /* -------------------------
          MODALS
       -------------------------- */
 
-      /* CREATE GYM ROUTINE */
       const GymCreatorModal = showGymCreator && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
           <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
@@ -869,7 +834,6 @@ const CalendarTab = (
               </div>
             )}
 
-            {/* Assign to a day (optional) */}
             {tempExercises.length > 0 && newRoutineName && (
               <>
                 <p className="text-sm text-[#8E8E93] mb-2">
@@ -909,7 +873,6 @@ const CalendarTab = (
         </div>
       );
 
-      /* CREATE RUN ROUTINE */
       const RunCreatorModal = showRunCreator && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
           <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
@@ -958,7 +921,6 @@ const CalendarTab = (
         </div>
       );
 
-      /* CREATE CHOOSER MODAL */
       const CreateChooserModal = showCreateChooser && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
           <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
@@ -999,18 +961,17 @@ const CalendarTab = (
           </div>
         </div>
       );
+
       /* -------------------------
          FINAL RENDER
       -------------------------- */
       return (
         <div className="w-full h-screen relative overflow-hidden">
 
-          {/* MAIN CONTENT */}
           {tab === "home" && HomeTab}
           {tab === "calendar" && CalendarTab}
           {tab === "workout" && WorkoutTab}
 
-          {/* FLOATING + BUTTON */}
           <button
             onClick={() => setShowCreateChooser(true)}
             className="fixed bottom-20 right-6 w-14 h-14 rounded-full bg-white text-black flex items-center justify-center text-3xl font-semibold shadow-lg z-[60]"
@@ -1018,7 +979,6 @@ const CalendarTab = (
             +
           </button>
 
-          {/* BOTTOM NAV */}
           <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
             <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-8 items-center">
 
@@ -1045,7 +1005,6 @@ const CalendarTab = (
             </div>
           </div>
 
-          {/* MODALS */}
           {GymCreatorModal}
           {RunCreatorModal}
           {CreateChooserModal}
