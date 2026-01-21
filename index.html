@@ -38,7 +38,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-  /********************************************
+ /********************************************
  * WEEKDAY HELPERS — MONDAY FIRST
  ********************************************/
 
@@ -117,7 +117,6 @@ function App() {
   /********************************************
    * USER SETTINGS (NAME + GOALS)
    ********************************************/
-
   const [userName, setUserName] = React.useState(() => {
     return localStorage.getItem("userName_v1") || "";
   });
@@ -141,12 +140,108 @@ function App() {
     localStorage.setItem("monthlyWorkoutGoal_v1", monthlyWorkoutGoal);
   }
 
+  /********************************************
+   * MODAL VISIBILITY STATES
+   ********************************************/
+  const [showGymCreator, setShowGymCreator] = React.useState(false);
+  const [showRunCreator, setShowRunCreator] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
+  const [showCreateChooser, setShowCreateChooser] = React.useState(false);
+
+  /********************************************
+   * TEMP STATE FOR GYM CREATOR
+   ********************************************/
+  const [newRoutineName, setNewRoutineName] = React.useState("");
+  const [newExerciseName, setNewExerciseName] = React.useState("");
+  const [newExerciseSets, setNewExerciseSets] = React.useState("");
+  const [newExerciseReps, setNewExerciseReps] = React.useState("");
+  const [tempExercises, setTempExercises] = React.useState([]);
+
+  function addTempExercise() {
+    if (!newExerciseName || !newExerciseSets || !newExerciseReps) return;
+
+    const newEx = {
+      name: newExerciseName,
+      sets: Number(newExerciseSets),
+      reps: Number(newExerciseReps),
+    };
+
+    setTempExercises([...tempExercises, newEx]);
+
+    setNewExerciseName("");
+    setNewExerciseSets("");
+    setNewExerciseReps("");
+  }
+
+  function saveNewRoutine() {
+    if (!newRoutineName || tempExercises.length === 0) return;
+
+    const routine = {
+      name: newRoutineName,
+      exercises: tempExercises,
+    };
+
+    const updated = [...routines, routine];
+    saveRoutines(updated);
+
+    autoAssignGym(routine);
+
+    setNewRoutineName("");
+    setTempExercises([]);
+    setShowGymCreator(false);
+  }
+
+  function saveNewRoutineToDay(day) {
+    if (!newRoutineName || tempExercises.length === 0) return;
+
+    const routine = {
+      name: newRoutineName,
+      exercises: tempExercises,
+    };
+
+    const updated = [...routines, routine];
+    saveRoutines(updated);
+
+    saveWeeklyPlan({
+      ...weeklyPlan,
+      [day]: routine,
+    });
+
+    setNewRoutineName("");
+    setTempExercises([]);
+    setShowGymCreator(false);
+  }
+
+  /********************************************
+   * TEMP STATE FOR RUN CREATOR
+   ********************************************/
+  const [newRunType, setNewRunType] = React.useState("");
+  const [newRunDistance, setNewRunDistance] = React.useState("");
+  const [newRunPace, setNewRunPace] = React.useState("");
+
+  function saveNewRunRoutine() {
+    if (!newRunType || !newRunDistance || !newRunPace) return;
+
+    const routine = {
+      type: newRunType,
+      distance: Number(newRunDistance),
+      pace: newRunPace,
+    };
+
+    const updated = [...runRoutines, routine];
+    saveRunRoutines(updated);
+
+    autoAssignRun(routine);
+
+    setNewRunType("");
+    setNewRunDistance("");
+    setNewRunPace("");
+    setShowRunCreator(false);
+  }
 
   /********************************************
    * GYM ROUTINES
    ********************************************/
-
   const [routines, setRoutines] = React.useState(() => {
     const saved = localStorage.getItem("routines_v1");
     return saved ? JSON.parse(saved) : [];
@@ -160,7 +255,6 @@ function App() {
   /********************************************
    * WEEKLY GYM PLAN
    ********************************************/
-
   const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
     const saved = localStorage.getItem("weeklyPlan_v1");
     return saved
@@ -184,7 +278,6 @@ function App() {
   /********************************************
    * RUNNING PLAN + ROUTINES
    ********************************************/
-
   const [runPlan, setRunPlan] = React.useState(() => {
     const saved = localStorage.getItem("runPlan_v1");
     return saved
@@ -218,7 +311,6 @@ function App() {
   /********************************************
    * DELETE FUNCTIONS
    ********************************************/
-
   const [selectedDay, setSelectedDay] = React.useState(null);
 
   function deleteGymRoutine(routineName) {
@@ -254,7 +346,6 @@ function App() {
   /********************************************
    * AUTO-ASSIGN HELPERS
    ********************************************/
-
   const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
   const autoAssignGym = (routine) => {
@@ -278,7 +369,6 @@ function App() {
   /********************************************
    * ACTIVE WORKOUT + LOGS
    ********************************************/
-
   const [activeWorkout, setActiveWorkout] = React.useState(null);
 
   const [workoutLogs, setWorkoutLogs] = React.useState(() => {
@@ -394,7 +484,6 @@ function App() {
   /********************************************
    * DAY DETAILS PANEL HELPERS
    ********************************************/
-
   function openDayDetails(dayObj) {
     setSelectedDay(dayObj);
   }
@@ -406,14 +495,11 @@ function App() {
   /********************************************
    * STATS + PROGRESS CALCULATIONS
    ********************************************/
-
   const todayDate = new Date();
 
-  // Count planned gym/run this week
   const plannedGymThisWeek = WEEK_DAYS.filter(d => weeklyPlan[d]).length;
   const plannedRunThisWeek = WEEK_DAYS.filter(d => runPlan[d]).length;
 
-  // Completed workouts from logs (per day)
   const completedDaysSet = new Set(
     workoutLogs.map(log => {
       const d = new Date(log.timestamp);
@@ -433,7 +519,6 @@ function App() {
 
   const gymProgress = Math.min(1, completedWorkoutsThisWeek / weeklyGymGoal);
 
-  // Simple run completion: count days where runPlan exists and date <= today
   const runCompletedDays = WEEK_DAYS.filter((day, idx) => {
     const weekStart = new Date(todayDate);
     const offset = getWeekdayIndex(weekStart);
@@ -445,7 +530,6 @@ function App() {
 
   const runProgress = Math.min(1, runCompletedDays / weeklyRunGoal);
 
-  // Streak calculation
   function computeStreak() {
     let streak = 0;
     const logsByDay = new Set(
@@ -468,7 +552,6 @@ function App() {
 
   const streak = computeStreak();
 
-  // Monthly stats
   const currentMonthIndex = todayDate.getMonth();
   const currentYear = todayDate.getFullYear();
 
