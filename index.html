@@ -38,7 +38,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
- /********************************************
+/********************************************
  * WEEKDAY HELPERS — MONDAY FIRST
  ********************************************/
 
@@ -115,23 +115,12 @@ function App() {
   const [tab, setTab] = React.useState("home");
 
   /********************************************
-   * USER SETTINGS (NAME + GOALS)
+   * USER SETTINGS
    ********************************************/
-  const [userName, setUserName] = React.useState(() => {
-    return localStorage.getItem("userName_v1") || "";
-  });
-
-  const [weeklyGymGoal, setWeeklyGymGoal] = React.useState(() => {
-    return Number(localStorage.getItem("weeklyGymGoal_v1")) || 3;
-  });
-
-  const [weeklyRunGoal, setWeeklyRunGoal] = React.useState(() => {
-    return Number(localStorage.getItem("weeklyRunGoal_v1")) || 3;
-  });
-
-  const [monthlyWorkoutGoal, setMonthlyWorkoutGoal] = React.useState(() => {
-    return Number(localStorage.getItem("monthlyWorkoutGoal_v1")) || 12;
-  });
+  const [userName, setUserName] = React.useState(localStorage.getItem("userName_v1") || "");
+  const [weeklyGymGoal, setWeeklyGymGoal] = React.useState(Number(localStorage.getItem("weeklyGymGoal_v1")) || 3);
+  const [weeklyRunGoal, setWeeklyRunGoal] = React.useState(Number(localStorage.getItem("weeklyRunGoal_v1")) || 3);
+  const [monthlyWorkoutGoal, setMonthlyWorkoutGoal] = React.useState(Number(localStorage.getItem("monthlyWorkoutGoal_v1")) || 12);
 
   function saveSettings() {
     localStorage.setItem("userName_v1", userName);
@@ -141,11 +130,10 @@ function App() {
   }
 
   /********************************************
-   * MODAL VISIBILITY STATES
+   * MODAL VISIBILITY
    ********************************************/
   const [showGymCreator, setShowGymCreator] = React.useState(false);
   const [showRunCreator, setShowRunCreator] = React.useState(false);
-  const [showSettings, setShowSettings] = React.useState(false);
   const [showCreateChooser, setShowCreateChooser] = React.useState(false);
 
   /********************************************
@@ -211,120 +199,95 @@ function App() {
     setTempExercises([]);
     setShowGymCreator(false);
   }
+
+  /********************************************
+   * TEMP STATE FOR RUN CREATOR
+   ********************************************/
+  const [newRunType, setNewRunType] = React.useState("");
+  const [newRunDistance, setNewRunDistance] = React.useState("");
+  const [newRunPace, setNewRunPace] = React.useState("");
+
+  function saveNewRunRoutine() {
+    if (!newRunType || !newRunDistance || !newRunPace) return;
+
+    const routine = {
+      type: newRunType,
+      distance: Number(newRunDistance),
+      pace: newRunPace,
+    };
+
+    const updated = [...runRoutines, routine];
+    saveRunRoutines(updated);
+
+    autoAssignRun(routine);
+
+    setNewRunType("");
+    setNewRunDistance("");
+    setNewRunPace("");
+    setShowRunCreator(false);
+  }
+
   function saveNewRunRoutineToDay(day) {
-  if (!newRunType || !newRunDistance || !newRunPace) return;
+    if (!newRunType || !newRunDistance || !newRunPace) return;
 
-  const routine = {
-    type: newRunType,
-    distance: Number(newRunDistance),
-    pace: newRunPace,
-  };
+    const routine = {
+      type: newRunType,
+      distance: Number(newRunDistance),
+      pace: newRunPace,
+    };
 
-  const updated = [...runRoutines, routine];
-  saveRunRoutines(updated);
+    const updated = [...runRoutines, routine];
+    saveRunRoutines(updated);
 
-  saveRunPlan({
-    ...runPlan,
-    [day]: routine,
-  });
+    saveRunPlan({
+      ...runPlan,
+      [day]: routine,
+    });
 
-  setNewRunType("");
-  setNewRunDistance("");
-  setNewRunPace("");
-  setShowRunCreator(false);
-}
-
-  /********************************************
- * TEMP STATE FOR RUN CREATOR
- ********************************************/
-const [newRunType, setNewRunType] = React.useState("");
-const [newRunDistance, setNewRunDistance] = React.useState("");
-const [newRunPace, setNewRunPace] = React.useState("");
-
-function saveNewRunRoutine() {
-  if (!newRunType || !newRunDistance || !newRunPace) return;
-
-  const routine = {
-    type: newRunType,
-    distance: Number(newRunDistance),
-    pace: newRunPace,
-  };
-
-  const updated = [...runRoutines, routine];
-  saveRunRoutines(updated);
-
-  autoAssignRun(routine);
-
-  setNewRunType("");
-  setNewRunDistance("");
-  setNewRunPace("");
-  setShowRunCreator(false);
-}
-
-/********************************************
- * ASSIGN RUN ROUTINE TO SPECIFIC DAY
- ********************************************/
-function saveNewRunRoutineToDay(day) {
-  if (!newRunType || !newRunDistance || !newRunPace) return;
-
-  const routine = {
-    type: newRunType,
-    distance: Number(newRunDistance),
-    pace: newRunPace,
-  };
-
-  const updated = [...runRoutines, routine];
-  saveRunRoutines(updated);
-
-  saveRunPlan({
-    ...runPlan,
-    [day]: routine,
-  });
-
-  setNewRunType("");
-  setNewRunDistance("");
-  setNewRunPace("");
-  setShowRunCreator(false);
-}
-
-/********************************************
- * GYM ROUTINES
- ********************************************/
-const [routines, setRoutines] = React.useState(() => {
-  const saved = localStorage.getItem("routines_v1");
-  return saved ? JSON.parse(saved) : [];
-});
-
-const saveRoutines = (updated) => {
-  setRoutines(updated);
-  localStorage.setItem("routines_v1", JSON.stringify(updated));
-};
-  
-/********************************************
- * WEEKLY GYM PLAN
- ********************************************/
-const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
-  const saved = localStorage.getItem("weeklyPlan_v1");
-  return saved
-    ? JSON.parse(saved)
-    : {
-        Mon: null,
-        Tue: null,
-        Wed: null,
-        Thu: null,
-        Fri: null,
-        Sat: null,
-        Sun: null,
-      };
-});
-
-const saveWeeklyPlan = (updated) => {
-  setWeeklyPlan(updated);
-  localStorage.setItem("weeklyPlan_v1", JSON.stringify(updated));
-};
+    setNewRunType("");
+    setNewRunDistance("");
+    setNewRunPace("");
+    setShowRunCreator(false);
+  }
 
   /********************************************
-   * RUNNING PLAN + ROUTINES
+   * GYM ROUTINES
+   ********************************************/
+  const [routines, setRoutines] = React.useState(() => {
+    const saved = localStorage.getItem("routines_v1");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const saveRoutines = (updated) => {
+    setRoutines(updated);
+    localStorage.setItem("routines_v1", JSON.stringify(updated));
+  };
+
+  /********************************************
+   * WEEKLY GYM PLAN  ← REQUIRED FOR NO CRASH
+   ********************************************/
+  const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
+    const saved = localStorage.getItem("weeklyPlan_v1");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          Mon: null,
+          Tue: null,
+          Wed: null,
+          Thu: null,
+          Fri: null,
+          Sat: null,
+          Sun: null,
+        };
+  });
+
+  const saveWeeklyPlan = (updated) => {
+    setWeeklyPlan(updated);
+    localStorage.setItem("weeklyPlan_v1", JSON.stringify(updated));
+  };
+
+  /********************************************
+   * RUN PLAN
    ********************************************/
   const [runPlan, setRunPlan] = React.useState(() => {
     const saved = localStorage.getItem("runPlan_v1");
@@ -346,6 +309,9 @@ const saveWeeklyPlan = (updated) => {
     localStorage.setItem("runPlan_v1", JSON.stringify(updated));
   };
 
+  /********************************************
+   * RUN ROUTINES
+   ********************************************/
   const [runRoutines, setRunRoutines] = React.useState(() => {
     const saved = localStorage.getItem("runRoutines_v1");
     return saved ? JSON.parse(saved) : [];
@@ -355,7 +321,7 @@ const saveWeeklyPlan = (updated) => {
     setRunRoutines(updated);
     localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
   };
-
+  
   /********************************************
    * DELETE FUNCTIONS
    ********************************************/
