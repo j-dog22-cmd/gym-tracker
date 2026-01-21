@@ -139,7 +139,7 @@
       };
 
       /* -------------------------------------------
-         DELETE FUNCTIONS — CORRECT POSITION
+         DELETE FUNCTIONS
       -------------------------------------------- */
       const [showGymCreator, setShowGymCreator] = React.useState(false);
       const [showRunCreator, setShowRunCreator] = React.useState(false);
@@ -389,138 +389,256 @@
         setShowRunCreator(false);
       };
 
-  /* -------------------------
-   DAY DETAILS PANEL
--------------------------- */
-function openDayDetails(dayObj) {
-  setSelectedDay(dayObj);
-}
+      /* -------------------------
+         DAY DETAILS PANEL HELPERS
+      -------------------------- */
+      function openDayDetails(dayObj) {
+        setSelectedDay(dayObj);
+      }
 
-function closeDayDetails() {
-  setSelectedDay(null);
-}
+      function closeDayDetails() {
+        setSelectedDay(null);
+      }
 
-/* -------------------------
-   TODAY / TOMORROW
--------------------------- */
-const { todayName, tomorrowName } = getTodayNames();
+      /* -------------------------
+         TODAY / TOMORROW
+      -------------------------- */
+      const { todayName, tomorrowName } = getTodayNames();
 
-/* -------------------------
-   HOME TAB
--------------------------- */
-const HomeTab = (
-  <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+      /* -------------------------
+         HOME TAB (FULLY REWRITTEN)
+      -------------------------- */
+      const HomeTab = (() => {
+        const todayDate = new Date();
+        const todayWeekday = WEEK_DAYS[getWeekdayIndex(todayDate)];
+        const todayNumber = todayDate.getDate();
 
-	{/* FULL-WIDTH WEEK VIEW */}
-<h2 className="text-xl font-semibold mb-3">This Week</h2>
+        // Start of this week (Mon–Sun)
+        const startOfWeek = (() => {
+          const d = new Date(todayDate);
+          const offset = getWeekdayIndex(d); // 0 = Mon
+          d.setDate(d.getDate() - offset);
+          return d;
+        })();
 
-<div className="grid grid-cols-7 gap-2 mb-6">
-  {WEEK_DAYS.map((day) => {
-    const gym = weeklyPlan[day];
-    const run = runPlan[day];
+        const weekDaysWithDates = WEEK_DAYS.map((day, idx) => {
+          const d = new Date(startOfWeek);
+          d.setDate(startOfWeek.getDate() + idx);
+          return { label: day, date: d };
+        });
 
-    const isToday =
-      WEEK_DAYS[getWeekdayIndex(new Date())] === day;
+        return (
+          <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
 
-    // dot color logic (same as calendar)
-    let dotColor = null;
-    if (gym && run) dotColor = "bg-white";
-    else if (gym) dotColor = "bg-green-400";
-    else if (run) dotColor = "bg-blue-400";
+            {/* TOP HEADER */}
+            <div className="mb-6">
+              <p className="text-sm text-[#8E8E93]">Today</p>
+              <h1 className="text-2xl font-semibold leading-tight">
+                {todayWeekday}
+              </h1>
+              <p className="text-4xl font-extrabold mt-1">
+                {todayNumber}
+              </p>
+            </div>
 
-    return (
-      <button
-        key={day}
-        onClick={() =>
-          openDayDetails({
-            weekday: day,
-            date: new Date(), // can be replaced with actual date if needed
-          })
-        }
-        className={`p-2 rounded-xl soft-border bg-[#1C1C1E] flex flex-col items-center ${
-          isToday ? "border border-red-500" : ""
-        }`}
-      >
-        {/* Day label */}
-        <p className="text-sm font-semibold">{day.slice(0, 2)}</p>
+            {/* HORIZONTAL WEEK ROW - APPLE STYLE CARDS */}
+            <h2 className="text-lg font-semibold mb-2">This Week</h2>
 
-        {/* Dot under day */}
-        {dotColor && (
-          <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`}></div>
-        )}
-      </button>
-    );
-  })}
-</div>   
-    {/* -------------------------
-        TODAY’S RUN
-    -------------------------- */}
-    <h2 className="text-xl font-semibold mb-2">Today’s Run</h2>
-    {runPlan[todayName] ? (
-      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-        <p className="font-semibold">{runPlan[todayName].type}</p>
-        <p className="text-sm text-[#8E8E93]">
-          {runPlan[todayName].distance} km — {runPlan[todayName].pace}
-        </p>
-      </div>
-    ) : (
-      <p className="text-[#8E8E93] mb-6">No run today</p>
-    )}
+            <div className="flex justify-between mb-4">
+              {weekDaysWithDates.map(({ label, date }) => {
+                const weekday = label;
+                const gym = weeklyPlan[weekday];
+                const run = runPlan[weekday];
 
-    {/* -------------------------
-        TODAY’S WORKOUT
-    -------------------------- */}
-    <h2 className="text-xl font-semibold mb-2">Today’s Workout</h2>
-    {weeklyPlan[todayName] ? (
-      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-        <p className="font-semibold">{weeklyPlan[todayName].name}</p>
+                const isToday =
+                  date.toDateString() === todayDate.toDateString();
 
-        <button
-          onClick={() => startWorkout(weeklyPlan[todayName])}
-          className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
-        >
-          Start Today’s Workout
-        </button>
-      </div>
-    ) : (
-      <p className="text-[#8E8E93] mb-6">No workout today</p>
-    )}
+                let dotColor = null;
+                if (gym && run) dotColor = "bg-white";
+                else if (gym) dotColor = "bg-green-400";
+                else if (run) dotColor = "bg-blue-400";
 
-    {/* -------------------------
-        TOMORROW’S RUN
-    -------------------------- */}
-    <h2 className="text-xl font-semibold mb-2">Tomorrow’s Run</h2>
-    {runPlan[tomorrowName] ? (
-      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-        <p className="font-semibold">{runPlan[tomorrowName].type}</p>
-        <p className="text-sm text-[#8E8E93]">
-          {runPlan[tomorrowName].distance} km — {runPlan[tomorrowName].pace}
-        </p>
-      </div>
-    ) : (
-      <p className="text-[#8E8E93] mb-6">No run tomorrow</p>
-    )}
+                return (
+                  <button
+                    key={weekday}
+                    onClick={() => openDayDetails({ weekday, date })}
+                    className={`
+                      w-12 p-3
+                      rounded-3xl soft-border
+                      bg-[#1C1C1E]
+                      flex flex-col items-center
+                      transition-all
+                      ${isToday ? "border border-red-500" : ""}
+                    `}
+                  >
+                    {/* DATE */}
+                    <p className="text-base font-semibold leading-none">
+                      {date.getDate()}
+                    </p>
 
-    {/* -------------------------
-        TOMORROW’S WORKOUT
-    -------------------------- */}
-    <h2 className="text-xl font-semibold mb-2">Tomorrow’s Workout</h2>
-    {weeklyPlan[tomorrowName] ? (
-      <div className="bg-[#1C1C1E] p-4 rounded-xl mb-6">
-        <p className="font-semibold">{weeklyPlan[tomorrowName].name}</p>
+                    {/* DAY */}
+                    <p className="text-xs text-[#8E8E93] leading-none mt-1">
+                      {weekday.slice(0, 2)}
+                    </p>
 
-        <button
-          onClick={() => startWorkout(weeklyPlan[tomorrowName])}
-          className="mt-3 w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
-        >
-          Start Tomorrow’s Workout
-        </button>
-      </div>
-    ) : (
-      <p className="text-[#8E8E93] mb-6">No workout tomorrow</p>
-    )}
-  </div>
-);
+                    {/* DOT */}
+                    {dotColor && (
+                      <div
+                        className={`w-2 h-2 ${dotColor} rounded-full mt-1`}
+                      ></div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* INLINE DAY DETAILS */}
+            {selectedDay && (
+              <div className="mb-6 bg-[#1C1C1E] p-4 rounded-xl soft-border">
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <p className="text-xs text-[#8E8E93]">
+                      {selectedDay.date.toDateString()}
+                    </p>
+                    <h3 className="text-lg font-semibold">
+                      {selectedDay.weekday}
+                    </h3>
+                  </div>
+                  <button
+                    onClick={closeDayDetails}
+                    className="text-sm text-[#8E8E93]"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* WORKOUT DETAILS */}
+                {(() => {
+                  const routine = weeklyPlan[selectedDay.weekday];
+                  if (!routine) {
+                    return (
+                      <p className="text-sm text-[#8E8E93] mb-3">
+                        No gym routine
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div className="mb-4">
+                      <p className="text-green-400 font-semibold mb-1">
+                        🏋️ {routine.name}
+                      </p>
+                      <ul className="text-sm text-[#E5E5EA] space-y-1">
+                        {routine.exercises.map((ex, i) => (
+                          <li key={i}>
+                            {ex.name} — {ex.sets}×{ex.reps}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <button
+                        onClick={() => startWorkout(routine)}
+                        className="w-full bg-white text-black rounded-xl py-2 text-sm font-semibold mt-3"
+                      >
+                        Start Workout
+                      </button>
+
+                      <button
+                        onClick={() => deleteGymRoutine(routine.name)}
+                        className="w-full bg-red-500 text-white rounded-xl py-2 text-sm font-semibold mt-2"
+                      >
+                        Delete Workout
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {/* RUN DETAILS */}
+                {(() => {
+                  const routine = runPlan[selectedDay.weekday];
+                  if (!routine) {
+                    return (
+                      <p className="text-sm text-[#8E8E93]">
+                        No running routine
+                      </p>
+                    );
+                  }
+
+                  return (
+                    <div>
+                      <p className="text-blue-400 font-semibold mb-1">
+                        🏃 {routine.type}
+                      </p>
+                      <p className="text-sm text-[#E5E5EA]">
+                        {routine.distance} km — {routine.pace}
+                      </p>
+
+                      <button
+                        onClick={() => deleteRunRoutine(routine.type)}
+                        className="w-full bg-red-500 text-white rounded-xl py-2 text-sm font-semibold mt-2"
+                      >
+                        Delete Run
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* TODAY & TOMORROW BOXES */}
+            <h2 className="text-lg font-semibold mb-3">Your Plan</h2>
+
+            <div className="grid grid-cols-2 gap-3 mb-10">
+              {[
+                { label: "Today", day: todayName },
+                { label: "Tomorrow", day: tomorrowName },
+              ].map(({ label, day }) => {
+                const gym = weeklyPlan[day];
+                const run = runPlan[day];
+
+                const idx = WEEK_DAYS.indexOf(day);
+                const d = new Date(startOfWeek);
+                d.setDate(startOfWeek.getDate() + idx);
+
+                return (
+                  <button
+                    key={day}
+                    onClick={() => openDayDetails({ weekday: day, date: d })}
+                    className="bg-[#1C1C1E] p-4 rounded-2xl soft-border text-left"
+                  >
+                    <p className="text-xs text-[#8E8E93] mb-1">
+                      {label}
+                    </p>
+                    <p className="text-sm font-semibold mb-2">
+                      {day} {d.getDate()}
+                    </p>
+
+                    {gym ? (
+                      <p className="text-xs text-green-400 mb-1">
+                        🏋️ {gym.name}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[#8E8E93] mb-1">
+                        🏋️ No workout
+                      </p>
+                    )}
+
+                    {run ? (
+                      <p className="text-xs text-blue-400">
+                        🏃 {run.type}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[#8E8E93]">
+                        🏃 No run
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })();
 
       /* -------------------------
          SWIPEABLE CALENDAR TAB
@@ -602,7 +720,7 @@ const HomeTab = (
             }
 
             const leadingBlanks = getWeekdayIndex(firstDay);
-                        const paddedDays = [
+            const paddedDays = [
               ...Array(leadingBlanks).fill({ blank: true }),
               ...days,
             ];
@@ -659,7 +777,7 @@ const HomeTab = (
             );
           })()}
 
-          {/* DAY DETAILS PANEL */}
+          {/* DAY DETAILS PANEL (CALENDAR MODAL) */}
           {selectedDay && (
             <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
               <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
@@ -761,7 +879,7 @@ const HomeTab = (
         </div>
       );
 
-	      /* -------------------------
+      /* -------------------------
          WORKOUT TAB
       -------------------------- */
       const WorkoutTab = activeWorkout && (
@@ -825,7 +943,8 @@ const HomeTab = (
           </button>
         </div>
       );
-	      /* -------------------------
+
+      /* -------------------------
          MODALS
       -------------------------- */
 
