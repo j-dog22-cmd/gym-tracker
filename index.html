@@ -299,6 +299,29 @@ const saveRoutines = (updated) => {
   setRoutines(updated);
   localStorage.setItem("routines_v1", JSON.stringify(updated));
 };
+  
+/********************************************
+ * WEEKLY GYM PLAN
+ ********************************************/
+const [weeklyPlan, setWeeklyPlan] = React.useState(() => {
+  const saved = localStorage.getItem("weeklyPlan_v1");
+  return saved
+    ? JSON.parse(saved)
+    : {
+        Mon: null,
+        Tue: null,
+        Wed: null,
+        Thu: null,
+        Fri: null,
+        Sat: null,
+        Sun: null,
+      };
+});
+
+const saveWeeklyPlan = (updated) => {
+  setWeeklyPlan(updated);
+  localStorage.setItem("weeklyPlan_v1", JSON.stringify(updated));
+};
 
   /********************************************
    * RUNNING PLAN + ROUTINES
