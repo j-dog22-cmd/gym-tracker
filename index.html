@@ -2,11 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport"
-      content="width=device-width,
-               initial-scale=1.0,
-               maximum-scale=1.0,
-               user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fitness Planner</title>
 
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -39,7 +35,6 @@
 
   <script type="text/babel">
     const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    
 
     function getTodayNames() {
       const now = new Date();
@@ -75,30 +70,6 @@
       };
     }
 
-    function getNextMonth(current) {
-      const nextDate = new Date(current.year, current.month + 1, 1);
-      const year = nextDate.getFullYear();
-      const month = nextDate.getMonth();
-    
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-    
-      const days = [];
-      for (let d = 1; d <= lastDay.getDate(); d++) {
-        const date = new Date(year, month, d);
-        days.push({
-          date,
-          key: `${year}-${month + 1}-${d}`,
-        });
-      }
-    
-      return {
-        year,
-        month,
-        label: firstDay.toLocaleString("default", { month: "long", year: "numeric" }),
-        days,
-      };
-    }
     function App() {
       /* -------------------------
          NAVIGATION
@@ -263,7 +234,6 @@
          CALENDAR (SINGLE MONTH)
       -------------------------- */
       const currentMonth = getCurrentMonth();
-      const nextMonth = getNextMonth(currentMonth);
 
       function renderDots(dateKey) {
         const d = new Date(dateKey);
@@ -359,46 +329,56 @@
       /* -------------------------
          CALENDAR TAB
       -------------------------- */
-      const CalendarTab = () => {
-  return (
-    <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
-
-      {/* Month Header */}
-      <div className="text-2xl font-semibold tracking-tight mb-4">
-        {currentMonth.label}
-      </div>
-
-      {/* Weekday Labels */}
-      <div className="grid grid-cols-7 gap-2 text-center text-sm text-[#8E8E93]">
-        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-          <div key={i}>{d}</div>
-        ))}
-      </div>
-
-      {/* TODO: Calendar Grid Goes Here */}
-
-      {/* DAY DETAILS PANEL */}
-      {selectedDay && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
-          <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                {selectedDay.date.toDateString()}
-              </h2>
-              <button
-                onClick={closeDayDetails}
-                className="text-sm text-[#8E8E93]"
-              >
-                Close
-              </button>
-            </div>
+      const CalendarTab = (
+        <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+          {/* Month Header */}
+          <div className="text-2xl font-semibold tracking-tight mb-4">
+            {currentMonth.label}
           </div>
-        </div>
-      )}
 
-    </div>
-  );
-};
+          {/* Weekday Labels */}
+          <div className="grid grid-cols-7 gap-2 text-center text-sm text-[#8E8E93]">
+            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+              <div key={i}>{d}</div>
+            ))}
+          </div>
+
+          {/* Month Grid */}
+          <div className="grid grid-cols-7 gap-2 mt-2 text-center">
+            {currentMonth.days.map((d) => {
+              const isToday =
+                new Date().toDateString() === d.date.toDateString();
+
+              return (
+                <button
+                  key={d.key}
+                  onClick={() => openDayDetails(d)}
+                  className={`py-2 rounded-xl ${
+                    isToday ? "bg-white text-black font-semibold" : "bg-[#1C1C1E]"
+                  }`}
+                >
+                  {d.date.getDate()}
+                  {renderDots(d.key)}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* DAY DETAILS PANEL */}
+          {selectedDay && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+              <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">
+                    {selectedDay.date.toDateString()}
+                  </h2>
+                  <button
+                    onClick={closeDayDetails}
+                    className="text-sm text-[#8E8E93]"
+                  >
+                    Close
+                  </button>
+                </div>
 
                 {/* RUNNING ROUTINE */}
                 {(() => {
