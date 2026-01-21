@@ -144,6 +144,47 @@
         setRunRoutines(updated);
         localStorage.setItem("runRoutines_v1", JSON.stringify(updated));
       };
+      /* -------------------------------------------
+   DELETE GYM ROUTINE
+-------------------------------------------- */
+function deleteGymRoutine(routineName) {
+  // 1. Remove from routines list
+  const updatedRoutines = routines.filter(r => r.name !== routineName);
+  saveRoutines(updatedRoutines);
+
+  // 2. Remove from weekly plan
+  const updatedPlan = { ...weeklyPlan };
+  WEEK_DAYS.forEach(day => {
+    if (updatedPlan[day] && updatedPlan[day].name === routineName) {
+      updatedPlan[day] = null;
+    }
+  });
+  saveWeeklyPlan(updatedPlan);
+
+  // 3. Close any open day panel
+  setSelectedDay(null);
+}
+
+/* -------------------------------------------
+   DELETE RUN ROUTINE
+-------------------------------------------- */
+function deleteRunRoutine(runType) {
+  // 1. Remove from run routines list
+  const updatedRoutines = runRoutines.filter(r => r.type !== runType);
+  saveRunRoutines(updatedRoutines);
+
+  // 2. Remove from run plan
+  const updatedPlan = { ...runPlan };
+  WEEK_DAYS.forEach(day => {
+    if (updatedPlan[day] && updatedPlan[day].type === runType) {
+      updatedPlan[day] = null;
+    }
+  });
+  saveRunPlan(updatedPlan);
+
+  // 3. Close any open day panel
+  setSelectedDay(null);
+}
 
       /* -------------------------
          AUTO-ASSIGN HELPERS
@@ -598,85 +639,108 @@ const CalendarTab = (
         </div>
       );
     })()}
+{/* DAY DETAILS PANEL */}
+{selectedDay && (
+  <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+    <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
 
-    {/* DAY DETAILS PANEL (unchanged) */}
-    {selectedDay && (
-      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
-        <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">
+          {selectedDay.date.toDateString()}
+        </h2>
 
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              {selectedDay.date.toDateString()}
-            </h2>
+        <button
+          onClick={closeDayDetails}
+          className="text-sm text-[#8E8E93]"
+        >
+          Close
+        </button>
+      </div>
+
+      {/* WORKOUT PREVIEW */}
+      {(() => {
+        const weekday = selectedDay.weekday;
+        const routine = weeklyPlan[weekday];
+
+        if (!routine) {
+          return (
+            <p className="text-sm text-[#8E8E93] mb-4">
+              No gym routine
+            </p>
+          );
+        }
+
+        return (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-2">Workout</h3>
+
+            <div className="bg-[#2C2C2E] p-4 rounded-xl soft-border mb-3">
+              <p className="font-semibold mb-1">{routine.name}</p>
+
+              <ul className="text-sm text-[#E5E5EA] space-y-1">
+                {routine.exercises.map((ex, i) => (
+                  <li key={i}>
+                    {ex.name} — {ex.sets}×{ex.reps}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* ⭐ DELETE WORKOUT BUTTON GOES HERE */}
+            <button
+              onClick={() => deleteGymRoutine(routine.name)}
+              className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
+            >
+              Delete Workout
+            </button>
 
             <button
-              onClick={closeDayDetails}
-              className="text-sm text-[#8E8E93]"
+              onClick={() => startWorkout(routine)}
+              className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
             >
-              Close
+              Start Today’s Workout
             </button>
           </div>
+        );
+      })()}
 
-          {/* WORKOUT PREVIEW */}
-          {(() => {
-            const weekday = selectedDay.weekday;
-            const routine = weeklyPlan[weekday];
+      {/* RUN PREVIEW */}
+      {(() => {
+        const weekday = selectedDay.weekday;
+        const routine = runPlan[weekday];
 
-            if (!routine)
-              return <p className="text-sm text-[#8E8E93] mb-4">No gym routine</p>;
+        if (!routine) {
+          return (
+            <p className="text-sm text-[#8E8E93] mb-4">
+              No running routine
+            </p>
+          );
+        }
 
-            return (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">Workout</h3>
+        return (
+          <div className="mb-4">
+            <p className="text-blue-400 text-sm font-semibold mb-1">
+              Run: {routine.type}
+            </p>
+            <p className="text-sm text-[#8E8E93]">
+              {routine.distance} km — {routine.pace}
+            </p>
 
-                <div className="bg-[#2C2C2E] p-4 rounded-xl soft-border mb-3">
-                  <p className="font-semibold mb-1">{routine.name}</p>
+            {/* ⭐ DELETE RUN BUTTON GOES HERE */}
+            <button
+              onClick={() => deleteRunRoutine(routine.type)}
+              className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
+            >
+              Delete Run
+            </button>
+          </div>
+        );
+      })()}
 
-                  <ul className="text-sm text-[#E5E5EA] space-y-1">
-                    {routine.exercises.map((ex, i) => (
-                      <li key={i}>
-                        {ex.name} — {ex.sets}×{ex.reps}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button
-                  onClick={() => startWorkout(routine)}
-                  className="w-full bg-white text-black rounded-xl py-3 font-semibold"
-                >
-                  Start Today’s Workout
-                </button>
-              </div>
-            );
-          })()}
-
-          {/* RUN PREVIEW */}
-          {(() => {
-            const weekday = selectedDay.weekday;
-            const routine = runPlan[weekday];
-
-            if (!routine)
-              return <p className="text-sm text-[#8E8E93] mb-4">No running routine</p>;
-
-            return (
-              <div className="mb-4">
-                <p className="text-blue-400 text-sm font-semibold mb-1">
-                  Run: {routine.type}
-                </p>
-                <p className="text-sm text-[#8E8E93]">
-                  {routine.distance} km — {routine.pace}
-                </p>
-              </div>
-            );
-          })()}
-
-        </div>
-      </div>
-    )}
+    </div>
   </div>
-);
-      /* -------------------------
+)}
+       /* -------------------------
          WORKOUT TAB
       -------------------------- */
       const WorkoutTab = activeWorkout && (
