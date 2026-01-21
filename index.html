@@ -593,59 +593,57 @@ const HomeTab = (() => {
   return (
     <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
 
-      {/* -----------------------------------------
-         THIS WEEK — NOW AT THE VERY TOP
-      ------------------------------------------ */}
-      <h2 className="text-lg font-semibold mb-2">This Week</h2>
+     {/* -----------------------------------------
+   HEADER — "Hey {name}" AT THE VERY TOP
+------------------------------------------ */}
+<div className="mb-6 mt-2">
+  <h1 className="text-3xl font-semibold">
+    Hey{userName ? ` ${userName}` : ""}
+  </h1>
+</div>
 
-      <div className="flex justify-between mb-6">
-        {weekDaysWithDates.map(({ label, date }) => {
-          const weekday = label;
-          const gym = weeklyPlan[weekday];
-          const run = runPlan[weekday];
+{/* -----------------------------------------
+   WEEKDAY STRIP — NO "THIS WEEK" TITLE
+------------------------------------------ */}
+<div className="flex justify-between mb-6">
+  {weekDaysWithDates.map(({ label, date }) => {
+    const weekday = label;
+    const gym = weeklyPlan[weekday];
+    const run = runPlan[weekday];
 
-          const isToday = isSameDay(date, todayDate);
+    const isToday = isSameDay(date, todayDate);
 
-          let dotColor = null;
-          if (gym && run) dotColor = "bg-white";
-          else if (gym) dotColor = "bg-green-400";
-          else if (run) dotColor = "bg-blue-400";
+    let dotColor = null;
+    if (gym && run) dotColor = "bg-white";
+    else if (gym) dotColor = "bg-green-400";
+    else if (run) dotColor = "bg-blue-400";
 
-          return (
-            <button
-              key={weekday}
-              onClick={() => openDayDetails({ weekday, date })}
-              className={`
-                w-12 p-3
-                rounded-3xl soft-border
-                bg-[#1C1C1E]
-                flex flex-col items-center
-                transition-all
-                ${isToday ? "border border-red-500" : ""}
-              `}
-            >
-              <p className="text-base font-semibold leading-none">
-                {date.getDate()}
-              </p>
-              <p className="text-xs text-[#8E8E93] leading-none mt-1">
-                {weekday.slice(0, 2)}
-              </p>
-              {dotColor && (
-                <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`}></div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* -----------------------------------------
-         HEADER — "Hey {name}"
-      ------------------------------------------ */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-semibold">
-          Hey{userName ? ` ${userName}` : ""}
-        </h1>
-      </div>
+    return (
+      <button
+        key={weekday}
+        onClick={() => openDayDetails({ weekday, date })}
+        className={`
+          w-12 p-3
+          rounded-3xl soft-border
+          bg-[#1C1C1E]
+          flex flex-col items-center
+          transition-all
+          ${isToday ? "border border-red-500" : ""}
+        `}
+      >
+        <p className="text-base font-semibold leading-none">
+          {date.getDate()}
+        </p>
+        <p className="text-xs text-[#8E8E93] leading-none mt-1">
+          {weekday.slice(0, 2)}
+        </p>
+        {dotColor && (
+          <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`}></div>
+        )}
+      </button>
+    );
+  })}
+</div>
 
       {/* -----------------------------------------
          PROGRESS RINGS + STREAK
