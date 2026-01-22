@@ -1306,6 +1306,24 @@
             </div>
           );
 
+        const ModalWrapper = ({ children, onClose }) => (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+          <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+            <div className="flex justify-end mb-4">
+              <button
+                onClick={onClose}
+                className="text-sm text-[#8E8E93]"
+              >
+                Close
+              </button>
+            </div>
+            {children}
+          </div>
+        </div>
+      );  
+
+        
+        /* ---------------- gym CREATOR MODAL ---------------- */      
         const GymCreatorModal = () => (
         <ModalWrapper onClose={() => setShowGymCreator(false)}>
           <h2 className="text-xl font-semibold mb-4">New Workout</h2>
