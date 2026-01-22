@@ -1531,11 +1531,11 @@
               </div>
             </div>
 
-            {/* Modals */}
-            {RunCreatorModal}
-            {showGymCreator && GymCreatorModal}
-            {showCreateChooser && CreateChooserModal}
-            {showDaySheet && DaySheet}
+          {/* Modals */}
+          {showRunCreator && <RunCreatorModal />}
+          {showGymCreator && <GymCreatorModal />}
+          {showCreateChooser && <CreateChooserModal />}
+          {showDaySheet && <DaySheet />}
           </div>
         );
       }
