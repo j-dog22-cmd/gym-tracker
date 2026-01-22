@@ -199,11 +199,11 @@
         }
 
         // -------- RUN LOGIC --------
-        function saveNewRunRoutine() {
+            function saveNewRunRoutine() {
           if (!newRunName) return;
-
+        
           const weekday = todayWeekday;
-
+        
           setRunPlan((prev) => ({
             ...prev,
             [weekday]: {
@@ -212,19 +212,19 @@
               color: RUN_COLORS[newRunCategory],
               distance: newRunDistance ? Number(newRunDistance) : null,
               pace: newRunPace || null,
+              date: new Date().toISOString()   // ⭐ REQUIRED FOR CHARTS
             },
           }));
-
+        
           setNewRunName("");
           setNewRunCategory("Easy");
           setNewRunDistance("");
           setNewRunPace("");
           setShowRunCreator(false);
         }
-
-        function saveNewRunRoutineToDay(day) {
+              function saveNewRunRoutineToDay(day) {
           if (!newRunName) return;
-
+        
           setRunPlan((prev) => ({
             ...prev,
             [day]: {
@@ -233,16 +233,16 @@
               color: RUN_COLORS[newRunCategory],
               distance: newRunDistance ? Number(newRunDistance) : null,
               pace: newRunPace || null,
+              date: new Date().toISOString()   // ⭐ REQUIRED FOR CHARTS
             },
           }));
-
+        
           setNewRunName("");
           setNewRunCategory("Easy");
           setNewRunDistance("");
           setNewRunPace("");
           setShowRunCreator(false);
         }
-
         function deleteRunRoutine(name) {
           const updated = { ...runPlan };
           for (const day of WEEK_DAYS) {
@@ -491,7 +491,44 @@
             </ModalWrapper>
           );
         };
+        
+    const LineChart = ({ data, label }) => {
+      const max = Math.max(...data, 1);
+      const points = data
+        .map((v, i) => {
+          const x = (i / (data.length - 1)) * 300;
+          const y = 100 - (v / max) * 100;
+          return `${x},${y}`;
+        })
+        .join(" ");
+    
+      return (
+        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-4">
+          <p className="text-xs text-[#8E8E93] mb-2">{label}</p>
+          <svg width="300" height="100">
+            <polyline
+              fill="none"
+              stroke="white"
+              strokeWidth="2"
+              points={points}
+            />
+          </svg>
+        </div>
+      );
+    };
+        function getMonthlyCounts(plan) {
+  const counts = Array(12).fill(0);
 
+  for (const day of WEEK_DAYS) {
+    const entry = plan[day];
+    if (entry && entry.date) {
+      const month = new Date(entry.date).getMonth();
+      counts[month]++;
+    }
+  }
+
+  return counts;
+}
         // -------- TABS --------
         const HomeTab = () => {
           const weekDates = [];
