@@ -140,63 +140,309 @@
         tomorrow.setDate(today.getDate() + 1);
         const tomorrowWeekday = getWeekdayFromDate(tomorrow);
 
-        // -------- WORKOUT LOGIC --------
-        function addTempExercise() {
-          if (!newExerciseName || !newExerciseSets || !newExerciseReps) return;
-          setTempExercises((prev) => [
-            ...prev,
-            {
-              name: newExerciseName,
-              sets: Number(newExerciseSets),
-              reps: Number(newExerciseReps),
-            },
-          ]);
-          setNewExerciseName("");
-          setNewExerciseSets("");
-          setNewExerciseReps("");
-        }
-
-        function saveNewRoutine() {
-          if (!newRoutineName || tempExercises.length === 0) return;
-
-          const weekday = todayWeekday;
-
-          setGymPlan((prev) => ({
-            ...prev,
-            [weekday]: {
-              name: newRoutineName,
-              exercises: tempExercises,
-            },
-          }));
-
-          setNewRoutineName("");
-          setTempExercises([]);
-          setShowGymCreator(false);
-        }
-
-        function saveNewRoutineToDay(day) {
-          if (!newRoutineName || tempExercises.length === 0) return;
-          setGymPlan((prev) => ({
-            ...prev,
-            [day]: {
-              name: newRoutineName,
-              exercises: tempExercises,
-            },
-          }));
-          setNewRoutineName("");
-          setTempExercises([]);
-          setShowGymCreator(false);
-        }
-
-        function deleteGymRoutine(name) {
-          const updated = { ...gymPlan };
-          for (const day of WEEK_DAYS) {
-            if (updated[day] && updated[day].name === name) {
-              delete updated[day];
-            }
+                  // ---------------- COMPLETION TRACKING ----------------
+          
+          // Stores completed gym/run sessions by date:
+          // completed = {
+          //   "2026-01-14": { gym: true, run: true },
+          //   "2026-01-15": { gym: true }
+          // }
+          const [completed, setCompleted] = React.useState(load("completed", {}));
+          
+          // Save completions to localStorage
+          React.useEffect(() => save("completed", completed), [completed]);
+          
+          // Convert a Date → "YYYY-MM-DD"
+          function dateKey(date) {
+            return date.toISOString().split("T")[0];
           }
-          setGymPlan(updated);
+          
+          // Mark gym completed for a specific date
+          function markGymCompleted(date) {
+            const key = dateKey(date);
+            setCompleted(prev => ({
+              ...prev,
+              [key]: { ...prev[key], gym: true }
+            }));
+          }
+          
+          // Mark run completed for a specific date
+          function markRunCompleted(date) {
+            const key = dateKey(date);
+            setCompleted(prev => ({
+              ...prev,
+              [key]: { ...prev[key], run: true }
+            }));
+          }
+          
+          // Check if gym/run completed for a date
+          function isGymCompleted(date) {
+            const key = dateKey(date);
+            return completed[key]?.gym === true;
+          }
+          
+          function isRunCompleted(date) {
+            const key = dateKey(date);
+            return completed[key]?.run === true;
+          }
+          
+          // ---------------- CALENDAR HELPERS ----------------
+          
+          // Monday-start calendar
+          function getMonthMatrix(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+          
+            // JS: 0=Sun, 1=Mon... convert to Monday-start
+            let start = firstDay.getDay();
+            if (start === 0) start = 6;
+            else start -= 1;
+          
+            const matrix = [];
+            let week = [];
+          
+            // Leading blanks
+            for (let i = 0; i < start; i++) week.push(null);
+          
+            // Fill days
+            for (let d = 1; d <= daysInMonth; d++) {
+              week.push(new Date(year, month, d));
+              if (week.length === 7) {
+                matrix.push(week);
+                week = [];
+              }
+            }
+          
+            // Trailing blanks
+            if (week.length > 0) {
+              while (week.length < 7) week.push(null);
+              matrix.push(week);
+            }
+          
+            return matrix;
+          }
+          
+          // ---------------- CHART DATA HELPERS ----------------
+          
+          // Count completed runs per week of selected month
+          function getWeeklyRunCounts(year, month) {
+            const matrix = getMonthMatrix(year, month);
+            return matrix.map(week =>
+              week.filter(d => d && isRunCompleted(d)).length
+            );
+          }
+          
+          // Count completed gym workouts per month of the year
+          function getMonthlyGymCounts(year) {
+            const counts = Array(12).fill(0);
+          
+            Object.keys(completed).forEach(key => {
+              const d = new Date(key);
+              if (completed[key].gym) {
+                counts[d.getMonth()]++;
+              }
+            });
+          
+            return counts;
+          }
+            // ---------------- SWIPEABLE CALENDAR COMPONENT ----------------
+    
+    const Calendar = ({
+      selectedDate,
+      setSelectedDate,
+      currentYear,
+      currentMonth,
+      setCurrentYear,
+      setCurrentMonth
+    }) => {
+      const matrix = getMonthMatrix(currentYear, currentMonth);
+      const today = new Date();
+    
+      // Swipe handling
+      const touchStart = React.useRef(null);
+    
+      function onTouchStart(e) {
+        touchStart.current = e.touches[0].clientX;
+      }
+    
+      function onTouchEnd(e) {
+        if (touchStart.current === null) return;
+        const diff = e.changedTouches[0].clientX - touchStart.current;
+    
+        if (diff > 50) prevMonth();
+        if (diff < -50) nextMonth();
+    
+        touchStart.current = null;
+      }
+    
+      function prevMonth() {
+        if (currentMonth === 0) {
+          setCurrentMonth(11);
+          setCurrentYear(currentYear - 1);
+        } else {
+          setCurrentMonth(currentMonth - 1);
         }
+      }
+    
+      function nextMonth() {
+        if (currentMonth === 11) {
+          setCurrentMonth(0);
+          setCurrentYear(currentYear + 1);
+        } else {
+          setCurrentMonth(currentMonth + 1);
+        }
+      }
+    
+      function isToday(date) {
+        return (
+          date &&
+          date.getFullYear() === today.getFullYear() &&
+          date.getMonth() === today.getMonth() &&
+          date.getDate() === today.getDate()
+        );
+      }
+    
+      function isSelected(date) {
+        return (
+          date &&
+          selectedDate &&
+          date.getFullYear() === selectedDate.getFullYear() &&
+          date.getMonth() === selectedDate.getMonth() &&
+          date.getDate() === selectedDate.getDate()
+        );
+      }
+    
+      return (
+        <div
+          className="w-full select-none"
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          {/* Month Header */}
+          <div className="flex items-center justify-between px-4 mb-4">
+            <button onClick={prevMonth} className="text-xl">‹</button>
+            <h2 className="text-lg font-semibold">
+              {new Date(currentYear, currentMonth).toLocaleString("default", {
+                month: "long",
+                year: "numeric"
+              })}
+            </h2>
+            <button onClick={nextMonth} className="text-xl">›</button>
+          </div>
+    
+          {/* Weekday Labels */}
+          <div className="grid grid-cols-7 text-center text-xs text-[#8E8E93] mb-2">
+            <div>Mon</div>
+            <div>Tue</div>
+            <div>Wed</div>
+            <div>Thu</div>
+            <div>Fri</div>
+            <div>Sat</div>
+            <div>Sun</div>
+          </div>
+    
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1 px-2">
+            {matrix.map((week, wi) =>
+              week.map((date, di) => {
+                if (!date) {
+                  return (
+                    <div
+                      key={`${wi}-${di}`}
+                      className="h-10 flex items-center justify-center text-[#3A3A3C]"
+                    >
+                      {/* blank */}
+                    </div>
+                  );
+                }
+    
+                const completedGym = isGymCompleted(date);
+                const completedRun = isRunCompleted(date);
+    
+                return (
+                  <div
+                    key={`${wi}-${di}`}
+                    onClick={() => setSelectedDate(date)}
+                    className={`
+                      h-10 flex flex-col items-center justify-center rounded-lg cursor-pointer
+                      ${isSelected(date) ? "bg-white text-black" : ""}
+                      ${!isSelected(date) && isToday(date) ? "border border-white/40" : ""}
+                    `}
+                  >
+                    <span className="text-sm">
+                      {date.getDate()}
+                    </span>
+    
+                    {/* Completion Dot */}
+                    {(completedGym || completedRun) && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white mt-0.5"></div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      );
+    };
+            // -------- WORKOUT LOGIC --------
+            function addTempExercise() {
+              if (!newExerciseName || !newExerciseSets || !newExerciseReps) return;
+              setTempExercises((prev) => [
+                ...prev,
+                {
+                  name: newExerciseName,
+                  sets: Number(newExerciseSets),
+                  reps: Number(newExerciseReps),
+                },
+              ]);
+              setNewExerciseName("");
+              setNewExerciseSets("");
+              setNewExerciseReps("");
+            }
+    
+            function saveNewRoutine() {
+              if (!newRoutineName || tempExercises.length === 0) return;
+    
+              const weekday = todayWeekday;
+    
+              setGymPlan((prev) => ({
+                ...prev,
+                [weekday]: {
+                  name: newRoutineName,
+                  exercises: tempExercises,
+                },
+              }));
+    
+              setNewRoutineName("");
+              setTempExercises([]);
+              setShowGymCreator(false);
+            }
+    
+            function saveNewRoutineToDay(day) {
+              if (!newRoutineName || tempExercises.length === 0) return;
+              setGymPlan((prev) => ({
+                ...prev,
+                [day]: {
+                  name: newRoutineName,
+                  exercises: tempExercises,
+                },
+              }));
+              setNewRoutineName("");
+              setTempExercises([]);
+              setShowGymCreator(false);
+            }
+    
+            function deleteGymRoutine(name) {
+              const updated = { ...gymPlan };
+              for (const day of WEEK_DAYS) {
+                if (updated[day] && updated[day].name === name) {
+                  delete updated[day];
+                }
+              }
+              setGymPlan(updated);
+            }
 
         // -------- RUN LOGIC --------
             function saveNewRunRoutine() {
@@ -430,92 +676,154 @@
           </ModalWrapper>
         );
 
-        const DaySheet = () => {
-          const weekday = getWeekdayFromDate(selectedDate);
-          const gym = gymPlan[weekday];
-          const run = runPlan[weekday];
+        // ---------------- DAY SHEET (UPDATED WITH COMPLETION) ----------------
 
-          return (
-            <ModalWrapper onClose={() => setShowDaySheet(false)}>
-              <h2 className="text-xl font-semibold mb-4">
-                {weekday}
-              </h2>
+const DaySheet = ({
+  selectedDate,
+  setSelectedDate,
+  gymPlan,
+  runPlan,
+  markGymCompleted,
+  markRunCompleted,
+  isGymCompleted,
+  isRunCompleted
+}) => {
+  if (!selectedDate) return null;
 
-              <div className="space-y-4">
-                <div className="bg-[#2C2C2E] soft-border rounded-xl p-4">
-                  <p className="text-sm text-[#8E8E93] mb-1">Gym</p>
-                  {gym ? (
-                    <div>
-                      <p className="font-semibold mb-1">{gym.name}</p>
-                      <ul className="text-sm space-y-1">
-                        {gym.exercises.map((ex, i) => (
-                          <li key={i}>
-                            {ex.name} — {ex.sets}×{ex.reps}
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        onClick={() => deleteGymRoutine(gym.name)}
-                        className="mt-2 text-xs text-red-400"
-                      >
-                        Delete workout
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[#8E8E93]">No workout planned.</p>
-                  )}
-                </div>
+  const weekday = WEEK_DAYS[selectedDate.getDay() === 0 ? 6 : selectedDate.getDay() - 1];
+  const gym = gymPlan[weekday];
+  const run = runPlan[weekday];
 
-                <div className="bg-[#2C2C2E] soft-border rounded-xl p-4">
-                  <p className="text-sm text-[#8E8E93] mb-1">Run</p>
-                  {run ? (
-                    <div>
-                      <p className="font-semibold mb-1">{run.name}</p>
-                      <p className="text-sm">
-                        {run.category}{" "}
-                        {run.distance ? `• ${run.distance} km` : ""}{" "}
-                        {run.pace ? `• ${run.pace} min/km` : ""}
-                      </p>
-                      <button
-                        onClick={() => deleteRunRoutine(run.name)}
-                        className="mt-2 text-xs text-red-400"
-                      >
-                        Delete run
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-[#8E8E93]">No run planned.</p>
-                  )}
-                </div>
-              </div>
-            </ModalWrapper>
-          );
-        };
-        
-    const LineChart = ({ data, label }) => {
-      const max = Math.max(...data, 1);
-      const points = data
-        .map((v, i) => {
-          const x = (i / (data.length - 1)) * 300;
-          const y = 100 - (v / max) * 100;
-          return `${x},${y}`;
-        })
-        .join(" ");
-    
-      return (
-        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-4">
-          <p className="text-xs text-[#8E8E93] mb-2">{label}</p>
-          <svg width="300" height="100">
-            <polyline
-              fill="none"
-              stroke="white"
-              strokeWidth="2"
-              points={points}
-            />
-          </svg>
+  const gymDone = isGymCompleted(selectedDate);
+  const runDone = isRunCompleted(selectedDate);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
+      <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 pb-10">
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">
+            {selectedDate.toLocaleDateString("default", {
+              weekday: "long",
+              month: "long",
+              day: "numeric"
+            })}
+          </h2>
+          <button
+            onClick={() => setSelectedDate(null)}
+            className="text-lg"
+          >
+            ✕
+          </button>
         </div>
-      );
-    };
+
+        {/* GYM SECTION */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Gym</h3>
+
+          {gym ? (
+            <div className="bg-[#2C2C2E] rounded-xl p-4">
+              <p className="font-medium mb-2">{gym.name}</p>
+
+              {gym.exercises.map((ex, i) => (
+                <div key={i} className="text-sm text-[#8E8E93]">
+                  {ex.name} — {ex.sets}×{ex.reps}
+                </div>
+              ))}
+
+              {/* Completion Button */}
+              {!gymDone ? (
+                <button
+                  onClick={() => markGymCompleted(selectedDate)}
+                  className="mt-4 w-full bg-white text-black py-2 rounded-xl font-semibold"
+                >
+                  Mark Workout Completed
+                </button>
+              ) : (
+                <div className="mt-4 text-green-400 font-semibold">
+                  ✓ Completed
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-[#8E8E93]">No gym routine planned.</p>
+          )}
+        </div>
+
+        {/* RUN SECTION */}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-2">Run</h3>
+
+          {run ? (
+            <div className="bg-[#2C2C2E] rounded-xl p-4">
+              <p className="font-medium mb-2">{run.name}</p>
+
+              <div className="text-sm text-[#8E8E93]">
+                Category: {run.category}
+              </div>
+
+              {run.distance && (
+                <div className="text-sm text-[#8E8E93]">
+                  Distance: {run.distance} km
+                </div>
+              )}
+
+              {run.pace && (
+                <div className="text-sm text-[#8E8E93]">
+                  Pace: {run.pace}
+                </div>
+              )}
+
+              {/* Completion Button */}
+              {!runDone ? (
+                <button
+                  onClick={() => markRunCompleted(selectedDate)}
+                  className="mt-4 w-full bg-white text-black py-2 rounded-xl font-semibold"
+                >
+                  Mark Run Completed
+                </button>
+              ) : (
+                <div className="mt-4 text-green-400 font-semibold">
+                  ✓ Completed
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-[#8E8E93]">No run planned.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+    // ---------------- LINE CHART COMPONENT ----------------
+
+const LineChart = ({ data, label }) => {
+  const max = Math.max(...data, 1);
+
+  const points = data
+    .map((v, i) => {
+      const x = (i / (data.length - 1)) * 300;
+      const y = 100 - (v / max) * 100;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  return (
+    <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-6">
+      <p className="text-xs text-[#8E8E93] mb-2">{label}</p>
+      <svg width="300" height="100">
+        <polyline
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          points={points}
+        />
+      </svg>
+    </div>
+  );
+};
         function getMonthlyCounts(plan) {
   const counts = Array(12).fill(0);
 
@@ -657,13 +965,64 @@
           );
         };
 
-        const CalendarTab = () => (
-          <div className="w-full h-full flex items-center justify-center">
-            <p className="text-sm text-[#8E8E93]">
-              Calendar view coming soon.
-            </p>
-          </div>
-        );
+      // ---------------- CALENDAR TAB (FINAL VERSION) ----------------
+
+const CalendarTab = ({
+  selectedDate,
+  setSelectedDate,
+  gymPlan,
+  runPlan,
+  markGymCompleted,
+  markRunCompleted,
+  isGymCompleted,
+  isRunCompleted
+}) => {
+  const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = React.useState(new Date().getMonth());
+
+  const weeklyRunData = getWeeklyRunCounts(currentYear, currentMonth);
+  const monthlyGymData = getMonthlyGymCounts(currentYear);
+
+  return (
+    <div className="w-full h-full px-4 pt-10 pb-24 overflow-y-auto">
+
+      {/* Calendar */}
+      <Calendar
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        currentYear={currentYear}
+        currentMonth={currentMonth}
+        setCurrentYear={setCurrentYear}
+        setCurrentMonth={setCurrentMonth}
+      />
+
+      {/* Charts */}
+      <div className="mt-8">
+        <LineChart
+          data={weeklyRunData}
+          label="Runs Completed Per Week"
+        />
+
+        <LineChart
+          data={monthlyGymData}
+          label="Gym Workouts Completed Per Month"
+        />
+      </div>
+
+      {/* DaySheet */}
+      <DaySheet
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        gymPlan={gymPlan}
+        runPlan={runPlan}
+        markGymCompleted={markGymCompleted}
+        markRunCompleted={markRunCompleted}
+        isGymCompleted={isGymCompleted}
+        isRunCompleted={isRunCompleted}
+      />
+    </div>
+  );
+};
 
         const SettingsPage = () => {
           function resetAll() {
