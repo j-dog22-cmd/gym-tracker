@@ -8,6 +8,11 @@
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- React + Babel -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
   <!-- Fonts -->
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
@@ -40,15 +45,15 @@
   <div id="root"></div>
 
   <script type="text/babel">
-  /* -------------------------------------------
+
+/* -------------------------------------------
    GLOBAL HELPERS & UTILITIES
 -------------------------------------------- */
 
 const WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function getWeekdayIndex(date) {
-  // Monday = 0 ... Sunday = 6
-  const js = date.getDay(); // Sunday = 0
+  const js = date.getDay();
   return (js + 6) % 7;
 }
 
@@ -69,7 +74,6 @@ function getEndOfMonth(date) {
 }
 
 function getWeekOfMonth(dayNumber) {
-  // Week 1 = days 1–7, Week 2 = 8–14, etc.
   return Math.ceil(dayNumber / 7);
 }
 
@@ -126,11 +130,13 @@ function ProgressRing({ size = 80, progress = 0, color = "#22c55e" }) {
     </svg>
   );
 }
+
 /* -------------------------------------------
-   APP COMPONENT — STATE & CORE LOGIC
+   APP COMPONENT — FULL + COMPLETE
 -------------------------------------------- */
 
 function App() {
+
   /* -------------------------------------------
      STATE: WORKOUTS, RUNS, SETTINGS
   -------------------------------------------- */
@@ -159,13 +165,8 @@ function App() {
     })
   );
 
-  const [workoutLogs, setWorkoutLogs] = React.useState(
-    load("workoutLogs", [])
-  );
-
-  const [runLogs, setRunLogs] = React.useState(
-    load("runLogs", [])
-  );
+  const [workoutLogs, setWorkoutLogs] = React.useState(load("workoutLogs", []));
+  const [runLogs, setRunLogs] = React.useState(load("runLogs", []));
 
   const [settings, setSettings] = React.useState(
     load("settings", {
@@ -226,7 +227,7 @@ function App() {
   );
 
   /* -------------------------------------------
-     SAVE TO LOCAL STORAGE ON CHANGE
+     SAVE TO LOCAL STORAGE
   -------------------------------------------- */
 
   React.useEffect(() => save("weeklyPlan", weeklyPlan), [weeklyPlan]);
@@ -268,11 +269,9 @@ function App() {
       exercises: tempExercises,
     };
 
-    // Save to library (logs are separate)
     const updated = { ...weeklyPlan };
     setWeeklyPlan(updated);
 
-    // Reset modal
     setNewRoutineName("");
     setTempExercises([]);
     setShowGymCreator(false);
@@ -309,7 +308,7 @@ function App() {
       pace: newRunPace,
     };
 
-    setRunPlan({ ...runPlan, Monday: runPlan.Monday }); // placeholder
+    setRunPlan({ ...runPlan, Monday: runPlan.Monday });
 
     setNewRunType("");
     setNewRunDistance("");
@@ -346,7 +345,6 @@ function App() {
     const updated = { ...activeWorkout };
     updated.completed[exIndex][setIndex] = true;
 
-    // Start rest timer
     updated.resting = true;
     updated.restTime = 60;
 
@@ -431,963 +429,846 @@ function App() {
     localStorage.clear();
     window.location.reload();
   }
-/* -------------------------------------------
-   HOME TAB (UPDATED)
--------------------------------------------- */
 
-const HomeTab = (() => {
-  const todayDate = new Date();
-  const todayWeekday = WEEK_DAYS[getWeekdayIndex(todayDate)];
-  const todayNumber = todayDate.getDate();
+  /* -------------------------------------------
+     HOME TAB
+  -------------------------------------------- */
 
-  // Affirmations (only if enabled)
-  const affirmations = [
-    "Small steps add up.",
-    "Stay consistent.",
-    "You’re building momentum.",
-    "Show up for yourself.",
-    "Progress feels good.",
-  ];
-  const affirmationIndex = todayNumber % affirmations.length;
+  const HomeTab = (() => {
+    const todayDate = new Date();
+    const todayWeekday = WEEK_DAYS[getWeekdayIndex(todayDate)];
+    const todayNumber = todayDate.getDate();
 
-  // Start of this week (Mon–Sun)
-  const startOfWeek = (() => {
-    const d = new Date(todayDate);
-    const offset = getWeekdayIndex(d);
-    d.setDate(d.getDate() - offset);
-    return d;
-  })();
+    const affirmations = [
+      "Small steps add up.",
+      "Stay consistent.",
+      "You’re building momentum.",
+      "Show up for yourself.",
+      "Progress feels good.",
+    ];
+    const affirmationIndex = todayNumber % affirmations.length;
 
-  const weekDaysWithDates = WEEK_DAYS.map((day, idx) => {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + idx);
-    return { label: day, date: d };
-  });
+    const startOfWeek = (() => {
+      const d = new Date(todayDate);
+      const offset = getWeekdayIndex(d);
+      d.setDate(d.getDate() - offset);
+      return d;
+    })();
 
-  // Weekly progress
-  const completedWorkoutsThisWeek = workoutLogs.filter((log) => {
-    const d = new Date(log.date);
+    const weekDaysWithDates = WEEK_DAYS.map((day, idx) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + idx);
+      return { label: day, date: d };
+    });
+
+    const completedWorkoutsThisWeek = workoutLogs.filter((log) => {
+      const d = new Date(log.date);
+      return (
+        d >= startOfWeek &&
+        d <= new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + 6)
+      );
+    }).length;
+
+    const runCompletedThisWeek = runLogs.filter((log) => {
+      const d = new Date(log.date);
+      return (
+        d >= startOfWeek &&
+        d <= new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + 6)
+      );
+    }).length;
+
+    const WEEKLY_GYM_GOAL = 4;
+    const WEEKLY_RUN_GOAL = 3;
+
+    const gymProgress = Math.min(completedWorkoutsThisWeek / WEEKLY_GYM_GOAL, 1);
+    const runProgress = Math.min(runCompletedThisWeek / WEEKLY_RUN_GOAL, 1);
+
+    const startOfMonth = getStartOfMonth(todayDate);
+    const endOfMonth = getEndOfMonth(todayDate);
+
+    const workoutsThisMonth = workoutLogs.filter((log) => {
+      const d = new Date(log.date);
+      return d >= startOfMonth && d <= endOfMonth;
+    }).length;
+
+    const MONTHLY_WORKOUT_GOAL = 16;
+    const monthlyProgress = Math.min(workoutsThisMonth / MONTHLY_WORKOUT_GOAL, 1);
+
     return (
-      d >= startOfWeek &&
-      d <= new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + 6)
-    );
-  }).length;
+      <div className="w-full min-h-screen overflow-y-auto bg-black pb-40 px-4 pt-6">
 
-  const runCompletedThisWeek = runLogs.filter((log) => {
-    const d = new Date(log.date);
-    return (
-      d >= startOfWeek &&
-      d <= new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate() + 6)
-    );
-  }).length;
-
-  const WEEKLY_GYM_GOAL = 4;
-  const WEEKLY_RUN_GOAL = 3;
-
-  const gymProgress = Math.min(completedWorkoutsThisWeek / WEEKLY_GYM_GOAL, 1);
-  const runProgress = Math.min(runCompletedThisWeek / WEEKLY_RUN_GOAL, 1);
-
-  // Monthly goal
-  const startOfMonth = getStartOfMonth(todayDate);
-  const endOfMonth = getEndOfMonth(todayDate);
-
-  const workoutsThisMonth = workoutLogs.filter((log) => {
-    const d = new Date(log.date);
-    return d >= startOfMonth && d <= endOfMonth;
-  }).length;
-
-  const MONTHLY_WORKOUT_GOAL = 16;
-  const monthlyProgress = Math.min(workoutsThisMonth / MONTHLY_WORKOUT_GOAL, 1);
-
-  return (
-    <div className="w-full min-h-screen overflow-y-auto bg-black pb-40 px-4 pt-6">
-
-      {/* MOTIVATIONAL HEADER */}
-      {settings.showAffirmations && (
-        <div className="mb-4">
-          <p className="text-xs text-[#8E8E93] mb-1">
-            {affirmations[affirmationIndex]}
-          </p>
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-2xl font-semibold leading-tight">Today</h1>
-            <span className="text-sm text-[#8E8E93]">
-              {todayWeekday}, {todayNumber}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* WEEK STRIP */}
-      <h2 className="text-lg font-semibold mb-2">This Week</h2>
-
-      <div className="flex justify-between mb-4">
-        {weekDaysWithDates.map(({ label, date }) => {
-          const weekday = label;
-          const gym = weeklyPlan[weekday];
-          const run = runPlan[weekday];
-          const isToday = isSameDay(date, todayDate);
-
-          let dotColor = null;
-          if (gym && run) dotColor = "bg-white";
-          else if (gym) dotColor = "bg-green-400";
-          else if (run) dotColor = "bg-blue-400";
-
-          return (
-            <button
-              key={weekday}
-              onClick={() => openDayDetails({ weekday, date })}
-              className={`
-                w-12 p-3 rounded-3xl soft-border bg-[#1C1C1E]
-                flex flex-col items-center transition-all
-                ${isToday ? "border border-red-500" : ""}
-              `}
-            >
-              <p className="text-base font-semibold leading-none">
-                {date.getDate()}
-              </p>
-              <p className="text-xs text-[#8E8E93] leading-none mt-1">
-                {weekday.slice(0, 2)}
-              </p>
-              {dotColor && (
-                <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`} />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* WEEKLY PROGRESS BLOCKS */}
-      {settings.showWeeklyProgress && (
-        <div className="space-y-3 mb-6">
-
-          {/* GYM PROGRESS */}
-          <div className="w-full bg-[#1C1C1E] soft-border rounded-2xl p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold mb-1">Gym Progress</p>
-              <p className="text-xs text-[#8E8E93]">
-                {completedWorkoutsThisWeek}/{WEEKLY_GYM_GOAL} workouts this week
-              </p>
+        {settings.showAffirmations && (
+          <div className="mb-4">
+            <p className="text-xs text-[#8E8E93] mb-1">
+              {affirmations[affirmationIndex]}
+            </p>
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-semibold leading-tight">Today</h1>
+              <span className="text-sm text-[#8E8E93]">
+                {todayWeekday}, {todayNumber}
+              </span>
             </div>
-            <ProgressRing size={80} progress={gymProgress} color="#22c55e" />
           </div>
+        )}
 
-          {/* RUN PROGRESS */}
-          <div className="w-full bg-[#1C1C1E] soft-border rounded-2xl p-4 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold mb-1">Running Progress</p>
-              <p className="text-xs text-[#8E8E93]">
-                {runCompletedThisWeek}/{WEEKLY_RUN_GOAL} runs this week
-              </p>
-            </div>
-            <ProgressRing size={80} progress={runProgress} color="#38bdf8" />
-          </div>
+        <h2 className="text-lg font-semibold mb-2">This Week</h2>
 
-        </div>
-      )}
+        <div className="flex justify-between mb-4">
+          {weekDaysWithDates.map(({ label, date }) => {
+            const weekday = label;
+            const gym = weeklyPlan[weekday];
+            const run = runPlan[weekday];
+            const isToday = isSameDay(date, todayDate);
 
-      {/* TODAY & TOMORROW BOXES */}
-      <h2 className="text-lg font-semibold mb-3">Your Plan</h2>
-
-      <div className="grid grid-cols-2 gap-3 mb-10">
-        {[{ label: "Today", day: todayWeekday },
-          { label: "Tomorrow", day: WEEK_DAYS[(getWeekdayIndex(todayDate) + 1) % 7] }].map(
-          ({ label, day }) => {
-            const gym = weeklyPlan[day];
-            const run = runPlan[day];
-
-            const idx = WEEK_DAYS.indexOf(day);
-            const d = new Date(startOfWeek);
-            d.setDate(startOfWeek.getDate() + idx);
+            let dotColor = null;
+            if (gym && run) dotColor = "bg-white";
+            else if (gym) dotColor = "bg-green-400";
+            else if (run) dotColor = "bg-blue-400";
 
             return (
               <button
-                key={day}
-                onClick={() => openDayDetails({ weekday: day, date: d })}
-                className="bg-[#1C1C1E] p-4 rounded-2xl soft-border text-left"
+                key={weekday}
+                onClick={() => openDayDetails({ weekday, date })}
+                className={`
+                  w-12 p-3 rounded-3xl soft-border bg-[#1C1C1E]
+                  flex flex-col items-center transition-all
+                  ${isToday ? "border border-red-500" : ""}
+                `}
               >
-                <p className="text-xs text-[#8E8E93] mb-1">{label}</p>
-                <p className="text-sm font-semibold mb-2">
-                  {day} {d.getDate()}
+                <p className="text-base font-semibold leading-none">
+                  {date.getDate()}
                 </p>
+                <p className="text-xs text-[#8E8E93] leading-none mt-1">
+                  {weekday.slice(0, 2)}
+                </p>
+                {dotColor && (
+                  <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`} />
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-                {gym ? (
-                  <p className="text-xs text-green-400 mb-1">
-                    🏋️ {gym.name}
+        {settings.showWeeklyProgress && (
+          <div className="space-y-3 mb-6">
+
+            <div className="w-full bg-[#1C1C1E] soft-border rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold mb-1">Gym Progress</p>
+                <p className="text-xs text-[#8E8E93]">
+                  {completedWorkoutsThisWeek}/{WEEKLY_GYM_GOAL} workouts this week
+                </p>
+              </div>
+              <ProgressRing size={80} progress={gymProgress} color="#22c55e" />
+            </div>
+
+            <div className="w-full bg-[#1C1C1E] soft-border rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold mb-1">Running Progress</p>
+                <p className="text-xs text-[#8E8E93]">
+                  {runCompletedThisWeek}/{WEEKLY_RUN_GOAL} runs this week
+                </p>
+              </div>
+              <ProgressRing size={80} progress={runProgress} color="#38bdf8" />
+            </div>
+
+          </div>
+        )}
+
+        <h2 className="text-lg font-semibold mb-3">Your Plan</h2>
+                <div className="grid grid-cols-2 gap-3 mb-10">
+          {[{ label: "Today", day: todayWeekday },
+            { label: "Tomorrow", day: WEEK_DAYS[(getWeekdayIndex(todayDate) + 1) % 7] }
+          ].map(({ label, day }) => {
+            const routine = weeklyPlan[day];
+            const run = runPlan[day];
+
+            return (
+              <div
+                key={label}
+                className="bg-[#1C1C1E] soft-border rounded-2xl p-4"
+              >
+                <p className="text-sm font-semibold mb-1">{label}</p>
+
+                {routine ? (
+                  <p className="text-green-400 text-sm mb-1">
+                    Workout: {routine.name}
                   </p>
                 ) : (
-                  <p className="text-xs text-[#8E8E93] mb-1">
-                    🏋️ No workout
+                  <p className="text-[#8E8E93] text-sm mb-1">
+                    No workout planned
                   </p>
                 )}
 
                 {run ? (
-                  <p className="text-xs text-blue-400">
-                    🏃 {run.type}
+                  <p className="text-blue-400 text-sm">
+                    Run: {run.type} — {run.distance} km
                   </p>
                 ) : (
-                  <p className="text-xs text-[#8E8E93]">
-                    🏃 No run
+                  <p className="text-[#8E8E93] text-sm">
+                    No run planned
                   </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {settings.showMonthlyGoal && (
+          <div className="w-full bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-10">
+            <p className="text-sm font-semibold mb-1">Monthly Goal</p>
+            <p className="text-xs text-[#8E8E93] mb-3">
+              {workoutsThisMonth}/{MONTHLY_WORKOUT_GOAL} workouts this month
+            </p>
+            <ProgressRing size={100} progress={monthlyProgress} color="#facc15" />
+          </div>
+        )}
+
+      </div>
+    );
+  })();
+    /* -------------------------------------------
+     CALENDAR TAB
+  -------------------------------------------- */
+
+  const CalendarTab = (() => {
+    const start = getStartOfMonth(currentMonth);
+    const end = getEndOfMonth(currentMonth);
+
+    const days = [];
+    for (let d = 1; d <= end.getDate(); d++) {
+      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
+      days.push({
+        date,
+        weekday: WEEK_DAYS[getWeekdayIndex(date)],
+        number: d,
+      });
+    }
+
+    function prevMonth() {
+      setCurrentMonth(
+        new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
+      );
+    }
+
+    function nextMonth() {
+      setCurrentMonth(
+        new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+      );
+    }
+
+    const monthName = currentMonth.toLocaleString("default", { month: "long" });
+    const year = currentMonth.getFullYear();
+
+    return (
+      <div className="w-full min-h-screen bg-black px-4 pt-6 pb-40">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={prevMonth} className="text-xl">‹</button>
+          <h1 className="text-xl font-semibold">
+            {monthName} {year}
+          </h1>
+          <button onClick={nextMonth} className="text-xl">›</button>
+        </div>
+
+        {/* WEEKDAY LABELS */}
+        <div className="grid grid-cols-7 mb-2">
+          {["M", "T", "W", "T", "F", "S", "S"].map((d) => (
+            <p key={d} className="text-center text-[#8E8E93] text-xs">
+              {d}
+            </p>
+          ))}
+        </div>
+
+        {/* CALENDAR GRID */}
+        <div className="grid grid-cols-7 gap-2 mb-10">
+          {days.map((dayObj) => {
+            const { date, weekday, number } = dayObj;
+
+            const gym = weeklyPlan[weekday];
+            const run = runPlan[weekday];
+
+            let dotColor = null;
+            if (gym && run) dotColor = "bg-white";
+            else if (gym) dotColor = "bg-green-400";
+            else if (run) dotColor = "bg-blue-400";
+
+            return (
+              <button
+                key={number}
+                onClick={() => openDayDetails(dayObj)}
+                className="w-full aspect-square bg-[#1C1C1E] soft-border rounded-xl flex flex-col items-center justify-center"
+              >
+                <p className="text-sm font-semibold">{number}</p>
+                {dotColor && (
+                  <div className={`w-2 h-2 ${dotColor} rounded-full mt-1`} />
                 )}
               </button>
             );
-          }
-        )}
-      </div>
-
-      {/* MONTHLY GOAL — MOVED TO BOTTOM */}
-      {settings.showMonthlyGoal && (
-        <div className="mb-6 bg-[#1C1C1E] rounded-2xl soft-border p-4">
-          <div className="flex justify-between items-center mb-2">
-            <p className="text-sm font-semibold">Monthly Goal</p>
-            <p className="text-xs text-[#8E8E93]">
-              {workoutsThisMonth}/{MONTHLY_WORKOUT_GOAL} workouts
-            </p>
-          </div>
-
-          <div className="w-full h-2 rounded-full bg-[#2C2C2E] overflow-hidden mb-3">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all"
-              style={{ width: `${monthlyProgress * 100}%` }}
-            />
-          </div>
-
-          <p className="text-xs text-[#8E8E93]">
-            Keep pushing — consistency builds results.
-          </p>
-        </div>
-      )}
-
-    </div>
-  );
-})();
-/* -------------------------------------------
-   CALENDAR TAB (WITH WEEKLY LINE GRAPHS)
--------------------------------------------- */
-
-const CalendarTab = (() => {
-  /* -------------------------------------------
-     SWIPE HANDLERS
-  -------------------------------------------- */
-
-  let touchStartX = 0;
-  let touchEndX = 0;
-
-  function handleTouchStart(e) {
-    touchStartX = e.changedTouches[0].screenX;
-  }
-
-  function handleTouchEnd(e) {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-  }
-
-  function handleSwipe() {
-    const diff = touchEndX - touchStartX;
-    if (Math.abs(diff) < 50) return;
-
-    if (diff < 0) goNextMonth();
-    if (diff > 0) goPrevMonth();
-  }
-
-  function goNextMonth() {
-    const next = new Date(currentMonth);
-    next.setMonth(next.getMonth() + 1);
-    setCurrentMonth(next);
-  }
-
-  function goPrevMonth() {
-    const prev = new Date(currentMonth);
-    prev.setMonth(prev.getMonth() - 1);
-    setCurrentMonth(prev);
-  }
-
-  /* -------------------------------------------
-     CALENDAR GRID GENERATION
-  -------------------------------------------- */
-
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-
-  const days = [];
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const date = new Date(year, month, d);
-    days.push({
-      date,
-      key: `${year}-${month + 1}-${d}`,
-      weekday: WEEK_DAYS[getWeekdayIndex(date)],
-    });
-  }
-
-  const leadingBlanks = getWeekdayIndex(firstDay);
-  const paddedDays = [
-    ...Array(leadingBlanks).fill({ blank: true }),
-    ...days,
-  ];
-
-  /* -------------------------------------------
-     WEEKLY GRAPH DATA (GYM + RUNS)
-  -------------------------------------------- */
-
-  const startOfMonth = new Date(year, month, 1);
-  const endOfMonth = new Date(year, month + 1, 0);
-
-  // Weekly buckets: Week 1–5
-  const gymWeekly = [0, 0, 0, 0, 0];
-  const runWeekly = [0, 0, 0, 0, 0];
-
-  workoutLogs.forEach((log) => {
-    const d = new Date(log.date);
-    if (d >= startOfMonth && d <= endOfMonth) {
-      const week = getWeekOfMonth(d.getDate()) - 1;
-      gymWeekly[week]++;
-    }
-  });
-
-  runLogs.forEach((log) => {
-    const d = new Date(log.date);
-    if (d >= startOfMonth && d <= endOfMonth) {
-      const week = getWeekOfMonth(d.getDate()) - 1;
-      runWeekly[week]++;
-    }
-  });
-
-  /* -------------------------------------------
-     GRAPH COMPONENT (WEEKLY LINE GRAPH)
-  -------------------------------------------- */
-
-  function WeeklyLineGraph({ title, data, color }) {
-    const maxVal = Math.max(...data, 1);
-    const points = data.map((v, i) => {
-      const x = (i / 4) * 100;
-      const y = 100 - (v / maxVal) * 100;
-      return `${x},${y}`;
-    }).join(" ");
-
-    return (
-      <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-4">
-        <p className="text-sm font-semibold mb-2">{title}</p>
-
-        <svg viewBox="0 0 100 100" className="w-full h-24">
-          {/* Line */}
-          <polyline
-            fill="none"
-            stroke={color}
-            strokeWidth="2"
-            points={points}
-            strokeLinecap="round"
-          />
-
-          {/* Dots */}
-          {data.map((v, i) => {
-            const x = (i / 4) * 100;
-            const y = 100 - (v / maxVal) * 100;
-            return (
-              <circle
-                key={i}
-                cx={x}
-                cy={y}
-                r="2.5"
-                fill="white"
-              />
-            );
           })}
-        </svg>
-
-        <div className="flex justify-between text-xs text-[#8E8E93] mt-1">
-          <span>W1</span>
-          <span>W2</span>
-          <span>W3</span>
-          <span>W4</span>
-          <span>W5</span>
         </div>
+
+        {/* GRAPHS */}
+        {settings.showGraphs && (
+          <div className="space-y-6">
+            {/* GYM GRAPH */}
+            <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
+              <p className="text-sm font-semibold mb-2">Gym Activity</p>
+              <p className="text-xs text-[#8E8E93] mb-4">
+                Weekly workouts this month
+              </p>
+
+              <div className="flex items-end gap-2 h-24">
+                {[1, 2, 3, 4].map((week) => {
+                  const count = workoutLogs.filter((log) => {
+                    const d = new Date(log.date);
+                    return (
+                      d.getMonth() === currentMonth.getMonth() &&
+                      getWeekOfMonth(d.getDate()) === week
+                    );
+                  }).length;
+
+                  return (
+                    <div key={week} className="flex-1 flex flex-col items-center">
+                      <div
+                        className="w-full bg-green-500 rounded"
+                        style={{ height: `${count * 20}px` }}
+                      />
+                      <p className="text-xs text-[#8E8E93] mt-1">W{week}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* RUN GRAPH */}
+            <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
+              <p className="text-sm font-semibold mb-2">Running Activity</p>
+              <p className="text-xs text-[#8E8E93] mb-4">
+                Weekly runs this month
+              </p>
+
+              <div className="flex items-end gap-2 h-24">
+                {[1, 2, 3, 4].map((week) => {
+                  const count = runLogs.filter((log) => {
+                    const d = new Date(log.date);
+                    return (
+                      d.getMonth() === currentMonth.getMonth() &&
+                      getWeekOfMonth(d.getDate()) === week
+                    );
+                  }).length;
+
+                  return (
+                    <div key={week} className="flex-1 flex flex-col items-center">
+                      <div
+                        className="w-full bg-blue-500 rounded"
+                        style={{ height: `${count * 20}px` }}
+                      />
+                      <p className="text-xs text-[#8E8E93] mt-1">W{week}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DAY DETAILS MODAL */}
+        {selectedDay && (
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+            <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">
+                  {selectedDay.weekday} {selectedDay.number}
+                </h2>
+                <button onClick={closeDayDetails} className="text-sm text-[#8E8E93]">
+                  Close
+                </button>
+              </div>
+
+              {/* GYM ROUTINE */}
+              {(() => {
+                const weekday = selectedDay.weekday;
+                const routine = weeklyPlan[weekday];
+
+                if (!routine) {
+                  return (
+                    <p className="text-sm text-[#8E8E93] mb-4">
+                      No workout routine
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="mb-4">
+                    <p className="text-green-400 text-sm font-semibold mb-1">
+                      Workout: {routine.name}
+                    </p>
+
+                    <button
+                      onClick={() => deleteGymRoutine(routine.name)}
+                      className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
+                    >
+                      Delete Workout
+                    </button>
+                  </div>
+                );
+              })()}
+
+              {/* RUN ROUTINE */}
+              {(() => {
+                const weekday = selectedDay.weekday;
+                const routine = runPlan[weekday];
+
+                if (!routine) {
+                  return (
+                    <p className="text-sm text-[#8E8E93] mb-4">
+                      No running routine
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="mb-4">
+                    <p className="text-blue-400 text-sm font-semibold mb-1">
+                      Run: {routine.type}
+                    </p>
+                    <p className="text-sm text-[#8E8E93]">
+                      {routine.distance} km — {routine.pace}
+                    </p>
+
+                    <button
+                      onClick={() => deleteRunRoutine(routine.type)}
+                      className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
+                    >
+                      Delete Run
+                    </button>
+                  </div>
+                );
+              })()}
+
+            </div>
+          </div>
+        )}
+
       </div>
     );
-  }
-
-  /* -------------------------------------------
-     RENDER CALENDAR TAB
+  })();
+    /* -------------------------------------------
+     WORKOUT EXECUTION SCREEN
   -------------------------------------------- */
 
-  return (
-    <div
-      className="w-full min-h-screen overflow-y-auto bg-black px-4 pt-6 pb-40"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* MONTH HEADER */}
-      <div className="text-xl font-semibold tracking-tight mb-2 text-center">
-        {currentMonth.toLocaleString("default", {
-          month: "long",
-          year: "numeric",
-        })}
-      </div>
-
-      {/* WEEKDAY LABELS */}
-      <div className="grid grid-cols-7 gap-1 text-center text-xs text-[#8E8E93] mb-1">
-        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-          <div key={i}>{d}</div>
-        ))}
-      </div>
-
-      {/* CALENDAR GRID */}
-      <div className="grid grid-cols-7 gap-1 text-center mb-6">
-        {paddedDays.map((d, index) => {
-          if (d.blank) return <div key={"blank-" + index}></div>;
-
-          const isToday =
-            new Date().toDateString() === d.date.toDateString();
-
-          return (
-            <button
-              key={d.key}
-              onClick={() => openDayDetails(d)}
-              className={`py-1 rounded-lg text-sm ${
-                isToday
-                  ? "bg-red-500 text-white font-semibold"
-                  : "bg-[#1C1C1E] text-white"
-              }`}
-            >
-              {d.date.getDate()}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* WEEKLY GRAPHS */}
-      {settings.showGraphs && (
-        <>
-          <WeeklyLineGraph
-            title="Gym Workouts (Weekly)"
-            data={gymWeekly}
-            color="#22c55e"
-          />
-
-          <WeeklyLineGraph
-            title="Runs Completed (Weekly)"
-            data={runWeekly}
-            color="#38bdf8"
-          />
-        </>
-      )}
-
-      {/* DAY DETAILS MODAL */}
-      {selectedDay && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
-          <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                {selectedDay.date.toDateString()}
-              </h2>
-
-              <button
-                onClick={closeDayDetails}
-                className="text-sm text-[#8E8E93]"
-              >
-                Close
-              </button>
-            </div>
-
-            {/* GYM DETAILS */}
-            {(() => {
-              const weekday = selectedDay.weekday;
-              const routine = weeklyPlan[weekday];
-
-              if (!routine) {
-                return (
-                  <p className="text-sm text-[#8E8E93] mb-4">
-                    No gym routine
-                  </p>
-                );
-              }
-
-              return (
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-2">Workout</h3>
-
-                  <div className="bg-[#2C2C2E] p-4 rounded-xl soft-border mb-3">
-                    <p className="font-semibold mb-1">{routine.name}</p>
-
-                    <ul className="text-sm text-[#E5E5EA] space-y-1">
-                      {routine.exercises.map((ex, i) => (
-                        <li key={i}>
-                          {ex.name} — {ex.sets}×{ex.reps}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <button
-                    onClick={() => deleteGymRoutine(routine.name)}
-                    className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
-                  >
-                    Delete Workout
-                  </button>
-
-                  <button
-                    onClick={() => startWorkout(routine)}
-                    className="w-full bg-white text-black rounded-xl py-3 font-semibold mt-3"
-                  >
-                    Start Today’s Workout
-                  </button>
-                </div>
-              );
-            })()}
-
-            {/* RUN DETAILS */}
-            {(() => {
-              const weekday = selectedDay.weekday;
-              const routine = runPlan[weekday];
-
-              if (!routine) {
-                return (
-                  <p className="text-sm text-[#8E8E93] mb-4">
-                    No running routine
-                  </p>
-                );
-              }
-
-              return (
-                <div className="mb-4">
-                  <p className="text-blue-400 text-sm font-semibold mb-1">
-                    Run: {routine.type}
-                  </p>
-                  <p className="text-sm text-[#8E8E93]">
-                    {routine.distance} km — {routine.pace}
-                  </p>
-
-                  <button
-                    onClick={() => deleteRunRoutine(routine.type)}
-                    className="w-full bg-red-500 text-white rounded-xl py-2 mt-3 font-semibold"
-                  >
-                    Delete Run
-                  </button>
-                </div>
-              );
-            })()}
-
-          </div>
+  const WorkoutScreen = (() => {
+    if (!activeWorkout) {
+      return (
+        <div className="w-full min-h-screen bg-black text-center pt-20">
+          <p className="text-[#8E8E93]">No active workout</p>
         </div>
-      )}
-    </div>
-  );
-})();
-  /* -------------------------------------------
-   WORKOUT EXECUTION SCREEN
--------------------------------------------- */
+      );
+    }
 
-const WorkoutScreen = (() => {
-  if (!activeWorkout) {
+    const routine = activeWorkout.routine;
+    const completed = activeWorkout.completed;
+
     return (
-      <div className="w-full min-h-screen bg-black text-center pt-20">
-        <p className="text-[#8E8E93]">No active workout</p>
-      </div>
-    );
-  }
+      <div className="w-full min-h-screen bg-black px-4 pt-6 pb-40">
 
-  const routine = activeWorkout.routine;
-  const completed = activeWorkout.completed;
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-xl font-semibold">{routine.name}</h1>
 
-  return (
-    <div className="w-full min-h-screen bg-black px-4 pt-6 pb-40">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-semibold">{routine.name}</h1>
-
-        <button
-          onClick={() => setActiveWorkout(null)}
-          className="text-sm text-[#8E8E93]"
-        >
-          Exit
-        </button>
-      </div>
-
-      {/* REST TIMER */}
-      {activeWorkout.resting && (
-        <div className="mb-6 bg-[#1C1C1E] soft-border rounded-2xl p-4 text-center">
-          <p className="text-sm text-[#8E8E93] mb-1">Resting</p>
-          <p className="text-3xl font-semibold">
-            {activeWorkout.restTime}s
-          </p>
-        </div>
-      )}
-
-      {/* EXERCISES */}
-      <div className="space-y-6">
-        {routine.exercises.map((ex, exIndex) => (
-          <div
-            key={exIndex}
-            className="bg-[#1C1C1E] soft-border rounded-2xl p-4"
-          >
-            <p className="text-sm font-semibold mb-2">{ex.name}</p>
-
-            <div className="flex gap-2 flex-wrap">
-              {completed[exIndex].map((isDone, setIndex) => (
-                <button
-                  key={setIndex}
-                  onClick={() => completeSet(exIndex, setIndex)}
-                  disabled={isDone || activeWorkout.resting}
-                  className={`
-                    w-12 h-12 rounded-xl flex items-center justify-center
-                    text-sm font-semibold transition-all
-                    ${
-                      isDone
-                        ? "bg-green-500 text-black"
-                        : "bg-[#2C2C2E] text-white soft-border"
-                    }
-                    ${activeWorkout.resting ? "opacity-40" : ""}
-                  `}
-                >
-                  {setIndex + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* FINISH BUTTON */}
-      <button
-        onClick={finishWorkout}
-        className="w-full bg-white text-black rounded-2xl py-3 font-semibold mt-10"
-      >
-        Finish Workout
-      </button>
-    </div>
-  );
-})();
-  /* -------------------------------------------
-   MODALS — GYM CREATOR, RUN CREATOR, CHOOSER
--------------------------------------------- */
-
-function ModalWrapper({ children, onClose }) {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
-      <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
-        <div className="flex justify-end mb-4">
           <button
-            onClick={onClose}
+            onClick={() => setActiveWorkout(null)}
             className="text-sm text-[#8E8E93]"
           >
-            Close
+            Exit
           </button>
         </div>
-        {children}
-      </div>
-    </div>
-  );
-}
 
-/* -------------------------------------------
-   CREATE CHOOSER MODAL
--------------------------------------------- */
+        {/* REST TIMER */}
+        {activeWorkout.resting && (
+          <div className="mb-6 bg-[#1C1C1E] soft-border rounded-2xl p-4 text-center">
+            <p className="text-sm text-[#8E8E93] mb-1">Resting</p>
+            <p className="text-3xl font-semibold">
+              {activeWorkout.restTime}s
+            </p>
+          </div>
+        )}
 
-const CreateChooserModal = () => (
-  <ModalWrapper onClose={() => setShowCreateChooser(false)}>
-    <h2 className="text-xl font-semibold mb-4">Create</h2>
-
-    <div className="space-y-3">
-      <button
-        onClick={() => {
-          setShowCreateChooser(false);
-          setShowGymCreator(true);
-        }}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl py-3 font-semibold"
-      >
-        New Workout
-      </button>
-
-      <button
-        onClick={() => {
-          setShowCreateChooser(false);
-          setShowRunCreator(true);
-        }}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl py-3 font-semibold"
-      >
-        New Run
-      </button>
-    </div>
-  </ModalWrapper>
-);
-
-/* -------------------------------------------
-   GYM CREATOR MODAL
--------------------------------------------- */
-
-const GymCreatorModal = () => (
-  <ModalWrapper onClose={() => setShowGymCreator(false)}>
-    <h2 className="text-xl font-semibold mb-4">New Workout</h2>
-
-    {/* Routine Name */}
-    <div className="mb-4">
-      <p className="text-sm text-[#8E8E93] mb-1">Routine Name</p>
-      <input
-        value={newRoutineName}
-        onChange={(e) => setNewRoutineName(e.target.value)}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
-        placeholder="Push Day"
-      />
-    </div>
-
-    {/* Add Exercise */}
-    <div className="mb-4">
-      <p className="text-sm text-[#8E8E93] mb-2">Add Exercise</p>
-
-      <input
-        value={newExerciseName}
-        onChange={(e) => setNewExerciseName(e.target.value)}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm mb-2"
-        placeholder="Bench Press"
-      />
-
-      <div className="flex gap-2 mb-2">
-        <input
-          value={newExerciseSets}
-          onChange={(e) => setNewExerciseSets(e.target.value)}
-          className="w-1/2 bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
-          placeholder="Sets"
-          type="number"
-        />
-        <input
-          value={newExerciseReps}
-          onChange={(e) => setNewExerciseReps(e.target.value)}
-          className="w-1/2 bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
-          placeholder="Reps"
-          type="number"
-        />
-      </div>
-
-      <button
-        onClick={addTempExercise}
-        className="w-full bg-white text-black rounded-xl py-2 font-semibold"
-      >
-        Add Exercise
-      </button>
-    </div>
-
-    {/* Exercise List */}
-    {tempExercises.length > 0 && (
-      <div className="mb-6">
-        <p className="text-sm font-semibold mb-2">Exercises</p>
-        <div className="space-y-2">
-          {tempExercises.map((ex, i) => (
+        {/* EXERCISES */}
+        <div className="space-y-6">
+          {routine.exercises.map((ex, exIndex) => (
             <div
-              key={i}
-              className="bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+              key={exIndex}
+              className="bg-[#1C1C1E] soft-border rounded-2xl p-4"
             >
-              {ex.name} — {ex.sets}×{ex.reps}
+              <p className="text-sm font-semibold mb-2">{ex.name}</p>
+
+              <div className="flex gap-2 flex-wrap">
+                {completed[exIndex].map((isDone, setIndex) => (
+                  <button
+                    key={setIndex}
+                    onClick={() => completeSet(exIndex, setIndex)}
+                    disabled={isDone || activeWorkout.resting}
+                    className={`
+                      w-12 h-12 rounded-xl flex items-center justify-center
+                      text-sm font-semibold transition-all
+                      ${
+                        isDone
+                          ? "bg-green-500 text-black"
+                          : "bg-[#2C2C2E] text-white soft-border"
+                      }
+                      ${activeWorkout.resting ? "opacity-40" : ""}
+                    `}
+                  >
+                    {setIndex + 1}
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
         </div>
+
+        {/* FINISH BUTTON */}
+        <button
+          onClick={finishWorkout}
+          className="w-full bg-white text-black rounded-2xl py-3 font-semibold mt-10"
+        >
+          Finish Workout
+        </button>
+
       </div>
-    )}
+    );
+  })();
+    /* -------------------------------------------
+     MODALS — GYM CREATOR, RUN CREATOR, CHOOSER
+  -------------------------------------------- */
 
-    {/* Save */}
-    <button
-      onClick={saveNewRoutine}
-      className="w-full bg-green-500 text-black rounded-xl py-3 font-semibold"
-    >
-      Save Workout
-    </button>
-  </ModalWrapper>
-);
-
-/* -------------------------------------------
-   RUN CREATOR MODAL
--------------------------------------------- */
-
-const RunCreatorModal = () => (
-  <ModalWrapper onClose={() => setShowRunCreator(false)}>
-    <h2 className="text-xl font-semibold mb-4">New Run</h2>
-
-    {/* Run Type */}
-    <div className="mb-4">
-      <p className="text-sm text-[#8E8E93] mb-1">Run Type</p>
-      <input
-        value={newRunType}
-        onChange={(e) => setNewRunType(e.target.value)}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
-        placeholder="Easy Run"
-      />
-    </div>
-
-    {/* Distance */}
-    <div className="mb-4">
-      <p className="text-sm text-[#8E8E93] mb-1">Distance (km)</p>
-      <input
-        value={newRunDistance}
-        onChange={(e) => setNewRunDistance(e.target.value)}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
-        placeholder="5"
-        type="number"
-      />
-    </div>
-
-    {/* Pace */}
-    <div className="mb-6">
-      <p className="text-sm text-[#8E8E93] mb-1">Pace</p>
-      <input
-        value={newRunPace}
-        onChange={(e) => setNewRunPace(e.target.value)}
-        className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
-        placeholder="5:30 /km"
-      />
-    </div>
-
-    {/* Save */}
-    <button
-      onClick={saveNewRunRoutine}
-      className="w-full bg-blue-500 text-black rounded-xl py-3 font-semibold"
-    >
-      Save Run
-    </button>
-  </ModalWrapper>
-);
-  /* -------------------------------------------
-   SETTINGS TAB
--------------------------------------------- */
-
-const SettingsTab = (() => {
-  function toggleSetting(key) {
-    setSettings({
-      ...settings,
-      [key]: !settings[key],
-    });
+  function ModalWrapper({ children, onClose }) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
+        <div className="w-full bg-[#1C1C1E] rounded-t-3xl p-6 soft-border">
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={onClose}
+              className="text-sm text-[#8E8E93]"
+            >
+              Close
+            </button>
+          </div>
+          {children}
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="w-full min-h-screen bg-black px-4 pt-6 pb-40">
-      <h1 className="text-xl font-semibold mb-6">Settings</h1>
+  /* -------------------------------------------
+     CREATE CHOOSER MODAL
+  -------------------------------------------- */
 
-      {/* TOGGLES */}
-      <div className="space-y-4 mb-10">
+  const CreateChooserModal = () => (
+    <ModalWrapper onClose={() => setShowCreateChooser(false)}>
+      <h2 className="text-xl font-semibold mb-4">Create</h2>
 
-        {/* Affirmations */}
-        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm font-semibold">Show Affirmations</p>
-            <p className="text-xs text-[#8E8E93]">Daily motivational message</p>
-          </div>
-
-          <button
-            onClick={() => toggleSetting("showAffirmations")}
-            className={`
-              w-12 h-6 rounded-full transition-all
-              ${settings.showAffirmations ? "bg-green-500" : "bg-[#2C2C2E]"}
-            `}
-          >
-            <div
-              className={`
-                w-5 h-5 bg-white rounded-full transform transition-all
-                ${settings.showAffirmations ? "translate-x-6" : "translate-x-1"}
-              `}
-            />
-          </button>
-        </div>
-
-        {/* Weekly Progress */}
-        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm font-semibold">Show Weekly Progress</p>
-            <p className="text-xs text-[#8E8E93]">Gym + running progress rings</p>
-          </div>
-
-          <button
-            onClick={() => toggleSetting("showWeeklyProgress")}
-            className={`
-              w-12 h-6 rounded-full transition-all
-              ${settings.showWeeklyProgress ? "bg-green-500" : "bg-[#2C2C2E]"}
-            `}
-          >
-            <div
-              className={`
-                w-5 h-5 bg-white rounded-full transform transition-all
-                ${settings.showWeeklyProgress ? "translate-x-6" : "translate-x-1"}
-              `}
-            />
-          </button>
-        </div>
-
-        {/* Monthly Goal */}
-        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm font-semibold">Show Monthly Goal</p>
-            <p className="text-xs text-[#8E8E93]">Workout target for the month</p>
-          </div>
-
-          <button
-            onClick={() => toggleSetting("showMonthlyGoal")}
-            className={`
-              w-12 h-6 rounded-full transition-all
-              ${settings.showMonthlyGoal ? "bg-green-500" : "bg-[#2C2C2E]"}
-            `}
-          >
-            <div
-              className={`
-                w-5 h-5 bg-white rounded-full transform transition-all
-                ${settings.showMonthlyGoal ? "translate-x-6" : "translate-x-1"}
-              `}
-            />
-          </button>
-        </div>
-
-        {/* Graphs */}
-        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
-          <div>
-            <p className="text-sm font-semibold">Show Graphs</p>
-            <p className="text-xs text-[#8E8E93]">Weekly gym + run graphs</p>
-          </div>
-
-          <button
-            onClick={() => toggleSetting("showGraphs")}
-            className={`
-              w-12 h-6 rounded-full transition-all
-              ${settings.showGraphs ? "bg-green-500" : "bg-[#2C2C2E]"}
-            `}
-          >
-            <div
-              className={`
-                w-5 h-5 bg-white rounded-full transform transition-all
-                ${settings.showGraphs ? "translate-x-6" : "translate-x-1"}
-              `}
-            />
-          </button>
-        </div>
-
-      </div>
-
-      {/* RESET APP */}
-      <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-10">
-        <p className="text-sm font-semibold mb-2">Reset App</p>
-        <p className="text-xs text-[#8E8E93] mb-4">
-          Clears all workouts, runs, logs, and settings.
-        </p>
+      <div className="space-y-3">
+        <button
+          onClick={() => {
+            setShowCreateChooser(false);
+            setShowGymCreator(true);
+          }}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl py-3 font-semibold"
+        >
+          New Workout
+        </button>
 
         <button
-          onClick={resetApp}
-          className="w-full bg-red-500 text-white rounded-xl py-3 font-semibold"
+          onClick={() => {
+            setShowCreateChooser(false);
+            setShowRunCreator(true);
+          }}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl py-3 font-semibold"
         >
-          Reset Everything
+          New Run
+        </button>
+      </div>
+    </ModalWrapper>
+  );
+
+  /* -------------------------------------------
+     GYM CREATOR MODAL
+  -------------------------------------------- */
+
+  const GymCreatorModal = () => (
+    <ModalWrapper onClose={() => setShowGymCreator(false)}>
+      <h2 className="text-xl font-semibold mb-4">New Workout</h2>
+
+      {/* Routine Name */}
+      <div className="mb-4">
+        <p className="text-sm text-[#8E8E93] mb-1">Routine Name</p>
+        <input
+          value={newRoutineName}
+          onChange={(e) => setNewRoutineName(e.target.value)}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+          placeholder="Push Day"
+        />
+      </div>
+
+      {/* Add Exercise */}
+      <div className="mb-4">
+        <p className="text-sm text-[#8E8E93] mb-2">Add Exercise</p>
+
+        <input
+          value={newExerciseName}
+          onChange={(e) => setNewExerciseName(e.target.value)}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm mb-2"
+          placeholder="Bench Press"
+        />
+
+        <div className="flex gap-2 mb-2">
+          <input
+            value={newExerciseSets}
+            onChange={(e) => setNewExerciseSets(e.target.value)}
+            className="w-1/2 bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+            placeholder="Sets"
+            type="number"
+          />
+          <input
+            value={newExerciseReps}
+            onChange={(e) => setNewExerciseReps(e.target.value)}
+            className="w-1/2 bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+            placeholder="Reps"
+            type="number"
+          />
+        </div>
+
+        <button
+          onClick={addTempExercise}
+          className="w-full bg-white text-black rounded-xl py-2 font-semibold"
+        >
+          Add Exercise
         </button>
       </div>
 
-      {/* ABOUT */}
-      <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
-        <p className="text-sm font-semibold mb-1">About</p>
-        <p className="text-xs text-[#8E8E93]">
-          Fitness Planner — built for clarity, consistency, and momentum.
-        </p>
-      </div>
-    </div>
+      {/* Exercise List */}
+      {tempExercises.length > 0 && (
+        <div className="mb-6">
+          <p className="text-sm font-semibold mb-2">Exercises</p>
+          <div className="space-y-2">
+            {tempExercises.map((ex, i) => (
+              <div
+                key={i}
+                className="bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+              >
+                {ex.name} — {ex.sets}×{ex.reps}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Save */}
+      <button
+        onClick={saveNewRoutine}
+        className="w-full bg-green-500 text-black rounded-xl py-3 font-semibold"
+      >
+        Save Workout
+      </button>
+    </ModalWrapper>
   );
-})();
-  /* -------------------------------------------
-   FINAL APP RENDER + NAVIGATION + FLOATING BUTTON
--------------------------------------------- */
+    /* -------------------------------------------
+     RUN CREATOR MODAL
+  -------------------------------------------- */
+
+  const RunCreatorModal = () => (
+    <ModalWrapper onClose={() => setShowRunCreator(false)}>
+      <h2 className="text-xl font-semibold mb-4">New Run</h2>
+
+      {/* Run Type */}
+      <div className="mb-4">
+        <p className="text-sm text-[#8E8E93] mb-1">Run Type</p>
+        <input
+          value={newRunType}
+          onChange={(e) => setNewRunType(e.target.value)}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+          placeholder="Easy Run"
+        />
+      </div>
+
+      {/* Distance */}
+      <div className="mb-4">
+        <p className="text-sm text-[#8E8E93] mb-1">Distance (km)</p>
+        <input
+          value={newRunDistance}
+          onChange={(e) => setNewRunDistance(e.target.value)}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+          placeholder="5"
+          type="number"
+        />
+      </div>
+
+      {/* Pace */}
+      <div className="mb-6">
+        <p className="text-sm text-[#8E8E93] mb-1">Pace</p>
+        <input
+          value={newRunPace}
+          onChange={(e) => setNewRunPace(e.target.value)}
+          className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+          placeholder="5:30 /km"
+        />
+      </div>
+
+      {/* Save */}
+      <button
+        onClick={saveNewRunRoutine}
+        className="w-full bg-blue-500 text-black rounded-xl py-3 font-semibold"
+      >
+        Save Run
+      </button>
+    </ModalWrapper>
+  );
+    /* -------------------------------------------
+     SETTINGS TAB
+  -------------------------------------------- */
+
+  const SettingsTab = (() => {
+    function toggleSetting(key) {
+      setSettings({
+        ...settings,
+        [key]: !settings[key],
+      });
+    }
+
+    return (
+      <div className="w-full min-h-screen bg-black px-4 pt-6 pb-40">
+        <h1 className="text-xl font-semibold mb-6">Settings</h1>
+
+        {/* TOGGLES */}
+        <div className="space-y-4 mb-10">
+
+          {/* Affirmations */}
+          <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-semibold">Show Affirmations</p>
+              <p className="text-xs text-[#8E8E93]">Daily motivational message</p>
+            </div>
+
+            <button
+              onClick={() => toggleSetting("showAffirmations")}
+              className={`
+                w-12 h-6 rounded-full transition-all
+                ${settings.showAffirmations ? "bg-green-500" : "bg-[#2C2C2E]"}
+              `}
+            >
+              <div
+                className={`
+                  w-5 h-5 bg-white rounded-full transform transition-all
+                  ${settings.showAffirmations ? "translate-x-6" : "translate-x-1"}
+                `}
+              />
+            </button>
+          </div>
+
+          {/* Weekly Progress */}
+          <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-semibold">Show Weekly Progress</p>
+              <p className="text-xs text-[#8E8E93]">Gym + running progress rings</p>
+            </div>
+
+            <button
+              onClick={() => toggleSetting("showWeeklyProgress")}
+              className={`
+                w-12 h-6 rounded-full transition-all
+                ${settings.showWeeklyProgress ? "bg-green-500" : "bg-[#2C2C2E]"}
+              `}
+            >
+              <div
+                className={`
+                  w-5 h-5 bg-white rounded-full transform transition-all
+                  ${settings.showWeeklyProgress ? "translate-x-6" : "translate-x-1"}
+                `}
+              />
+            </button>
+          </div>
+
+          {/* Monthly Goal */}
+          <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-semibold">Show Monthly Goal</p>
+              <p className="text-xs text-[#8E8E93]">Workout target for the month</p>
+            </div>
+
+            <button
+              onClick={() => toggleSetting("showMonthlyGoal")}
+              className={`
+                w-12 h-6 rounded-full transition-all
+                ${settings.showMonthlyGoal ? "bg-green-500" : "bg-[#2C2C2E]"}
+              `}
+            >
+              <div
+                className={`
+                  w-5 h-5 bg-white rounded-full transform transition-all
+                  ${settings.showMonthlyGoal ? "translate-x-6" : "translate-x-1"}
+                `}
+              />
+            </button>
+          </div>
+
+          {/* Graphs */}
+          <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 flex justify-between items-center">
+            <div>
+              <p className="text-sm font-semibold">Show Graphs</p>
+              <p className="text-xs text-[#8E8E93]">Weekly gym + run graphs</p>
+            </div>
+
+            <button
+              onClick={() => toggleSetting("showGraphs")}
+              className={`
+                w-12 h-6 rounded-full transition-all
+                ${settings.showGraphs ? "bg-green-500" : "bg-[#2C2C2E]"}
+              `}
+            >
+              <div
+                className={`
+                  w-5 h-5 bg-white rounded-full transform transition-all
+                  ${settings.showGraphs ? "translate-x-6" : "translate-x-1"}
+                `}
+              />
+            </button>
+          </div>
+
+        </div>
+
+        {/* RESET APP */}
+        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4 mb-10">
+          <p className="text-sm font-semibold mb-2">Reset App</p>
+          <p className="text-xs text-[#8E8E93] mb-4">
+            Clears all workouts, runs, logs, and settings.
+          </p>
+
+          <button
+            onClick={resetApp}
+            className="w-full bg-red-500 text-white rounded-xl py-3 font-semibold"
+          >
+            Reset Everything
+          </button>
+        </div>
+
+        {/* ABOUT */}
+        <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
+          <p className="text-sm font-semibold mb-1">About</p>
+          <p className="text-xs text-[#8E8E93]">
+            Fitness Planner — built for clarity, consistency, and momentum.
+          </p>
+        </div>
+      </div>
+    );
+  })();
+    /* -------------------------------------------
+     FINAL APP RENDER + NAVIGATION + FLOATING BUTTON
+  -------------------------------------------- */
 
   return (
     <div className="relative w-full min-h-screen bg-black">
@@ -1398,7 +1279,7 @@ const SettingsTab = (() => {
       {tab === "workout" && <WorkoutScreen />}
       {tab === "settings" && <SettingsTab />}
 
-      {/* FLOATING + BUTTON (TOP RIGHT) */}
+      {/* FLOATING + BUTTON */}
       {tab !== "workout" && (
         <button
           onClick={() => setShowCreateChooser(true)}
@@ -1418,7 +1299,7 @@ const SettingsTab = (() => {
         </button>
       )}
 
-      {/* BOTTOM NAVIGATION */}
+      {/* BOTTOM NAV */}
       <div
         className="
           fixed bottom-0 left-0 w-full
@@ -1465,12 +1346,11 @@ const SettingsTab = (() => {
     </div>
   );
 }
-
-/* -------------------------------------------
+    /* -------------------------------------------
    RENDER APP
 -------------------------------------------- */
 
 ReactDOM.render(<App />, document.getElementById("root"));
-  </script>
+</script>
 </body>
 </html>
