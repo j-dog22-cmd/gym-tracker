@@ -46,8 +46,8 @@
       const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
       function ProgressRing({ value, goal, label }) {
-        const radius = 28;
-        const stroke = 6;
+        const radius = 42;
+        const stroke = 8;
         const normalizedRadius = radius - stroke;
         const circumference = normalizedRadius * 2 * Math.PI;
         const progress = Math.min(value / Math.max(goal, 1), 1);
@@ -77,8 +77,9 @@
                 style={{ transition: "stroke-dashoffset 0.35s" }}
               />
             </svg>
-            <p className="text-xs mt-1 text-[#8E8E93]">{label}</p>
-            <p className="text-sm font-semibold mt-0.5">
+
+            <p className="text-sm mt-2 text-[#8E8E93]">{label}</p>
+            <p className="text-lg font-semibold mt-0.5">
               {value}/{goal}
             </p>
           </div>
@@ -101,6 +102,9 @@
         );
         const [monthlyWorkoutGoal, setMonthlyWorkoutGoal] = React.useState(
           Number(localStorage.getItem("monthlyWorkoutGoal") || 16)
+        );
+        const [restTime, setRestTime] = React.useState(
+          Number(localStorage.getItem("restTime") || 90)
         );
 
         // PLANS
@@ -146,6 +150,10 @@
         // ACTIVE WORKOUT
         const [activeWorkout, setActiveWorkout] = React.useState(null);
 
+        // REST TIMER
+        const [restRemaining, setRestRemaining] = React.useState(0);
+        const [isResting, setIsResting] = React.useState(false);
+
         // HOME WEEK SELECTION
         const [selectedHomeDate, setSelectedHomeDate] =
           React.useState(today);
@@ -179,6 +187,10 @@
         }, [monthlyWorkoutGoal]);
 
         React.useEffect(() => {
+          localStorage.setItem("restTime", restTime);
+        }, [restTime]);
+
+        React.useEffect(() => {
           localStorage.setItem("gymPlan_v1", JSON.stringify(gymPlan));
         }, [gymPlan]);
 
@@ -197,6 +209,23 @@
           localStorage.setItem("runLogs_v1", JSON.stringify(runLogs));
         }, [runLogs]);
 
+        // REST TIMER EFFECT
+        React.useEffect(() => {
+          if (!isResting || restRemaining <= 0) return;
+
+          const timer = setInterval(() => {
+            setRestRemaining((prev) => {
+              if (prev <= 1) {
+                setIsResting(false);
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+
+          return () => clearInterval(timer);
+        }, [isResting, restRemaining]);
+
         // RESET APP
         function resetApp() {
           if (
@@ -214,6 +243,7 @@
           localStorage.removeItem("weeklyGymGoal");
           localStorage.removeItem("weeklyRunGoal");
           localStorage.removeItem("monthlyWorkoutGoal");
+          localStorage.removeItem("restTime");
 
           setGymPlan({});
           setRunPlan({});
@@ -223,6 +253,7 @@
           setWeeklyGymGoal(3);
           setWeeklyRunGoal(3);
           setMonthlyWorkoutGoal(16);
+          setRestTime(90);
 
           setSelectedHomeDate(new Date());
           setCalendarDate(
@@ -235,6 +266,8 @@
           setSelectedCalendarDate(null);
           setShowDaySheet(false);
           setActiveWorkout(null);
+          setIsResting(false);
+          setRestRemaining(0);
 
           alert("App has been reset.");
         }
@@ -330,11 +363,14 @@
             completed,
             dateForLog,
           });
+          setIsResting(false);
+          setRestRemaining(0);
           setTab("workout");
         }
 
         function completeSet(exIndex, setIndex) {
-          if (!activeWorkout) return;
+          if (!activeWorkout || isResting) return;
+
           let { routine, completed, dateForLog } = activeWorkout;
 
           const newCompleted = completed.map((row, i) =>
@@ -344,6 +380,7 @@
           );
 
           const exerciseDone = newCompleted[exIndex].every((d) => d);
+
           let newRoutine = routine;
           let newCompletedMatrix = newCompleted;
 
@@ -357,6 +394,7 @@
             );
           }
 
+          // If workout is finished
           if (newRoutine.exercises.length === 0) {
             setWorkoutLogs((prev) => [
               ...prev,
@@ -366,9 +404,15 @@
               },
             ]);
             setActiveWorkout(null);
+            setIsResting(false);
+            setRestRemaining(0);
             setTab("home");
             return;
           }
+
+          // Start rest timer
+          setIsResting(true);
+          setRestRemaining(restTime);
 
           setActiveWorkout({
             routine: newRoutine,
@@ -379,6 +423,8 @@
 
         function finishWorkout() {
           setActiveWorkout(null);
+          setIsResting(false);
+          setRestRemaining(0);
           setTab("home");
         }
 
@@ -417,15 +463,7 @@
         );
         const monthlyRunGoalCalculated = weeklyRunGoal * weeksInMonth;
 
-        const weeklyRunsPlanned = WEEK_DAYS.reduce((count, day) => {
-          return runPlan[day] ? count + 1 : count;
-        }, 0);
-
-        const weeklyGymsPlanned = WEEK_DAYS.reduce((count, day) => {
-          return gymPlan[day] ? count + 1 : count;
-        }, 0);
-
-        // HOME WEEK STRIP
+        // Weekly completed (for rings) based on logs
         function getStartOfWeek(date) {
           const d = new Date(date);
           const day = (d.getDay() + 6) % 7; // Mon=0
@@ -434,10 +472,25 @@
           return d;
         }
 
-        const startOfWeek = getStartOfWeek(today);
+        const startOfThisWeek = getStartOfWeek(today);
+        const endOfThisWeek = new Date(startOfThisWeek);
+        endOfThisWeek.setDate(startOfThisWeek.getDate() + 7);
+
+        const weeklyGymsCompleted = workoutLogs.filter((log) => {
+          const d = new Date(log.timestamp);
+          return d >= startOfThisWeek && d < endOfThisWeek;
+        }).length;
+
+        const weeklyRunsCompleted = runLogs.filter((log) => {
+          const d = new Date(log.timestamp);
+          return d >= startOfThisWeek && d < endOfThisWeek;
+        }).length;
+
+        // HOME WEEK STRIP
+        const startOfWeekStrip = getStartOfWeek(today);
         const weekDates = Array.from({ length: 7 }).map((_, i) => {
-          const d = new Date(startOfWeek);
-          d.setDate(startOfWeek.getDate() + i);
+          const d = new Date(startOfWeekStrip);
+          d.setDate(startOfWeekStrip.getDate() + i);
           return d;
         });
 
@@ -522,9 +575,6 @@
           }
         }
 
-        const maxGym = Math.max(1, ...weeklyGym);
-        const maxRun = Math.max(1, ...weeklyRun);
-
         // DAY SHEET DATA
         function getDayDetails(date) {
           const weekday = getWeekdayFromDate(date);
@@ -549,9 +599,9 @@
           <div className="w-full min-h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
             {/* HEADER */}
             <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm text-[#8E8E93]">Good job,</p>
-                <h1 className="text-2xl font-semibold">{userName}</h1>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-semibold">Hello</p>
+                <p className="text-2xl font-semibold">{userName}</p>
               </div>
             </div>
 
@@ -601,24 +651,14 @@
             {/* RINGS */}
             <div className="flex justify-between mb-6">
               <ProgressRing
-                value={weeklyGymsPlanned}
+                value={weeklyGymsCompleted}
                 goal={weeklyGymGoal}
                 label="Gym this week"
               />
               <ProgressRing
-                value={weeklyRunsPlanned}
+                value={weeklyRunsCompleted}
                 goal={weeklyRunGoal}
                 label="Runs this week"
-              />
-              <ProgressRing
-                value={workoutsThisMonth}
-                goal={monthlyWorkoutGoal}
-                label="Workouts this month"
-              />
-              <ProgressRing
-                value={runsThisMonth}
-                goal={monthlyRunGoalCalculated}
-                label="Runs this month"
               />
             </div>
 
@@ -777,7 +817,7 @@
 
         // CALENDAR TAB
         const CalendarTab = (
-          <div className="w-full min-h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+          <div className="w-full min-h-screen overflow-y-auto bg-black pb-10 px-4 pt-6">
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() =>
@@ -860,34 +900,56 @@
               })}
             </div>
 
-            {/* MONTHLY GYM GRAPH */}
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">
-                Monthly Gym Activity
-              </h3>
-              <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
-                <svg width="100%" height="120">
+            {/* SIDE-BY-SIDE GRAPHS */}
+            <div className="flex gap-2 mt-6">
+              {/* GYM GRAPH */}
+              <div className="flex-1 bg-[#1C1C1E] soft-border rounded-2xl p-4">
+                <h3 className="text-lg font-semibold mb-2">Gym</h3>
+                <svg width="100%" height="150">
+                  {/* Y-axis */}
                   <line
-                    x1="0"
-                    y1="100"
+                    x1="30"
+                    y1="10"
+                    x2="30"
+                    y2="120"
+                    stroke="#3A3A3C"
+                    strokeWidth="1"
+                  />
+                  {[0, 1, 2, 3, 4, 5].map((v) => (
+                    <text
+                      key={v}
+                      x="5"
+                      y={120 - v * 20}
+                      fill="#8E8E93"
+                      fontSize="10"
+                    >
+                      {v}
+                    </text>
+                  ))}
+
+                  {/* X-axis */}
+                  <line
+                    x1="30"
+                    y1="120"
                     x2="100%"
-                    y2="100"
+                    y2="120"
                     stroke="#3A3A3C"
                     strokeWidth="1"
                   />
 
+                  {/* Graph line */}
                   {weeklyGym.length > 0 &&
                     (() => {
-                      const width = 320;
+                      const width = 220;
                       const stepX =
                         weeklyGym.length > 1
                           ? width / (weeklyGym.length - 1)
                           : 0;
 
                       const points = weeklyGym.map((v, i) => {
-                        const x = stepX * i;
-                        const y = 100 - (v / maxGym) * 70;
-                        return { x, y, v };
+                        const x = 30 + stepX * i;
+                        const y = 120 - (Math.min(v, 5) / 5) * 100;
+                        return { x, y };
                       });
 
                       const polyPoints = points
@@ -911,8 +973,8 @@
                                 fill="#34C759"
                               />
                               <text
-                                x={p.x}
-                                y={110}
+                                x={p.x + 5}
+                                y={135}
                                 fill="#8E8E93"
                                 fontSize="10"
                                 textAnchor="middle"
@@ -925,40 +987,56 @@
                       );
                     })()}
                 </svg>
-                <p className="text-xs text-[#8E8E93] mt-1">
-                  Gym workouts per week this month
-                </p>
               </div>
-            </div>
 
-            {/* MONTHLY RUN GRAPH */}
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">
-                Monthly Running Activity
-              </h3>
-              <div className="bg-[#1C1C1E] soft-border rounded-2xl p-4">
-                <svg width="100%" height="120">
+              {/* RUN GRAPH */}
+              <div className="flex-1 bg-[#1C1C1E] soft-border rounded-2xl p-4">
+                <h3 className="text-lg font-semibold mb-2">Running</h3>
+                <svg width="100%" height="150">
+                  {/* Y-axis */}
                   <line
-                    x1="0"
-                    y1="100"
+                    x1="30"
+                    y1="10"
+                    x2="30"
+                    y2="120"
+                    stroke="#3A3A3C"
+                    strokeWidth="1"
+                  />
+                  {[0, 1, 2, 3, 4, 5].map((v) => (
+                    <text
+                      key={v}
+                      x="5"
+                      y={120 - v * 20}
+                      fill="#8E8E93"
+                      fontSize="10"
+                    >
+                      {v}
+                    </text>
+                  ))}
+
+                  {/* X-axis */}
+                  <line
+                    x1="30"
+                    y1="120"
                     x2="100%"
-                    y2="100"
+                    y2="120"
                     stroke="#3A3A3C"
                     strokeWidth="1"
                   />
 
+                  {/* Graph line */}
                   {weeklyRun.length > 0 &&
                     (() => {
-                      const width = 320;
+                      const width = 220;
                       const stepX =
                         weeklyRun.length > 1
                           ? width / (weeklyRun.length - 1)
                           : 0;
 
                       const points = weeklyRun.map((v, i) => {
-                        const x = stepX * i;
-                        const y = 100 - (v / maxRun) * 70;
-                        return { x, y, v };
+                        const x = 30 + stepX * i;
+                        const y = 120 - (Math.min(v, 5) / 5) * 100;
+                        return { x, y };
                       });
 
                       const polyPoints = points
@@ -982,8 +1060,8 @@
                                 fill="#0A84FF"
                               />
                               <text
-                                x={p.x}
-                                y={110}
+                                x={p.x + 5}
+                                y={135}
                                 fill="#8E8E93"
                                 fontSize="10"
                                 textAnchor="middle"
@@ -996,9 +1074,6 @@
                       );
                     })()}
                 </svg>
-                <p className="text-xs text-[#8E8E93] mt-1">
-                  Runs per week this month
-                </p>
               </div>
             </div>
           </div>
@@ -1046,11 +1121,21 @@
             </label>
             <input
               type="number"
-              className="w-full mb-6 p-3 rounded-xl bg-[#1C1C1E] soft-border"
+              className="w-full mb-4 p-3 rounded-xl bg-[#1C1C1E] soft-border"
               value={monthlyWorkoutGoal}
               onChange={(e) =>
                 setMonthlyWorkoutGoal(Number(e.target.value))
               }
+            />
+
+            <label className="text-sm text-[#8E8E93]">
+              Default Rest Time (seconds)
+            </label>
+            <input
+              type="number"
+              className="w-full mb-6 p-3 rounded-xl bg-[#1C1C1E] soft-border"
+              value={restTime}
+              onChange={(e) => setRestTime(Number(e.target.value))}
             />
 
             <button
@@ -1077,6 +1162,27 @@
                 {activeWorkout.routine.name}
               </h2>
 
+              {isResting && (
+                <div className="mb-4 bg-[#1C1C1E] soft-border rounded-xl p-4 text-center">
+                  <p className="text-sm text-[#8E8E93] mb-1">
+                    Rest Time
+                  </p>
+                  <p className="text-4xl font-bold mb-3">
+                    {restRemaining}s
+                  </p>
+
+                  <button
+                    onClick={() => {
+                      setIsResting(false);
+                      setRestRemaining(0);
+                    }}
+                    className="w-full bg-white text-black rounded-xl py-2 text-sm font-semibold"
+                  >
+                    Skip Rest
+                  </button>
+                </div>
+              )}
+
               {activeWorkout.routine.exercises.map((ex, exIndex) => (
                 <div
                   key={exIndex}
@@ -1099,17 +1205,25 @@
                           onClick={() =>
                             completeSet(exIndex, setIndex)
                           }
-                          disabled={done}
+                          disabled={done || isResting}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm ${
                             done
                               ? "bg-green-500 text-black"
+                              : isResting
+                              ? "bg-[#3A3A3C] text-[#8E8E93]"
                               : "bg-[#2C2C2E] text-white"
                           }`}
                         >
                           <span>
                             Set {setIndex + 1} — {ex.reps} reps
                           </span>
-                          <span>{done ? "✅" : "Tap to complete"}</span>
+                          <span>
+                            {done
+                              ? "✅"
+                              : isResting
+                              ? "Resting..."
+                              : "Tap to complete"}
+                          </span>
                         </button>
                       );
                     })}
@@ -1469,52 +1583,56 @@
             {tab === "settings" && SettingsPage}
             {tab === "workout" && WorkoutTab}
 
-            {/* BOTTOM NAV */}
-            <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
-              <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-10 items-center">
-                <button
-                  onClick={() => setTab("home")}
-                  className={`flex flex-col items-center text-xs ${
-                    tab === "home" ? "text-white" : "text-[#8E8E93]"
-                  }`}
-                >
-                  <span className="mb-1">🏠</span>
-                  <span>Home</span>
-                </button>
+            {/* BOTTOM NAV (hidden on calendar) */}
+            {tab !== "calendar" && (
+              <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
+                <div className="glass-nav soft-border rounded-[24px] py-2.5 px-6 flex gap-10 items-center">
+                  <button
+                    onClick={() => setTab("home")}
+                    className={`flex flex-col items-center text-xs ${
+                      tab === "home"
+                        ? "text-white"
+                        : "text-[#8E8E93]"
+                    }`}
+                  >
+                    <span className="mb-1">🏠</span>
+                    <span>Home</span>
+                  </button>
 
-                <button
-                  onClick={() => setShowCreateChooser(true)}
-                  className="flex flex-col items-center text-xs text-white"
-                >
-                  <span className="mb-1 text-2xl">＋</span>
-                  <span>Add</span>
-                </button>
+                  <button
+                    onClick={() => setShowCreateChooser(true)}
+                    className="flex flex-col items-center text-xs text-white"
+                  >
+                    <span className="mb-1 text-2xl">＋</span>
+                    <span>Add</span>
+                  </button>
 
-                <button
-                  onClick={() => setTab("calendar")}
-                  className={`flex flex-col items-center text-xs ${
-                    tab === "calendar"
-                      ? "text-white"
-                      : "text-[#8E8E93]"
-                  }`}
-                >
-                  <span className="mb-1">📅</span>
-                  <span>Calendar</span>
-                </button>
+                  <button
+                    onClick={() => setTab("calendar")}
+                    className={`flex flex-col items-center text-xs ${
+                      tab === "calendar"
+                        ? "text-white"
+                        : "text-[#8E8E93]"
+                    }`}
+                  >
+                    <span className="mb-1">📅</span>
+                    <span>Calendar</span>
+                  </button>
 
-                <button
-                  onClick={() => setTab("settings")}
-                  className={`flex flex-col items-center text-xs ${
-                    tab === "settings"
-                      ? "text-white"
-                      : "text-[#8E8E93]"
-                  }`}
-                >
-                  <span className="mb-1">⚙️</span>
-                  <span>Settings</span>
-                </button>
+                  <button
+                    onClick={() => setTab("settings")}
+                    className={`flex flex-col items-center text-xs ${
+                      tab === "settings"
+                        ? "text-white"
+                        : "text-[#8E8E93]"
+                    }`}
+                  >
+                    <span className="mb-1">⚙️</span>
+                    <span>Settings</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* MODALS */}
             {GymCreatorModal}
