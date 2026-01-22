@@ -1306,6 +1306,84 @@
             </div>
           );
 
+        const GymCreatorModal = () => (
+        <ModalWrapper onClose={() => setShowGymCreator(false)}>
+          <h2 className="text-xl font-semibold mb-4">New Workout</h2>
+      
+          {/* Routine Name */}
+          <div className="mb-4">
+            <p className="text-sm text-[#8E8E93] mb-1">Routine Name</p>
+            <input
+              value={newRoutineName}
+              onChange={(e) => setNewRoutineName(e.target.value)}
+              className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+              placeholder="Push Day"
+            />
+          </div>
+      
+          {/* Add Exercise */}
+          <div className="mb-4">
+            <p className="text-sm text-[#8E8E93] mb-2">Add Exercise</p>
+      
+            <input
+              value={newExerciseName}
+              onChange={(e) => setNewExerciseName(e.target.value)}
+              className="w-full bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm mb-2"
+              placeholder="Bench Press"
+            />
+      
+            <div className="flex gap-2 mb-2">
+              <input
+                value={newExerciseSets}
+                onChange={(e) => setNewExerciseSets(e.target.value)}
+                className="w-1/2 bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+                placeholder="Sets"
+                type="number"
+              />
+              <input
+                value={newExerciseReps}
+                onChange={(e) => setNewExerciseReps(e.target.value)}
+                className="w-1/2 bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+                placeholder="Reps"
+                type="number"
+              />
+            </div>
+      
+            <button
+              onClick={addTempExercise}
+              className="w-full bg-white text-black rounded-xl py-2 font-semibold"
+            >
+              Add Exercise
+            </button>
+          </div>
+      
+          {/* Exercise List */}
+          {tempExercises.length > 0 && (
+            <div className="mb-6">
+              <p className="text-sm font-semibold mb-2">Exercises</p>
+              <div className="space-y-2">
+                {tempExercises.map((ex, i) => (
+                  <div
+                    key={i}
+                    className="bg-[#2C2C2E] soft-border rounded-xl p-3 text-sm"
+                  >
+                    {ex.name} — {ex.sets}×{ex.reps}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+      
+          {/* Save */}
+          <button
+            onClick={saveNewRoutine}
+            className="w-full bg-green-500 text-black rounded-xl py-3 font-semibold"
+          >
+            Save Workout
+          </button>
+        </ModalWrapper>
+      );
+
         /* ---------------- RUN CREATOR MODAL ---------------- */
         const RunCreatorModal =
           showRunCreator && (
