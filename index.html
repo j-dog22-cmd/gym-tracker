@@ -1479,10 +1479,10 @@
         /* ---------------- BOTTOM NAV ---------------- */
         return (
           <div className="w-full h-screen relative overflow-hidden">
-            {tab === "home" && HomeTab}
-            {tab === "calendar" && CalendarTab}
-            {tab === "settings" && SettingsPage}
-            {tab === "workout" && WorkoutTab}
+            {tab === "home" && <HomeTab />}
+            {tab === "calendar" && <CalendarTab />}
+            {tab === "settings" && <SettingsPage />}
+            {tab === "workout" && <WorkoutTab />}
 
             {/* Bottom Navigation */}
             <div className="fixed bottom-4 left-0 right-0 flex justify-center z-[50]">
