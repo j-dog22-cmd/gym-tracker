@@ -311,11 +311,23 @@
 
         // SAVE NEW GYM ROUTINE
         function saveNewRoutine() {
-          if (!newRoutineName || tempExercises.length === 0) return;
-          setNewRoutineName("");
-          setTempExercises([]);
-          setShowGymCreator(false);
-        }
+        if (!newRoutineName || tempExercises.length === 0) return;
+      
+        const today = new Date();
+        const weekday = WEEK_DAYS[today.getDay() === 0 ? 6 : today.getDay() - 1]; // Sunday fix
+      
+        setGymPlan((prev) => ({
+          ...prev,
+          [weekday]: {
+            name: newRoutineName,
+            exercises: tempExercises,
+          },
+        }));
+      
+        setNewRoutineName("");
+        setTempExercises([]);
+        setShowGymCreator(false);
+      }
 
         function saveNewRoutineToDay(day) {
           if (!newRoutineName || tempExercises.length === 0) return;
