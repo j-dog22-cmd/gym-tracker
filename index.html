@@ -657,7 +657,7 @@ const WorkoutScreen = activeWorkout ? (
 })() : null;
 
   /* BOTTOM-SHEET GYM BUILDER (AUTO HEIGHT, NO ZOOM) */
-  const GymBuilder = showGymBuilder ? (
+    const GymBuilder = showGymBuilder ? (
     <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
       <div className="w-full max-h-[85%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
@@ -998,25 +998,26 @@ const WorkoutScreen = activeWorkout ? (
         Close
       </button>
     </div>
-    // ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
-    React.useEffect(() => {
-      if (restTimer === null) return;
     
-      if (restTimer > 0) {
-        const interval = setInterval(() => {
-          setRestTimer(t => t - 1);
-        }, 1000);
-    
-        return () => clearInterval(interval);
-      }
-    
-      if (restTimer === 0) {
-        if (navigator.vibrate) navigator.vibrate(300);
-      }
-    }, [restTimer]);
-    
-    // ⭐ NOW YOUR WORKOUT SCREEN JSX BEGINS
-    const WorkoutScreen = activeWorkout ? (
+     // ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
+  React.useEffect(() => {
+    if (restTimer === null) return;
+  
+    if (restTimer > 0) {
+      const interval = setInterval(() => {
+        setRestTimer(t => t - 1);
+      }, 1000);
+  
+      return () => clearInterval(interval);
+    }
+  
+    if (restTimer === 0) {
+      if (navigator.vibrate) navigator.vibrate(300);
+    }
+  }, [restTimer]);
+  
+  // ⭐ NOW YOUR WORKOUT SCREEN JSX BEGINS
+  const WorkoutScreen = activeWorkout ? (
   <div className="fixed inset-0 bg-gradient-to-b from-black to-[#0f0f0f] z-50 p-6 overflow-y-auto text-lg">
 
     {/* HEADER */}
@@ -1037,13 +1038,6 @@ const WorkoutScreen = activeWorkout ? (
         <p className="text-4xl font-extrabold mt-1">{restTimer}s</p>
       </div>
     )}
-
-    {/* ...YOUR RUN + GYM EXECUTION UI GOES HERE... */}
-
-  </div>
-) : null;
-    
-
     {/* ---------------- RUN WORKOUT EXECUTION ---------------- */}
     {activeWorkout.type === "run" && (
       <div className="space-y-6">
