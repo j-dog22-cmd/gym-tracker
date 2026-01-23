@@ -151,24 +151,26 @@ function App() {
   }
 
   /* ADD GYM WORKOUT (planned) */
-  function saveGymWorkout() {
-    const date = dateFromWeekIndex(gymDate);
-    const newLog = {
-      type: "gym",
-      date,
-      name: gymName || "Gym Workout",
-      warmup: warmupItems,
-      exercises: exercises,
-      warmdown: warmDownItems,
-      completed: false
-    };
-    setLogs([...logs,newLog]);
-    setGymName("");
-    setWarmupItems([]);
-    setExercises([]);
-    setWarmDownItems([]);
-    setShowGymBuilder(false);
-  }
+function saveGymWorkout() {
+  const date = new Date(gymDate);   // <-- FIXED
+
+  const newLog = {
+    type: "gym",
+    date,
+    name: gymName || "Gym Workout",
+    warmup: warmupItems,
+    exercises: exercises,
+    warmdown: warmDownItems,
+    completed: false
+  };
+
+  setLogs([...logs, newLog]);
+  setGymName("");
+  setWarmupItems([]);
+  setExercises([]);
+  setWarmDownItems([]);
+  setShowGymBuilder(false);
+}
 
   /* ADD RUN (planned) */
   function saveRun() {
