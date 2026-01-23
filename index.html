@@ -1058,14 +1058,6 @@ const WorkoutScreen = activeWorkout ? (
       </div>
     )}
 
-    {/* FINISH WORKOUT */}
-    <button
-      onClick={finishWorkout}
-      className="w-full bg-green-600 rounded-xl py-3 text-sm font-semibold mt-4"
-    >
-      Mark as Done
-    </button>
-
     {/* GYM WORKOUT EXECUTION */}
     {activeWorkout.type === "gym" && (
       <div className="space-y-4 mt-6">
@@ -1132,7 +1124,7 @@ const WorkoutScreen = activeWorkout ? (
       </div>
     )}
 
-    {/* MARK AS DONE FOR RUN */}
+    {/* FINAL MARK AS DONE */}
     <button
       onClick={() => {
         setLogs(logs.map((log, idx) => {
@@ -1155,7 +1147,6 @@ const WorkoutScreen = activeWorkout ? (
 
   </div>
 ) : null;
-
   return (
     <div>
       {tab==="home" && Home}
