@@ -987,6 +987,46 @@ const WorkoutScreen = activeWorkout ? (
         <p className="text-4xl font-extrabold mt-1">{restTimer}s</p>
       </div>
     )}
+    {/* RUN WORKOUT EXECUTION */}
+{activeWorkout.type === "run" && (
+  <div className="space-y-6">
+
+    {/* RUN TYPE */}
+    <div>
+      <p className="text-sm text-gray-400 mb-2">Run Type</p>
+      <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+        <p className="text-base font-medium">{activeWorkout.runType}</p>
+      </div>
+    </div>
+
+    {/* Warm-up */}
+    {activeWorkout.warmup?.length > 0 && (
+      <div>
+        <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
+        {activeWorkout.warmup.map((w,i)=>(
+          <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+            <p className="text-base font-medium">{w.name}</p>
+            <p className="text-sm text-gray-400">{w.reps}</p>
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* Stretches */}
+    {activeWorkout.stretches?.length > 0 && (
+      <div>
+        <p className="text-sm text-gray-400 mb-2">Stretches</p>
+        {activeWorkout.stretches.map((s,i)=>(
+          <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+            <p className="text-base font-medium">{s.name}</p>
+            <p className="text-sm text-gray-400">{s.reps}</p>
+          </div>
+        ))}
+      </div>
+    )}
+
+  </div>
+)}
     {/* RUN WORKOUT DONE BUTTON */}
     {activeWorkout.type === "run" && (
       <div className="mt-6">
