@@ -175,24 +175,44 @@ function App() {
 }
 
   /* ADD GYM WORKOUT (planned) */
-  function saveGymWorkout() {
-    const newPlan = {
-      type: "gym",
-      dayIndex: gymDayIndex,   // recurring weekly
-      name: gymName || "Gym Workout",
-      warmup: warmupItems,
-      exercises,
-      warmdown: warmDownItems,
-      completed: false
-    };
-  
-    setLogs([...logs, newPlan]);
-    setGymName("");
-    setWarmupItems([]);
-    setExercises([]);
-    setWarmDownItems([]);
-    setShowGymBuilder(false);
-  }
+function saveGymWorkout() {
+  // Convert reps string into actual sets
+  const grouped = {};
+
+  exercises.forEach(ex => {
+    const [setsStr, repsStr] = ex.reps.split("x").map(s => s.trim());
+    const sets = parseInt(setsStr);
+    const reps = parseInt(repsStr);
+
+    if (!grouped[ex.name]) grouped[ex.name] = [];
+
+    for (let i = 0; i < sets; i++) {
+      grouped[ex.name].push({ weight: 0, reps, completed: false });
+    }
+  });
+
+  const finalExercises = Object.entries(grouped).map(([name, sets]) => ({
+    name,
+    sets
+  }));
+
+  const newPlan = {
+    type: "gym",
+    dayIndex: gymDayIndex,
+    name: gymName || "Gym Workout",
+    warmup: warmupItems,
+    exercises: finalExercises,
+    warmdown: warmDownItems,
+    completed: false
+  };
+
+  setLogs([...logs, newPlan]);
+  setGymName("");
+  setWarmupItems([]);
+  setExercises([]);
+  setWarmDownItems([]);
+  setShowGymBuilder(false);
+}
   
   /* ADD RUN (planned) */
   function saveRun() {
