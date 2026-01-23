@@ -322,28 +322,28 @@ function App() {
         })}
       </div>
 
-      {/* QUICK ADD */}
-  <div className="grid grid-cols-2 gap-3 mt-2">
-    <button
-      onClick={()=>{
-        setGymDate(new Date().toISOString().split("T")[0]);
-        setShowGymBuilder(true);
-      }}
-      className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-    >
-      ➕ New Workout
-    </button>
-  
-    <button
-      onClick={()=>{
-        setRunDate(new Date().toISOString().split("T")[0]);
-        setShowRunBuilder(true);
-      }}
-      className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-    >
-      ➕ New Run
-    </button>
-  </div>
+    {/* QUICK ADD */}
+    <div className="grid grid-cols-2 gap-3 mt-2">
+      <button
+        onClick={()=>{
+          setGymDayIndex(activeDay);   // use weekday index
+          setShowGymBuilder(true);
+        }}
+        className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+      >
+        ➕ New Workout
+      </button>
+    
+      <button
+        onClick={()=>{
+          setRunDayIndex(activeDay);   // use weekday index
+          setShowRunBuilder(true);
+        }}
+        className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+      >
+        ➕ New Run
+      </button>
+    </div>
   
         {/* MONTHLY GOALS */}
         <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-2">
