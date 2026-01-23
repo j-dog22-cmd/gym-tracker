@@ -217,7 +217,33 @@
 
         setSelectedDay(null);
       }
-
+      
+      const [userName, setUserName] = React.useState(
+        localStorage.getItem("userName_v1") || ""
+      );
+      
+      const [userRings, setUserRings] = React.useState(() => {
+        const saved = localStorage.getItem("userRings_v1");
+        return saved
+          ? JSON.parse(saved)
+          : {
+              workouts: true,
+              runs: true,
+              calories: false,
+              steps: false,
+            };
+      });
+      
+      const [userGoals, setUserGoals] = React.useState(() => {
+        const saved = localStorage.getItem("userGoals_v1");
+        return saved
+          ? JSON.parse(saved)
+          : {
+              workouts: 12,
+              runs: 8,
+              distance: 40,
+            };
+      });
       /* AUTO-ASSIGN HELPERS */
       const WEEK_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -899,7 +925,85 @@
         </button>
       </div>
     );
+      
+    const SettingsTab = (
+  <div className="w-full h-screen overflow-y-auto bg-black px-4 pt-6 pb-32">
 
+    <h2 className="text-2xl font-semibold mb-6">Settings</h2>
+
+    {/* NAME */}
+    <div className="mb-6 bg-[#1C1C1E] p-4 rounded-xl soft-border">
+      <label className="text-sm text-[#8E8E93]">Your Name</label>
+      <input
+        type="text"
+        className="w-full mt-2 p-3 rounded-xl bg-[#2C2C2E]"
+        value={userName}
+        onChange={(e) => {
+          setUserName(e.target.value);
+          localStorage.setItem("userName_v1", e.target.value);
+        }}
+        placeholder="Enter your name"
+      />
+    </div>
+
+    {/* RINGS */}
+    <div className="mb-6 bg-[#1C1C1E] p-4 rounded-xl soft-border">
+      <p className="font-semibold mb-3">Progress Rings</p>
+
+      {Object.keys(userRings).map((key) => (
+        <div key={key} className="flex justify-between items-center mb-2">
+          <span className="capitalize">{key}</span>
+          <input
+            type="checkbox"
+            checked={userRings[key]}
+            onChange={() => {
+              const updated = { ...userRings, [key]: !userRings[key] };
+              setUserRings(updated);
+              localStorage.setItem("userRings_v1", JSON.stringify(updated));
+            }}
+          />
+        </div>
+      ))}
+    </div>
+
+    {/* MONTHLY GOALS */}
+    <div className="mb-6 bg-[#1C1C1E] p-4 rounded-xl soft-border">
+      <p className="font-semibold mb-3">Monthly Goals</p>
+
+      {Object.keys(userGoals).map((key) => (
+        <div key={key} className="mb-3">
+          <label className="text-sm text-[#8E8E93] capitalize">{key}</label>
+          <input
+            type="number"
+            className="w-full mt-1 p-3 rounded-xl bg-[#2C2C2E]"
+            value={userGoals[key]}
+            onChange={(e) => {
+              const updated = { ...userGoals, [key]: Number(e.target.value) };
+              setUserGoals(updated);
+              localStorage.setItem("userGoals_v1", JSON.stringify(updated));
+            }}
+          />
+        </div>
+      ))}
+    </div>
+
+    {/* RESET APP */}
+    <div className="bg-[#1C1C1E] p-4 rounded-xl soft-border">
+      <p className="font-semibold mb-3 text-red-400">Danger Zone</p>
+
+      <button
+        onClick={() => {
+          localStorage.clear();
+          location.reload();
+        }}
+        className="w-full bg-red-500 text-white rounded-xl py-3 font-semibold"
+      >
+        Reset App
+      </button>
+    </div>
+
+  </div>
+);
     /* MODALS */
     const GymCreatorModal = showGymCreator && (
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end z-[999]">
@@ -1124,6 +1228,16 @@
             >
               <span className="mb-1">📅</span>
               <span>Calendar</span>
+            </button>
+
+            <button
+              onClick={() => setTab("settings")}
+              className={`flex flex-col items-center text-xs ${
+                tab === "settings" ? "text-white" : "text-[#8E8E93]"
+              }`}
+            >
+              <span className="mb-1">⚙️</span>
+              <span>Settings</span>
             </button>
 
           </div>
