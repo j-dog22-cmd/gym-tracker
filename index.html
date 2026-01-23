@@ -984,8 +984,8 @@ const RunBuilder = showRunBuilder ? (
     </div>
   </div>
 ) : null;
-
-// ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
+        
+    // ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
 React.useEffect(() => {
   if (restTimer === null) return;
 
@@ -1197,6 +1197,7 @@ const WorkoutScreen = activeWorkout ? (
 
   </div>
 ) : null;
+  
 return (
     <div>
       {tab==="home" && Home}
