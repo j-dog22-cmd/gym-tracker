@@ -113,7 +113,7 @@ function App() {
 
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
-  const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(
+  const [gymDayIndex,setGymDayIndex] = React.useState(
     new Date().toISOString().split("T")[0]);
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
