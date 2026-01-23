@@ -508,122 +508,124 @@ function App() {
   );
 
   /* DAY POPUP WITH START + DELETE */
-  const DayPopup = popupDay !== null ? (() => {
-    const d = dateFromWeekIndex(popupDay);
-    const dayLogs = logs
-      .map((l,i)=>({...l,_idx:i}))
-      .filter(l=>sameDay(l.date,d));
+const DayPopup = popupDay !== null ? (() => {
+  // popupDay is already a weekday index (0–6)
+  const dayLogs = logs
+    .map((l, i) => ({ ...l, _idx: i }))
+    .filter(l => l.dayIndex === popupDay);   // match by weekday, not date
 
-    return (
-      <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
-        <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
-            <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
-          </div>
-          {dayLogs.length === 0 ? (
-            <p className="text-xs text-gray-400">No workouts scheduled.</p>
-          ) : (
-            dayLogs.map((l,i)=>(
-              <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
-                {/* TITLE */}
-                <p className="text-sm font-semibold">
-                  {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
-                  {l.completed && (
-                    <span className="ml-1 text-[10px] text-green-400">✓ Done</span>
-                  )}
-                </p>
-
-                {/* RUN SECTION */}
-                {l.type === "run" && (
-                  <>
-                    <p className="text-xs text-gray-400">Type: {l.runType}</p>
-
-                    {/* RUN WARM-UP */}
-                    {l.warmup && l.warmup.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
-                        {l.warmup.map((w,j)=>(
-                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* RUN STRETCHES */}
-                    {l.stretches && l.stretches.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Stretches</p>
-                        {l.stretches.map((w,j)=>(
-                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* GYM SECTION */}
-                {l.type === "gym" && (
-                  <>
-                    {/* GYM WARM-UP */}
-                    {l.warmup && l.warmup.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
-                        {l.warmup.map((w,j)=>(
-                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* GYM EXERCISES */}
-                    {l.exercises && l.exercises.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
-                        {l.exercises.map((ex,j)=>(
-                          <p key={j} className="text-[11px]">
-                            • {ex.name} — {ex.sets} x {ex.reps}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* GYM WARM-DOWN */}
-                    {l.warmdown && l.warmdown.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Warm‑down</p>
-                        {l.warmdown.map((w,j)=>(
-                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* START WORKOUT */}
-                <button
-                  onClick={()=>{
-                    setActiveWorkout(l);
-                    setRestTimer(null);
-                    setPopupDay(null);
-                  }}
-                  className="w-full bg-green-600 rounded-xl py-2 text-xs"
-                >
-                  Start Workout
-                </button>
-
-                {/* DELETE BUTTON */}
-                <button
-                  onClick={()=>deleteLog(l._idx)}
-                  className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
-                >
-                  Delete Workout
-                </button>
-              </div>
-            ))
-          )}
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
+      <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
+        <div className="flex justify-between items-center mb-2">
+          <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
+          <button onClick={() => setPopupDay(null)} className="text-sm text-gray-400">
+            Close
+          </button>
         </div>
+
+        {dayLogs.length === 0 ? (
+          <p className="text-xs text-gray-400">No workouts scheduled.</p>
+        ) : (
+          dayLogs.map((l, i) => (
+            <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
+              {/* TITLE */}
+              <p className="text-sm font-semibold">
+                {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
+                {l.completed && (
+                  <span className="ml-1 text-[10px] text-green-400">✓ Done</span>
+                )}
+              </p>
+
+              {/* RUN SECTION */}
+              {l.type === "run" && (
+                <>
+                  <p className="text-xs text-gray-400">Type: {l.runType}</p>
+
+                  {l.warmup && l.warmup.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
+                      {l.warmup.map((w, j) => (
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {l.stretches && l.stretches.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Stretches</p>
+                      {l.stretches.map((w, j) => (
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* GYM SECTION */}
+              {l.type === "gym" && (
+                <>
+                  {l.warmup && l.warmup.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
+                      {l.warmup.map((w, j) => (
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {l.exercises && l.exercises.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
+                      {l.exercises.map((ex, j) => (
+                        <p key={j} className="text-[11px]">
+                          • {ex.name} — {ex.sets} x {ex.reps}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {l.warmdown && l.warmdown.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Warm‑down</p>
+                      {l.warmdown.map((w, j) => (
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* START WORKOUT */}
+              <button
+                onClick={() => {
+                  setActiveWorkout({
+                    ...l,
+                    date: new Date(),   // actual workout date when you start it
+                    completed: false
+                  });
+                  setRestTimer(null);
+                  setPopupDay(null);
+                }}
+                className="w-full bg-green-600 rounded-xl py-2 text-xs"
+              >
+                Start Workout
+              </button>
+
+              {/* DELETE BUTTON */}
+              <button
+                onClick={() => deleteLog(l._idx)}
+                className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
+              >
+                Delete Workout
+              </button>
+            </div>
+          ))
+        )}
       </div>
-    );
-  })() : null;
+    </div>
+  );
+})() : null;
 
   /* BOTTOM-SHEET GYM BUILDER */
   const GymBuilder = showGymBuilder ? (
