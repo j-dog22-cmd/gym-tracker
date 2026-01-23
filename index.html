@@ -96,6 +96,9 @@ function App() {
   const [showRunBuilder,setShowRunBuilder] = React.useState(false);
   const [activeWorkout, setActiveWorkout] = React.useState(null);
 
+  const [workoutProgress, setWorkoutProgress] = React.useState({});
+  const [restTimer, setRestTimer] = React.useState(null);
+
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
   const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(today));
@@ -539,7 +542,10 @@ const DayPopup = popupDay !== null ? (() => {
               )}
 
               <button
-                onClick={()=>setActiveWorkout(l)}
+                onClick={()=>{
+                  setActiveWorkout(l);
+                  setWorkoutProgress({});
+                }}
                 className="w-full bg-green-600 rounded-xl py-2 text-xs"
               >
                 Start Workout
@@ -899,6 +905,13 @@ const WorkoutScreen = activeWorkout ? (
       </button>
     </div>
 
+    {restTimer !== null && (
+    <div className="p-3 bg-[#1C1C1E] rounded-xl mb-4 text-center">
+      <p className="text-sm">Rest</p>
+      <p className="text-3xl font-bold mt-1">{restTimer}s</p>
+    </div>
+  )}
+
     {/* GYM WORKOUT EXECUTION */}
     {activeWorkout.type === "gym" && (
       <div className="space-y-4">
@@ -920,12 +933,38 @@ const WorkoutScreen = activeWorkout ? (
         {activeWorkout.exercises?.length > 0 && (
           <div>
             <p className="text-xs text-gray-400 mb-1">Exercises</p>
-            {activeWorkout.exercises.map((ex,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{ex.name}</p>
-                <p className="text-xs text-gray-400">{ex.sets} x {ex.reps}</p>
-              </div>
-            ))}
+        
+            {activeWorkout.exercises.map((ex,i)=>{
+        
+              const sets = Number(ex.sets) || 0;
+              const completed = workoutProgress[i] || 0;
+        
+              return (
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm mb-2">{ex.name}</p>
+        
+                  <div className="flex flex-col gap-2">
+                    {[...Array(sets)].map((_,s)=>(
+                      <label key={s} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={s < completed}
+                          onChange={()=>{
+                            const next = {...workoutProgress};
+                            next[i] = s + 1;
+                            setWorkoutProgress(next);
+                            setRestTimer(settings.rest); // start rest timer
+                          }}
+                        />
+                        <span className="text-xs text-gray-300">
+                          Set {s+1} — {ex.reps} reps
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -982,6 +1021,20 @@ const WorkoutScreen = activeWorkout ? (
 
   </div>
 ) : null;  
+
+  /* REST TIMER COUNTDOWN */
+  React.useEffect(()=>{
+    if (restTimer === null) return;
+  
+    if (restTimer === 0) {
+      setRestTimer(null);
+      return;
+    }
+  
+    const t = setTimeout(()=>setRestTimer(restTimer - 1), 1000);
+    return ()=>clearTimeout(t);
+  
+  }, [restTimer]);
   
 return (
     <div>
