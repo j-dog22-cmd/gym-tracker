@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fitness Planner v2</title>
+  <title>Fitness Planner v3</title>
 
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -13,39 +13,31 @@
   <style>
     html, body {
       height: 100%;
-      overflow: hidden;
       background: black;
       color: white;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     }
     .soft-border { border: 1px solid rgba(255,255,255,0.08); }
-    .glass-nav {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(20px);
-    }
+    .glass-nav { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
 
 <script type="text/babel">
-/* -------------------------------------------------
-   CONSTANTS + HELPERS
---------------------------------------------------*/
-const WEEK_DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-const getWeekdayIndex = d => d.getDay() === 0 ? 6 : d.getDay() - 1;
-const isSameDay = (a,b) => a.toDateString() === b.toDateString();
+/* ---------------- HELPERS ---------------- */
+const WEEK = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const dayIndex = d => d.getDay() === 0 ? 6 : d.getDay() - 1;
+const today = new Date();
 
-/* -------------------------------------------------
-   PROGRESS RING (CUSTOMISABLE)
---------------------------------------------------*/
-function ProgressRing({ progress, color, size = 56 }) {
-  const stroke = 6;
+/* ---------------- RING ---------------- */
+function Ring({ value, total, color }) {
+  const size = 52, stroke = 6;
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   return (
     <svg width={size} height={size}>
-      <circle r={r} cx={size/2} cy={size/2} stroke="rgba(255,255,255,0.1)" strokeWidth={stroke} fill="none" />
+      <circle r={r} cx={size/2} cy={size/2} stroke="rgba(255,255,255,0.15)" strokeWidth={stroke} fill="none" />
       <circle
         r={r}
         cx={size/2}
@@ -55,172 +47,206 @@ function ProgressRing({ progress, color, size = 56 }) {
         fill="none"
         strokeLinecap="round"
         strokeDasharray={c}
-        strokeDashoffset={c * (1 - progress)}
+        strokeDashoffset={c * (1 - Math.min(1,value/total))}
         style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%" }}
       />
     </svg>
   );
 }
 
-/* -------------------------------------------------
-   APP
---------------------------------------------------*/
+/* ---------------- LINE GRAPH ---------------- */
+function LineGraph({ data, color }) {
+  const max = 5;
+  return (
+    <div className="h-32 flex items-end gap-2">
+      {data.map((v,i)=>(
+        <div key={i} className="flex-1 flex flex-col justify-end items-center">
+          <div className="w-full rounded" style={{height:`${(v/max)*100}%`,background:color}}></div>
+          <p className="text-[10px] mt-1">W{i+1}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- APP ---------------- */
 function App() {
-  const today = new Date();
-
   /* SETTINGS */
-  const [settings, setSettings] = React.useState(() => JSON.parse(localStorage.getItem("settings_v2")) || {
-    name: "Alex",
-    weeklyGymGoal: 3,
-    weeklyRunGoal: 3,
-    monthlyGymGoal: 12,
-    monthlyRunGoal: 12,
-    restTime: 60,
-    gymColor: "#22c55e",
-    runColor: "#38bdf8"
+  const [settings,setSettings] = React.useState(()=>JSON.parse(localStorage.getItem("settings"))||{
+    name:"Alex",
+    weeklyGym:3,
+    weeklyRun:3,
+    monthlyGym:12,
+    monthlyRun:12,
+    rest:60,
+    gymColor:"#22c55e",
+    runColor:"#38bdf8"
   });
-
-  React.useEffect(() => {
-    localStorage.setItem("settings_v2", JSON.stringify(settings));
-  }, [settings]);
+  React.useEffect(()=>localStorage.setItem("settings",JSON.stringify(settings)),[settings]);
 
   /* DATA */
-  const [weeklyPlan, setWeeklyPlan] = React.useState(() => JSON.parse(localStorage.getItem("weeklyPlan_v2")) || Object.fromEntries(WEEK_DAYS.map(d=>[d,null])));
-  const [runPlan, setRunPlan] = React.useState(() => JSON.parse(localStorage.getItem("runPlan_v2")) || Object.fromEntries(WEEK_DAYS.map(d=>[d,null])));
-  const [workoutLogs, setWorkoutLogs] = React.useState(() => JSON.parse(localStorage.getItem("workoutLogs_v2")) || []);
-  const [runLogs, setRunLogs] = React.useState(() => JSON.parse(localStorage.getItem("runLogs_v2")) || []);
+  const [logs,setLogs] = React.useState(()=>JSON.parse(localStorage.getItem("logs"))||[]);
+  React.useEffect(()=>localStorage.setItem("logs",JSON.stringify(logs)),[logs]);
 
-  React.useEffect(()=>localStorage.setItem("weeklyPlan_v2",JSON.stringify(weeklyPlan)),[weeklyPlan]);
-  React.useEffect(()=>localStorage.setItem("runPlan_v2",JSON.stringify(runPlan)),[runPlan]);
-  React.useEffect(()=>localStorage.setItem("workoutLogs_v2",JSON.stringify(workoutLogs)),[workoutLogs]);
-  React.useEffect(()=>localStorage.setItem("runLogs_v2",JSON.stringify(runLogs)),[runLogs]);
-
-  /* NAV */
+  const [activeDay,setActiveDay] = React.useState(dayIndex(today));
   const [tab,setTab] = React.useState("home");
+  const [workout,setWorkout] = React.useState(null);
 
   /* STREAK */
-  const streak = (() => {
-    let s = 0;
-    let cursor = new Date();
-    while (true) {
-      const day = cursor.toDateString();
-      const didWorkout = workoutLogs.some(l => new Date(l.timestamp).toDateString() === day);
-      const didRun = runLogs.some(l => new Date(l.timestamp).toDateString() === day);
-      if (didWorkout || didRun) {
-        s++; cursor.setDate(cursor.getDate()-1);
+  const streak = (()=>{
+    let s=0, d=new Date();
+    while(true){
+      const day = d.toDateString();
+      if(logs.some(l=>new Date(l.date).toDateString()===day)){
+        s++; d.setDate(d.getDate()-1);
       } else break;
     }
     return s;
   })();
 
-  /* WEEK PROGRESS */
-  const weekStart = new Date(today); weekStart.setDate(today.getDate() - getWeekdayIndex(today));
-  const gymDone = workoutLogs.filter(l => new Date(l.timestamp) >= weekStart).length;
-  const runDone = runLogs.filter(l => new Date(l.timestamp) >= weekStart).length;
+  /* WEEKLY */
+  const weekStart = new Date(today); weekStart.setDate(today.getDate()-dayIndex(today));
+  const weekLogs = logs.filter(l=>new Date(l.date)>=weekStart);
+  const gymWeek = weekLogs.filter(l=>l.type==="gym").length;
+  const runWeek = weekLogs.filter(l=>l.type==="run").length;
+
+  /* MONTHLY GRAPH */
+  const month = today.getMonth();
+  const byWeek = (type)=>{
+    const arr=[0,0,0,0];
+    logs.filter(l=>new Date(l.date).getMonth()===month && l.type===type)
+      .forEach(l=>{ arr[Math.floor((new Date(l.date).getDate()-1)/7)]++; });
+    return arr;
+  };
+
+  /* START WORKOUT */
+  function startWorkout(type){
+    setWorkout({type,sets:[false,false,false,false],rest:settings.rest});
+    setTab("workout");
+  }
+
+  /* COMPLETE WORKOUT */
+  function finishWorkout(){
+    setLogs([...logs,{type:workout.type,date:new Date()}]);
+    setWorkout(null);
+    setTab("home");
+  }
 
   /* HOME */
-  const Home = (
-    <div className="h-screen overflow-y-auto px-4 pt-6 pb-32">
+  const Home=(
+    <div className="p-4 pb-32 space-y-4">
+      <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
 
-      <h1 className="text-2xl font-semibold mb-3">Hey, {settings.name}</h1>
-
-      {/* WEEK STRIP */}
-      <div className="flex gap-2 mb-4 overflow-x-auto">
-        {WEEK_DAYS.map((d,i)=>{
-          const date = new Date(weekStart); date.setDate(weekStart.getDate()+i);
-          const gym = weeklyPlan[d];
-          const run = runPlan[d];
-          return (
-            <div key={d} className={`min-w-[56px] p-2 rounded-2xl soft-border bg-[#1C1C1E] ${isSameDay(date,today)?"border-red-500":""}`}>
-              <p className="text-sm font-semibold">{date.getDate()}</p>
-              <p className="text-xs text-[#8E8E93]">{d}</p>
-              {(gym||run) && <div className="w-2 h-2 rounded-full mt-1" style={{background: gym&&run?"white":gym?settings.gymColor:settings.runColor}}></div>}
-            </div>
-          );
-        })}
+      {/* WEEK */}
+      <div className="flex gap-2">
+        {WEEK.map((d,i)=>(
+          <button key={i} onClick={()=>setActiveDay(i)} className={`p-3 rounded-xl soft-border ${i===activeDay?"bg-[#1C1C1E]":""}`}>
+            <p className="text-xs">{d}</p>
+            <p className="text-sm">{new Date(weekStart).setDate(weekStart.getDate()+i) && new Date(weekStart).getDate()+i}</p>
+          </button>
+        ))}
       </div>
 
-      {/* WEEKLY PROGRESS */}
-      <div className="space-y-3 mb-6">
-        <div className="flex justify-between items-center bg-[#1C1C1E] p-4 rounded-2xl soft-border">
-          <div>
-            <p className="font-semibold">Gym this week</p>
-            <p className="text-xs text-[#8E8E93]">{gymDone}/{settings.weeklyGymGoal}</p>
-          </div>
-          <ProgressRing progress={Math.min(1,gymDone/settings.weeklyGymGoal)} color={settings.gymColor} />
+      {/* WEEK PROGRESS */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
+          <div><p>Gym</p><p className="text-xs">{gymWeek}/{settings.weeklyGym}</p></div>
+          <Ring value={gymWeek} total={settings.weeklyGym} color={settings.gymColor} />
         </div>
-
-        <div className="flex justify-between items-center bg-[#1C1C1E] p-4 rounded-2xl soft-border">
-          <div>
-            <p className="font-semibold">Runs this week</p>
-            <p className="text-xs text-[#8E8E93]">{runDone}/{settings.weeklyRunGoal}</p>
-          </div>
-          <ProgressRing progress={Math.min(1,runDone/settings.weeklyRunGoal)} color={settings.runColor} />
+        <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
+          <div><p>Runs</p><p className="text-xs">{runWeek}/{settings.weeklyRun}</p></div>
+          <Ring value={runWeek} total={settings.weeklyRun} color={settings.runColor} />
         </div>
       </div>
 
       {/* TODAY / TOMORROW */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        {[0,1].map(offset=>{
-          const d = new Date(today); d.setDate(today.getDate()+offset);
-          const wd = WEEK_DAYS[getWeekdayIndex(d)];
-          return (
-            <div key={offset} className="bg-[#1C1C1E] p-4 rounded-2xl soft-border">
-              <p className="text-xs text-[#8E8E93]">{offset===0?"Today":"Tomorrow"}</p>
-              <p className="font-semibold">{wd} {d.getDate()}</p>
-              <p className="text-xs mt-2">🏋️ {weeklyPlan[wd]?.name || "No workout"}</p>
-              <p className="text-xs">🏃 {runPlan[wd]?.type || "No run"}</p>
+      <div className="grid grid-cols-2 gap-3">
+        {[0,1].map(o=>{
+          const d=new Date(); d.setDate(today.getDate()+o);
+          return(
+            <div key={o} className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">
+              <p className="text-xs">{o===0?"Today":"Tomorrow"}</p>
+              <p className="font-semibold">{WEEK[dayIndex(d)]}</p>
+              {o===0 && (
+                <div className="mt-2 space-y-1">
+                  <button onClick={()=>startWorkout("gym")} className="text-xs">🏋️ Start Workout</button>
+                  <button onClick={()=>startWorkout("run")} className="text-xs">🏃 Start Run</button>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      {/* QUICK ACTIONS */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <button className="bg-[#1C1C1E] p-4 rounded-2xl soft-border">🏋️ New Workout</button>
-        <button className="bg-[#1C1C1E] p-4 rounded-2xl soft-border">🏃 New Run</button>
+      {/* QUICK */}
+      <div className="grid grid-cols-2 gap-3">
+        <button className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">New Workout</button>
+        <button className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">New Run</button>
       </div>
 
-      {/* MONTHLY GOALS */}
-      <div className="bg-[#1C1C1E] p-4 rounded-2xl soft-border">
+      {/* MONTHLY */}
+      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">
         <p className="font-semibold mb-2">Monthly Goals</p>
-        <p className="text-xs">Gym: {workoutLogs.length}/{settings.monthlyGymGoal}</p>
-        <p className="text-xs">Runs: {runLogs.length}/{settings.monthlyRunGoal}</p>
+        <p className="text-xs">Gym {logs.filter(l=>l.type==="gym").length}/{settings.monthlyGym}</p>
+        <p className="text-xs">Run {logs.filter(l=>l.type==="run").length}/{settings.monthlyRun}</p>
       </div>
 
-      <div className="mt-4 text-xs">🔥 {streak} day streak</div>
+      <p className="text-xs">🔥 {streak} day streak</p>
+    </div>
+  );
 
+  /* CALENDAR */
+  const Calendar=(
+    <div className="p-4 space-y-4">
+      <p className="font-semibold">This Month</p>
+      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">
+        <p className="text-sm mb-2">Gym</p>
+        <LineGraph data={byWeek("gym")} color={settings.gymColor} />
+      </div>
+      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">
+        <p className="text-sm mb-2">Runs</p>
+        <LineGraph data={byWeek("run")} color={settings.runColor} />
+      </div>
+    </div>
+  );
+
+  /* WORKOUT */
+  const Workout=(
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-semibold">{workout.type === "gym" ? "Workout" : "Run"}</h2>
+      <p>Rest timer: {workout.rest}s</p>
+      <div className="grid grid-cols-4 gap-2">
+        {workout.sets.map((s,i)=>(
+          <button key={i} onClick={()=>{
+            const ns=[...workout.sets]; ns[i]=!ns[i]; setWorkout({...workout,sets:ns});
+          }} className={`p-4 rounded-xl ${s?"bg-green-500":"bg-[#1C1C1E]"}`}>{i+1}</button>
+        ))}
+      </div>
+      <button onClick={finishWorkout} className="w-full bg-blue-500 rounded-xl py-3">Finish</button>
     </div>
   );
 
   /* SETTINGS */
-  const Settings = (
-    <div className="h-screen overflow-y-auto px-4 pt-6 pb-32">
-      <h2 className="text-xl font-semibold mb-4">Settings</h2>
-
-      <label className="text-sm">Name</label>
-      <input className="w-full p-3 mb-3 rounded-xl bg-[#2C2C2E]" value={settings.name} onChange={e=>setSettings({...settings,name:e.target.value})} />
-
-      <label className="text-sm">Rest Timer (seconds)</label>
-      <input type="number" className="w-full p-3 mb-3 rounded-xl bg-[#2C2C2E]" value={settings.restTime} onChange={e=>setSettings({...settings,restTime:+e.target.value})} />
-
-      <button
-        onClick={()=>{ localStorage.clear(); location.reload(); }}
-        className="w-full bg-red-500 text-white rounded-xl py-3 mt-6"
-      >
-        Reset App
-      </button>
+  const Settings=(
+    <div className="p-4 space-y-3">
+      <p className="font-semibold">Settings</p>
+      <input className="w-full p-3 rounded-xl bg-[#2C2C2E]" value={settings.name} onChange={e=>setSettings({...settings,name:e.target.value})} />
+      <input type="number" className="w-full p-3 rounded-xl bg-[#2C2C2E]" value={settings.rest} onChange={e=>setSettings({...settings,rest:+e.target.value})} />
+      <button onClick={()=>{localStorage.clear();location.reload();}} className="bg-red-500 p-3 rounded-xl">Reset App</button>
     </div>
   );
 
-  return (
-    <div className="relative h-screen">
-      {tab==="home" && Home}
-      {tab==="settings" && Settings}
+  return(
+    <div>
+      {tab==="home"&&Home}
+      {tab==="calendar"&&Calendar}
+      {tab==="workout"&&Workout}
+      {tab==="settings"&&Settings}
 
-      <div className="fixed bottom-4 left-0 right-0 flex justify-center">
-        <div className="glass-nav soft-border rounded-2xl px-6 py-2 flex gap-8">
+      <div className="fixed bottom-4 inset-x-0 flex justify-center">
+        <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
           <button onClick={()=>setTab("home")}>🏠</button>
+          <button onClick={()=>setTab("calendar")}>📅</button>
           <button onClick={()=>setTab("settings")}>⚙️</button>
         </div>
       </div>
