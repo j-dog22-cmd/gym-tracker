@@ -1033,24 +1033,6 @@ const DayPopup = popupDay !== null ? (() => {
             </div>
           );
         })}
-
-      {activeWorkout.exercises.map((ex, exIndex) => (
-      <div key={exIndex} className="mb-4">
-        <p className="font-semibold mb-2">{ex.name}</p>
-    
-        {ex.sets.map((set, setIndex) => (
-          <div key={setIndex} className="flex items-center gap-2 mb-1">
-            <input
-              type="checkbox"
-              checked={set.completed}
-              onChange={() => handleSetComplete(exIndex, setIndex)}
-              className="w-5 h-5 accent-green-500"
-            />
-            <p className="text-sm">{set.weight}kg × {set.reps}</p>
-          </div>
-        ))}
-      </div>
-    ))}
       
       {restTimer !== null && (
       <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
