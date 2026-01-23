@@ -127,6 +127,24 @@ function App() {
   const [runWarmup, setRunWarmup] = React.useState([]);
   const [runStretches, setRunStretches] = React.useState([]);
 
+    const finishWorkout = () => {
+    setLogs(logs.map((log) => {
+      if (
+        sameDay(log.date, activeWorkout.date) &&
+        log.name === activeWorkout.name &&
+        log.type === activeWorkout.type
+      ) {
+        return { ...log, completed: true };
+      }
+      return log;
+    }));
+  
+    setActiveWorkout(null);
+    setRestTimer(null);
+  };
+    
+  const WorkoutScreen = activeWorkout ? ( ... ) : null;
+    
   /* WEEK CALC */
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dayIndex(today));
