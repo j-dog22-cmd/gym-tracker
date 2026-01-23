@@ -538,36 +538,49 @@
         const todayWeekday = WEEK_DAYS[getWeekdayIndex(todayDate)];
         const todayNumber = todayDate.getDate();
 
-        // Start of this week (Mon–Sun)
-        const startOfWeek = (() => {
-          const d = new Date(todayDate);
-          const offset = getWeekdayIndex(d); // 0 = Mon
-          d.setDate(d.getDate() - offset);
-          return d;
-        })();
+      {/* HORIZONTAL WEEK ROW - APPLE STYLE CARDS */}
+            <h2 className="text-lg font-semibold mb-2">This Week</h2>
 
-        const weekDaysWithDates = WEEK_DAYS.map((day, idx) => {
-          const d = new Date(startOfWeek);
-          d.setDate(startOfWeek.getDate() + idx);
-          return { label: day, date: d };
-        });
+            <div className="flex justify-between mb-4">
+              {weekDaysWithDates.map(({ label, date }) => {
+                const weekday = label;
+                const gym = weeklyPlan[weekday];
+                const run = runPlan[weekday];
 
-        return (
-          <div className="w-full h-screen overflow-y-auto bg-black pb-32 px-4 pt-6">
+                const isToday = isSameDay(date, todayDate);
 
-            {/* MOTIVATIONAL HEADER */}
-            <div className="mb-4">
-              <p className="text-xs text-[#8E8E93] mb-1">
-                {affirmations[affirmationIndex]}
-              </p>
-              <div className="flex items-baseline gap-2">
-                <h1 className="text-2xl font-semibold leading-tight">
-                  Today
-                </h1>
-                <span className="text-sm text-[#8E8E93]">
-                  {todayWeekday}, {todayNumber}
-                </span>
-              </div>
+                let dotColor = null;
+                if (gym && run) dotColor = "bg-white";
+                else if (gym) dotColor = "bg-green-400";
+                else if (run) dotColor = "bg-blue-400";
+
+                return (
+                  <button
+                    key={weekday}
+                    onClick={() => openDayDetails({ weekday, date })}
+                    className={`
+                      w-12 p-3
+                      rounded-3xl soft-border
+                      bg-[#1C1C1E]
+                      flex flex-col items-center
+                      transition-all
+                      ${isToday ? "border border-red-500" : ""}
+                    `}
+                  >
+                    <p className="text-base font-semibold leading-none">
+                      {date.getDate()}
+                    </p>
+                    <p className="text-xs text-[#8E8E93] leading-none mt-1">
+                      {weekday.slice(0, 2)}
+                    </p>
+                    {dotColor && (
+                      <div
+                        className={`w-2 h-2 ${dotColor} rounded-full mt-1`}
+                      ></div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* PROGRESS RINGS + STREAK */}
@@ -663,51 +676,7 @@
               </button>
             </div>
 
-            {/* HORIZONTAL WEEK ROW - APPLE STYLE CARDS */}
-            <h2 className="text-lg font-semibold mb-2">This Week</h2>
-
-            <div className="flex justify-between mb-4">
-              {weekDaysWithDates.map(({ label, date }) => {
-                const weekday = label;
-                const gym = weeklyPlan[weekday];
-                const run = runPlan[weekday];
-
-                const isToday = isSameDay(date, todayDate);
-
-                let dotColor = null;
-                if (gym && run) dotColor = "bg-white";
-                else if (gym) dotColor = "bg-green-400";
-                else if (run) dotColor = "bg-blue-400";
-
-                return (
-                  <button
-                    key={weekday}
-                    onClick={() => openDayDetails({ weekday, date })}
-                    className={`
-                      w-12 p-3
-                      rounded-3xl soft-border
-                      bg-[#1C1C1E]
-                      flex flex-col items-center
-                      transition-all
-                      ${isToday ? "border border-red-500" : ""}
-                    `}
-                  >
-                    <p className="text-base font-semibold leading-none">
-                      {date.getDate()}
-                    </p>
-                    <p className="text-xs text-[#8E8E93] leading-none mt-1">
-                      {weekday.slice(0, 2)}
-                    </p>
-                    {dotColor && (
-                      <div
-                        className={`w-2 h-2 ${dotColor} rounded-full mt-1`}
-                      ></div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
+            
             {/* INLINE DAY DETAILS */}
             {selectedDay && (
               <div className="mb-6 bg-[#1C1C1E] p-4 rounded-xl soft-border">
