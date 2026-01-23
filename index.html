@@ -65,7 +65,7 @@ function App() {
   /* SETTINGS */
   const [settings,setSettings] = React.useState(()=>{
     return JSON.parse(localStorage.getItem("settings")) || {
-      name:" ",
+      name:"Alex",
       weeklyGym:3,
       weeklyRun:3,
       monthlyGym:12,
@@ -94,24 +94,17 @@ function App() {
 
   const [showGymBuilder,setShowGymBuilder] = React.useState(false);
   const [showRunBuilder,setShowRunBuilder] = React.useState(false);
-  const [activeWorkout, setActiveWorkout] = React.useState(null);
-
-  const [workoutProgress, setWorkoutProgress] = React.useState({});
-  const [restTimer, setRestTimer] = React.useState(null);
 
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
   const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(today));
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
-  const [warmDownItems,setWarmDownItems] = React.useState([]);
 
   // Run builder state
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
   const [runDayIndex,setRunDayIndex] = React.useState(dayIndex(today));
-  const [runWarmup, setRunWarmup] = React.useState([]);
-  const [runStretches, setRunStretches] = React.useState([]);
 
   /* WEEK CALC */
   const weekStart = new Date(today);
@@ -143,16 +136,13 @@ function App() {
       date,
       name: gymName || "Gym Workout",
       warmup: warmupItems,
-      exercises: exercises,
-      warmdown: warmDownItems
-
+      exercises: exercises
     };
     setLogs([...logs,newLog]);
     setGymName("");
     setWarmupItems([]);
     setExercises([]);
     setShowGymBuilder(false);
-    setWarmDownItems([]);
   }
 
   /* ADD RUN */
@@ -162,19 +152,12 @@ function App() {
       type: "run",
       date,
       name: runName || "Run",
-      runType,
-      warmup: runWarmup,
-      stretches: runStretches
-      
+      runType
     };
-    const next = [...plan];
-    next[runDayIndex].push(newLog);
-    setPlan(next);
+    setLogs([...logs,newLog]);
     setRunName("");
     setRunType("Easy");
     setShowRunBuilder(false);
-    setRunWarmup([]);
-    setRunStretches([]);
   }
 
   /* DELETE WORKOUT (by global index) */
@@ -184,11 +167,11 @@ function App() {
 
   /* HOME */
   const Home = (
-    <div className="p-5 pb-40 space-y-6">
+    <div className="p-4 pb-32 space-y-4">
       <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
 
       {/* WEEK SELECTOR WITH DOTS + TODAY HIGHLIGHT */}
-      <div className="flex gap-2 mt-3">
+      <div className="flex gap-2">
         {WEEK.map((d,i)=>{
           const dateObj = dateFromWeekIndex(i);
           const hasGym = logs.some(l => l.type==="gym" && sameDay(l.date,dateObj));
@@ -229,7 +212,7 @@ function App() {
       </div>
 
       {/* WEEK PROGRESS */}
-      <div className="space-y-4 mt-4">
+      <div className="space-y-3">
         <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
           <div>
             <p>Gym this week</p>
@@ -246,8 +229,6 @@ function App() {
         </div>
       </div>
 
-  <p className="text-lg font-semibold mt-4">Your Plan</p>
-      
       {/* TODAY / TOMORROW WITH DOTS PER WORKOUT */}
       <div className="grid grid-cols-2 gap-3">
         {[0,1].map(o=>{
@@ -353,311 +334,69 @@ function App() {
     </div>
   );
 
-  <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2">
-    <p className="text-sm font-semibold">Rest Timer (seconds)</p>
-    <input
-      type="number"
-      min="5"
-      max="300"
-      value={settings.rest}
-      onChange={e => setSettings({...settings, rest: Number(e.target.value)})}
-      className="w-full p-2 rounded-xl bg-[#2A2A2A] text-sm"
-    />
-  </div>
+  /* DAY POPUP WITH DELETE */
+  const DayPopup = popupDay !== null ? (() => {
+    const d = dateFromWeekIndex(popupDay);
+    const dayLogs = logs
+      .map((l,i)=>({...l,_idx:i}))
+      .filter(l=>sameDay(l.date,d));
 
-/* DAY POPUP WITH DELETE */
-const DayPopup = popupDay !== null ? (() => {
-  const d = dateFromWeekIndex(popupDay);
-  const dayLogs = logs
-    .map((l,i)=>({...l,_idx:i}))
-    .filter(l=>sameDay(l.date,d));
-
-  
-const WorkoutScreen = activeWorkout ? (
-  <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
-
-    {/* HEADER */}
-    <div className="flex justify-between items-center mb-4">
-      <p className="text-lg font-semibold">{activeWorkout.name}</p>
-      <button
-        onClick={()=>setActiveWorkout(null)}
-        className="text-sm text-gray-400"
-      >
-        Close
-      </button>
-    </div>
-
-    {/* RUN WORKOUT EXECUTION */}
-    {activeWorkout.type === "run" && (
-      <div className="space-y-6">
-
-        {/* RUN TYPE */}
-        <div>
-          <p className="text-sm text-gray-400 mb-2">Run Type</p>
-          <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-            <p className="text-base font-medium">{activeWorkout.runType}</p>
+    return (
+      <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
+        <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
+          <div className="flex justify-between items-center mb-2">
+            <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
+            <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
           </div>
-        </div>
-
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-                <p className="text-base font-medium">{w.name}</p>
-                <p className="text-sm text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Stretches */}
-        {activeWorkout.stretches?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Stretches</p>
-            {activeWorkout.stretches.map((s,i)=>(
-              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-                <p className="text-base font-medium">{s.name}</p>
-                <p className="text-sm text-gray-400">{s.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-       {/* MARK RUN AS DONE */}
-        <button
-          onClick={() => {
-            const completedRun = {
-              ...activeWorkout,
-              completed: true,
-              date: new Date()
-            };
-        
-            // 1. Add to logs
-            setLogs([...logs, completedRun]);
-        
-            // 2. Remove from plan
-            const next = [...plan];
-            next[activeWorkout.dayIndex].splice(activeWorkout.workoutIndex, 1);
-            setPlan(next);
-        
-            // 3. Close workout screen
-            setActiveWorkout(null);
-          }}
-          className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
-        >
-          Mark Run as Done
-        </button>
-
-    {/* GYM WORKOUT EXECUTION */}
-    {activeWorkout.type === "gym" && (
-  <div className="space-y-4">
-
-    {/* Warm-up */}
-    {activeWorkout.warmup?.length > 0 && (
-      <div>
-        <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-        {activeWorkout.warmup.map((w,i)=>(
-          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-            <p className="text-sm">{w.name}</p>
-            <p className="text-xs text-gray-400">{w.reps}</p>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {/* Exercises */}
-    {activeWorkout.exercises?.length > 0 && (
-      <div>
-        <p className="text-xs text-gray-400 mb-1">Exercises</p>
-
-        {activeWorkout.exercises.map((ex,i)=>{
-          const sets = Number(ex.sets) || 0;
-          const completed = workoutProgress[i] || 0;
-
-          return (
-            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-              <p className="text-sm mb-3">{ex.name}</p>
-
-              <div className="flex flex-col gap-3">
-                {[...Array(sets)].map((_,s)=>(
-                  <div
-                    key={s}
-                    onClick={()=>{
-                      const next = {...workoutProgress};
-                      next[i] = s + 1;
-                      setWorkoutProgress(next);
-                      setRestTimer(settings.rest);
-                    }}
-                    className="flex items-center gap-3 cursor-pointer"
-                  >
-                    <div
-                      className={
-                        "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
-                        (s < completed
-                          ? "bg-green-500 border-green-500"
-                          : "border-gray-500")
-                      }
-                    >
-                      {s < completed && (
-                        <span className="text-white text-lg leading-none">✓</span>
-                      )}
-                    </div>
-
-                    <span className="text-sm text-gray-300">
-                      Set {s+1} — {ex.reps} reps
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    )}
-
-    {/* ⭐ MARK GYM WORKOUT AS DONE BUTTON ⭐ */}
-    <button
-      onClick={() => {
-        const completedWorkout = {
-          ...activeWorkout,
-          completed: true,
-          date: new Date()
-        };
-
-        // 1. Add to logs
-        setLogs([...logs, completedWorkout]);
-
-        // 2. Remove from plan
-        const next = [...plan];
-        next[activeWorkout.dayIndex].splice(activeWorkout.workoutIndex, 1);
-        setPlan(next);
-
-        // 3. Close workout screen
-        setActiveWorkout(null);
-      }}
-      className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
-    >
-      Mark Workout as Done
-    </button>
-
-  </div>
-)}
-        
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
-      <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
-
-        <div className="flex justify-between items-center mb-2">
-          <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
-          <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
-        </div>
-
-        {dayLogs.length === 0 ? (
-          <p className="text-xs text-gray-400">No workouts scheduled.</p>
-        ) : (
-          dayLogs.map((l,i)=>(
-            <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
-
-              {/* TITLE */}
-              <p className="text-sm font-semibold">
-                {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
-              </p>
-
-              {/* ---------------- RUN SECTION ---------------- */}
-              {l.type === "run" && (
-                <>
+          {dayLogs.length === 0 ? (
+            <p className="text-xs text-gray-400">No workouts scheduled.</p>
+          ) : (
+            dayLogs.map((l,i)=>(
+              <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
+                <p className="text-sm font-semibold">
+                  {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
+                </p>
+                {l.type === "run" && (
                   <p className="text-xs text-gray-400">Type: {l.runType}</p>
-
-                  {/* RUN WARM-UP */}
-                  {l.warmup && l.warmup.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
-                      {l.warmup.map((w,j)=>(
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* RUN STRETCHES */}
-                  {l.stretches && l.stretches.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Stretches</p>
-                      {l.stretches.map((w,j)=>(
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* ---------------- GYM SECTION ---------------- */}
-              {l.type === "gym" && (
-                <>
-                  {/* GYM WARM-UP */}
-                  {l.warmup && l.warmup.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
-                      {l.warmup.map((w,j)=>(
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* GYM EXERCISES */}
-                  {l.exercises && l.exercises.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
-                      {l.exercises.map((ex,j)=>(
-                        <p key={j} className="text-[11px]">
-                          • {ex.name} — {ex.sets} x {ex.reps}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* GYM WARM-DOWN */}
-                  {l.warmdown && l.warmdown.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Warm‑down</p>
-                      {l.warmdown.map((w,j)=>(
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-
-              <button
-                onClick={()=>{
-                  setActiveWorkout(l);
-                  setWorkoutProgress({});
-                }}
-                className="w-full bg-green-600 rounded-xl py-2 text-xs"
-              >
-                Start Workout
-              </button>
-
-              {/* DELETE BUTTON */}
-              <button
-                onClick={()=>deleteLog(l._idx)}
-                className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
-              >
-                Delete Workout
-              </button>
-
-            </div>
-          ))
-        )}
-
+                )}
+                {l.type === "gym" && (
+                  <>
+                    {l.warmup && l.warmup.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Warm-up</p>
+                        {l.warmup.map((w,j)=>(
+                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                        ))}
+                      </div>
+                    )}
+                    {l.exercises && l.exercises.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
+                        {l.exercises.map((ex,j)=>(
+                          <p key={j} className="text-[11px]">
+                            • {ex.name} — {ex.sets} x {ex.reps}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                <button
+                  onClick={()=>deleteLog(l._idx)}
+                  className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
+                >
+                  Delete Workout
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </div>
-  );
-})() : null;
+    );
+  })() : null;
 
   /* BOTTOM-SHEET GYM BUILDER (AUTO HEIGHT, NO ZOOM) */
-    const GymBuilder = showGymBuilder ? (
+  const GymBuilder = showGymBuilder ? (
     <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
       <div className="w-full max-h-[85%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
@@ -767,49 +506,7 @@ const WorkoutScreen = activeWorkout ? (
             </div>
           ))}
         </div>
-        
-        {/* WARM-DOWN */}
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-gray-400">Warm‑down</p>
-            <button
-              onClick={()=>setWarmDownItems([...warmDownItems,{name:"",reps:""}])}
-              className="text-xs text-blue-400"
-            >
-              + Add
-            </button>
-          </div>
-        
-          {warmDownItems.length === 0 && (
-            <p className="text-[11px] text-gray-500">No warm‑down items yet.</p>
-          )}
-        
-          {warmDownItems.map((w,i)=>(
-            <div key={i} className="flex gap-2 mb-1">
-              <input
-                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Movement"
-                value={w.name}
-                onChange={e=>{
-                  const next=[...warmDownItems];
-                  next[i]={...next[i],name:e.target.value};
-                  setWarmDownItems(next);
-                }}
-              />
-              <input
-                className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Reps/time"
-                value={w.reps}
-                onChange={e=>{
-                  const next=[...warmDownItems];
-                  next[i]={...next[i],reps:e.target.value};
-                  setWarmDownItems(next);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-        
+
         <div className="space-y-2 mb-6">
           <p className="text-xs text-gray-400">Day</p>
           <select
@@ -833,379 +530,72 @@ const WorkoutScreen = activeWorkout ? (
     </div>
   ) : null;
 
-/* BOTTOM-SHEET RUN BUILDER (AUTO HEIGHT, NO ZOOM) */
-const RunBuilder = showRunBuilder ? (
-  <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
-    <div className="w-full max-h-[70%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <p className="font-semibold text-lg">New Run</p>
-        <button
-          onClick={() => setShowRunBuilder(false)}
-          className="text-sm text-gray-400"
-        >
-          Close
-        </button>
-      </div>
-
-      {/* RUN NAME */}
-      <div className="space-y-2 mb-4">
-        <p className="text-xs text-gray-400">Run name</p>
-        <input
-          className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-          placeholder="5K Tempo, Easy Loop..."
-          value={runName}
-          onChange={e => setRunName(e.target.value)}
-        />
-      </div>
-
-      {/* RUN TYPE */}
-      <div className="space-y-2 mb-4">
-        <p className="text-xs text-gray-400">Run type</p>
-        <select
-          className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-          value={runType}
-          onChange={e => setRunType(e.target.value)}
-        >
-          <option>Easy</option>
-          <option>Tempo</option>
-          <option>Long</option>
-          <option>Other</option>
-        </select>
-      </div>
-
-      {/* RUN WARM-UP */}
-      <div className="space-y-2 mb-4">
-        <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-400">Warm‑up</p>
+  /* BOTTOM-SHEET RUN BUILDER (AUTO HEIGHT, NO ZOOM) */
+  const RunBuilder = showRunBuilder ? (
+    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
+      <div className="w-full max-h-[70%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <p className="font-semibold text-lg">New Run</p>
           <button
-            onClick={() => setRunWarmup([...runWarmup, { name: "", reps: "" }])}
-            className="text-xs text-blue-400"
+            onClick={()=>setShowRunBuilder(false)}
+            className="text-sm text-gray-400"
           >
-            + Add
+            Close
           </button>
         </div>
 
-        {runWarmup.length === 0 && (
-          <p className="text-[11px] text-gray-500">No warm‑up items yet.</p>
-        )}
+        <div className="space-y-2 mb-4">
+          <p className="text-xs text-gray-400">Run name</p>
+          <input
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
+            placeholder="5K Tempo, Easy Loop..."
+            value={runName}
+            onChange={e=>setRunName(e.target.value)}
+          />
+        </div>
 
-        {runWarmup.map((w, i) => (
-          <div key={i} className="flex gap-2 mb-1">
-            <input
-              className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
-              placeholder="Movement"
-              value={w.name}
-              onChange={e => {
-                const next = [...runWarmup];
-                next[i] = { ...next[i], name: e.target.value };
-                setRunWarmup(next);
-              }}
-            />
-            <input
-              className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
-              placeholder="Reps/time"
-              value={w.reps}
-              onChange={e => {
-                const next = [...runWarmup];
-                next[i] = { ...next[i], reps: e.target.value };
-                setRunWarmup(next);
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* RUN STRETCHES / WARM-DOWN */}
-      <div className="space-y-2 mb-6">
-        <div className="flex justify-between items-center">
-          <p className="text-xs text-gray-400">Stretches / Warm‑down</p>
-          <button
-            onClick={() => setRunStretches([...runStretches, { name: "", reps: "" }])}
-            className="text-xs text-blue-400"
+        <div className="space-y-2 mb-4">
+          <p className="text-xs text-gray-400">Run type</p>
+          <select
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
+            value={runType}
+            onChange={e=>setRunType(e.target.value)}
           >
-            + Add
-          </button>
+            <option>Easy</option>
+            <option>Tempo</option>
+            <option>Long</option>
+            <option>Other</option>
+          </select>
         </div>
 
-        {runStretches.length === 0 && (
-          <p className="text-[11px] text-gray-500">No stretches yet.</p>
-        )}
-
-        {runStretches.map((w, i) => (
-          <div key={i} className="flex gap-2 mb-1">
-            <input
-              className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
-              placeholder="Stretch"
-              value={w.name}
-              onChange={e => {
-                const next = [...runStretches];
-                next[i] = { ...next[i], name: e.target.value };
-                setRunStretches(next);
-              }}
-            />
-            <input
-              className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
-              placeholder="Reps/time"
-              value={w.reps}
-              onChange={e => {
-                const next = [...runStretches];
-                next[i] = { ...next[i], reps: e.target.value };
-                setRunStretches(next);
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* DAY SELECTOR */}
-      <div className="space-y-2 mb-6">
-        <p className="text-xs text-gray-400">Day</p>
-        <select
-          className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-          value={runDayIndex}
-          onChange={e => setRunDayIndex(+e.target.value)}
-        >
-          {WEEK.map((d, i) => (
-            <option key={i} value={i}>{d}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* SAVE BUTTON */}
-      <button
-        onClick={saveRun}
-        className="w-full bg-blue-500 rounded-xl py-3 text-sm font-semibold"
-      >
-        Save Run
-      </button>
-
-    </div>
-  </div>
-) : null;
-
-);
-        
-    // ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
-React.useEffect(() => {
-  if (restTimer === null) return;
-
-  if (restTimer > 0) {
-    const interval = setInterval(() => {
-      setRestTimer(t => t - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }
-
-  if (restTimer === 0) {
-    if (navigator.vibrate) navigator.vibrate(300);
-  }
-}, [restTimer]);
-
-
-// ⭐ WORKOUT SCREEN JSX
-const WorkoutScreen = activeWorkout ? (
-  <div className="fixed inset-0 bg-gradient-to-b from-black to-[#0f0f0f] z-50 p-6 overflow-y-auto text-lg">
-
-    {/* HEADER */}
-    <div className="flex justify-between items-center mb-6">
-      <p className="text-2xl font-bold">{activeWorkout.name}</p>
-      <button
-        onClick={() => setActiveWorkout(null)}
-        className="text-gray-400 text-lg"
-      >
-        Close
-      </button>
-    </div>
-
-    {/* REST TIMER */}
-    {restTimer !== null && (
-      <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-6 text-center">
-        <p className="text-base text-gray-300">Rest</p>
-        <p className="text-4xl font-extrabold mt-1">{restTimer}s</p>
-      </div>
-    )}
-
-    {/* ---------------- RUN WORKOUT EXECUTION ---------------- */}
-    {activeWorkout.type === "run" && (
-      <div className="space-y-6">
-
-        {/* RUN TYPE */}
-        <div>
-          <p className="text-sm text-gray-400 mb-2">Run Type</p>
-          <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-            <p className="text-base font-medium">{activeWorkout.runType}</p>
-          </div>
+        <div className="space-y-2 mb-6">
+          <p className="text-xs text-gray-400">Day</p>
+          <select
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
+            value={runDayIndex}
+            onChange={e=>setRunDayIndex(+e.target.value)}
+          >
+            {WEEK.map((d,i)=>(
+              <option key={i} value={i}>{d}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-                <p className="text-base font-medium">{w.name}</p>
-                <p className="text-sm text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Stretches */}
-        {activeWorkout.stretches?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Stretches</p>
-            {activeWorkout.stretches.map((s,i)=>(
-              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-                <p className="text-base font-medium">{s.name}</p>
-                <p className="text-sm text-gray-400">{s.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* MARK RUN AS DONE */}
         <button
-          onClick={() => {
-            const completed = {
-              ...activeWorkout,
-              completed: true,
-              date: new Date()
-            };
-
-            setLogs([...logs, completed]);
-
-            const next = [...plan];
-            next[activeWorkout.dayIndex].splice(activeWorkout.workoutIndex, 1);
-            setPlan(next);
-
-            setActiveWorkout(null);
-          }}
-          className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
+          onClick={saveRun}
+          className="w-full bg-blue-500 rounded-xl py-3 text-sm font-semibold"
         >
-          Mark Run as Done
+          Save Run
         </button>
-
       </div>
-    )}
+    </div>
+  ) : null;
 
-    {/* ---------------- GYM WORKOUT EXECUTION ---------------- */}
-    {activeWorkout.type === "gym" && (
-      <div className="space-y-6">
-
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-                <p className="text-base font-medium">{w.name}</p>
-                <p className="text-sm text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Exercises */}
-        {activeWorkout.exercises?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Exercises</p>
-
-            {activeWorkout.exercises.map((ex, i) => {
-              const sets = Number(ex.sets) || 0;
-              const completed = workoutProgress[i] || 0;
-
-              return (
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm mb-3">{ex.name}</p>
-
-                  <div className="flex flex-col gap-3">
-                    {[...Array(sets)].map((_, s) => (
-                      <div
-                        key={s}
-                        onClick={() => {
-                          const next = { ...workoutProgress };
-                          next[i] = s + 1;
-                          setWorkoutProgress(next);
-
-                          setRestTimer(settings.rest);
-                        }}
-                        className="flex items-center gap-3 cursor-pointer"
-                      >
-                        <div
-                          className={
-                            "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
-                            (s < completed
-                              ? "bg-green-500 border-green-500"
-                              : "border-gray-500")
-                          }
-                        >
-                          {s < completed && (
-                            <span className="text-white text-lg leading-none">✓</span>
-                          )}
-                        </div>
-
-                        <span className="text-sm text-gray-300">
-                          Set {s + 1} — {ex.reps} reps
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Warm-down */}
-        {activeWorkout.warmdown?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Warm‑down</p>
-            {activeWorkout.warmdown.map((w,i)=>(
-              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-                <p className="text-base font-medium">{w.name}</p>
-                <p className="text-sm text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* MARK GYM AS DONE */}
-        <button
-          onClick={() => {
-            const completed = {
-              ...activeWorkout,
-              completed: true,
-              date: new Date()
-            };
-
-            setLogs([...logs, completed]);
-
-            const next = [...plan];
-            next[activeWorkout.dayIndex].splice(activeWorkout.workoutIndex, 1);
-            setPlan(next);
-
-            setActiveWorkout(null);
-          }}
-          className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
-        >
-          Mark Workout as Done
-        </button>
-
-      </div>
-    )}
-
-  </div>
-) : null;
-  
-return (
+  return (
     <div>
       {tab==="home" && Home}
       {tab==="calendar" && Calendar}
       {tab==="settings" && SettingsView}
-      {WorkoutScreen}
 
       <div className="fixed bottom-4 inset-x-0 flex justify-center">
         <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
@@ -1225,4 +615,4 @@ return (
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
-</html>
+</html
