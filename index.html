@@ -174,7 +174,7 @@ function saveGymWorkout() {
 
   /* ADD RUN (planned) */
   function saveRun() {
-    const date = dateFromWeekIndex(runDayIndex);
+    const date = new Date(runDate);
     const newLog = {
       type: "run",
       date,
