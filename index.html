@@ -100,11 +100,13 @@ function App() {
   const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(today));
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
+  const [warmDownItems,setWarmDownItems] = React.useState([]);
 
   // Run builder state
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
   const [runDayIndex,setRunDayIndex] = React.useState(dayIndex(today));
+  const [warmDownItems,setWarmDownItems] = React.useState([]);
 
   /* WEEK CALC */
   const weekStart = new Date(today);
@@ -137,12 +139,15 @@ function App() {
       name: gymName || "Gym Workout",
       warmup: warmupItems,
       exercises: exercises
+      warmdown: warmDownItems
+
     };
     setLogs([...logs,newLog]);
     setGymName("");
     setWarmupItems([]);
     setExercises([]);
     setShowGymBuilder(false);
+    setWarmDownItems([]);
   }
 
   /* ADD RUN */
@@ -152,12 +157,17 @@ function App() {
       type: "run",
       date,
       name: runName || "Run",
-      runType
+      runType,
+      warmup: runWarmup,
+      stretches: runStretches
+      
     };
     setLogs([...logs,newLog]);
     setRunName("");
     setRunType("Easy");
     setShowRunBuilder(false);
+    setRunWarmup([]);
+    setRunStretches([]);
   }
 
   /* DELETE WORKOUT (by global index) */
@@ -336,66 +346,113 @@ function App() {
     </div>
   );
 
-  /* DAY POPUP WITH DELETE */
-  const DayPopup = popupDay !== null ? (() => {
-    const d = dateFromWeekIndex(popupDay);
-    const dayLogs = logs
-      .map((l,i)=>({...l,_idx:i}))
-      .filter(l=>sameDay(l.date,d));
+/* DAY POPUP WITH DELETE */
+const DayPopup = popupDay !== null ? (() => {
+  const d = dateFromWeekIndex(popupDay);
+  const dayLogs = logs
+    .map((l,i)=>({...l,_idx:i}))
+    .filter(l=>sameDay(l.date,d));
 
-    return (
-      <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
-        <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
-            <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
-          </div>
-          {dayLogs.length === 0 ? (
-            <p className="text-xs text-gray-400">No workouts scheduled.</p>
-          ) : (
-            dayLogs.map((l,i)=>(
-              <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
-                <p className="text-sm font-semibold">
-                  {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
-                </p>
-                {l.type === "run" && (
-                  <p className="text-xs text-gray-400">Type: {l.runType}</p>
-                )}
-                {l.type === "gym" && (
-                  <>
-                    {l.warmup && l.warmup.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Warm-up</p>
-                        {l.warmup.map((w,j)=>(
-                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                        ))}
-                      </div>
-                    )}
-                    {l.exercises && l.exercises.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
-                        {l.exercises.map((ex,j)=>(
-                          <p key={j} className="text-[11px]">
-                            • {ex.name} — {ex.sets} x {ex.reps}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-                <button
-                  onClick={()=>deleteLog(l._idx)}
-                  className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
-                >
-                  Delete Workout
-                </button>
-              </div>
-            ))
-          )}
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
+      <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
+
+        <div className="flex justify-between items-center mb-2">
+          <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
+          <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
         </div>
+
+        {dayLogs.length === 0 ? (
+          <p className="text-xs text-gray-400">No workouts scheduled.</p>
+        ) : (
+          dayLogs.map((l,i)=>(
+            <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
+
+              {/* TITLE */}
+              <p className="text-sm font-semibold">
+                {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
+              </p>
+
+              {/* ---------------- RUN SECTION ---------------- */}
+              {l.type === "run" && (
+                <>
+                  <p className="text-xs text-gray-400">Type: {l.runType}</p>
+
+                  {/* RUN WARM-UP */}
+                  {l.warmup && l.warmup.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
+                      {l.warmup.map((w,j)=>(
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* RUN STRETCHES */}
+                  {l.stretches && l.stretches.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Stretches</p>
+                      {l.stretches.map((w,j)=>(
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* ---------------- GYM SECTION ---------------- */}
+              {l.type === "gym" && (
+                <>
+                  {/* GYM WARM-UP */}
+                  {l.warmup && l.warmup.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
+                      {l.warmup.map((w,j)=>(
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* GYM EXERCISES */}
+                  {l.exercises && l.exercises.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
+                      {l.exercises.map((ex,j)=>(
+                        <p key={j} className="text-[11px"]>
+                          • {ex.name} — {ex.sets} x {ex.reps}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* GYM WARM-DOWN */}
+                  {l.warmdown && l.warmdown.length > 0 && (
+                    <div className="mt-1">
+                      <p className="text-[11px] text-gray-400 mb-1">Warm‑down</p>
+                      {l.warmdown.map((w,j)=>(
+                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* DELETE BUTTON */}
+              <button
+                onClick={()=>deleteLog(l._idx)}
+                className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
+              >
+                Delete Workout
+              </button>
+
+            </div>
+          ))
+        )}
+
       </div>
-    );
-  })() : null;
+    </div>
+  );
+})() : null;
 
   /* BOTTOM-SHEET GYM BUILDER (AUTO HEIGHT, NO ZOOM) */
   const GymBuilder = showGymBuilder ? (
@@ -508,7 +565,49 @@ function App() {
             </div>
           ))}
         </div>
-
+        
+        {/* WARM-DOWN */}
+        <div className="space-y-2 mb-4">
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-gray-400">Warm‑down</p>
+            <button
+              onClick={()=>setWarmDownItems([...warmDownItems,{name:"",reps:""}])}
+              className="text-xs text-blue-400"
+            >
+              + Add
+            </button>
+          </div>
+        
+          {warmDownItems.length === 0 && (
+            <p className="text-[11px] text-gray-500">No warm‑down items yet.</p>
+          )}
+        
+          {warmDownItems.map((w,i)=>(
+            <div key={i} className="flex gap-2 mb-1">
+              <input
+                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
+                placeholder="Movement"
+                value={w.name}
+                onChange={e=>{
+                  const next=[...warmDownItems];
+                  next[i]={...next[i],name:e.target.value};
+                  setWarmDownItems(next);
+                }}
+              />
+              <input
+                className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
+                placeholder="Reps/time"
+                value={w.reps}
+                onChange={e=>{
+                  const next=[...warmDownItems];
+                  next[i]={...next[i],reps:e.target.value};
+                  setWarmDownItems(next);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        
         <div className="space-y-2 mb-6">
           <p className="text-xs text-gray-400">Day</p>
           <select
@@ -569,7 +668,91 @@ function App() {
             <option>Other</option>
           </select>
         </div>
-
+        
+        {/* RUN WARM-UP */}
+        <div className="space-y-2 mb-4">
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-gray-400">Warm‑up</p>
+            <button
+              onClick={()=>setRunWarmup([...runWarmup,{name:"",reps:""}])}
+              className="text-xs text-blue-400"
+            >
+              + Add
+            </button>
+          </div>
+        
+          {runWarmup.length === 0 && (
+            <p className="text-[11px] text-gray-500">No warm‑up items yet.</p>
+          )}
+        
+          {runWarmup.map((w,i)=>(
+            <div key={i} className="flex gap-2 mb-1">
+              <input
+                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
+                placeholder="Movement"
+                value={w.name}
+                onChange={e=>{
+                  const next=[...runWarmup];
+                  next[i]={...next[i],name:e.target.value};
+                  setRunWarmup(next);
+                }}
+              />
+              <input
+                className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
+                placeholder="Reps/time"
+                value={w.reps}
+                onChange={e=>{
+                  const next=[...runWarmup];
+                  next[i]={...next[i],reps:e.target.value};
+                  setRunWarmup(next);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* RUN STRETCHES / WARM-DOWN */}
+        <div className="space-y-2 mb-6">
+          <div className="flex justify-between items-center">
+            <p className="text-xs text-gray-400">Stretches / Warm‑down</p>
+            <button
+              onClick={()=>setRunStretches([...runStretches,{name:"",reps:""}])}
+              className="text-xs text-blue-400"
+            >
+              + Add
+            </button>
+          </div>
+        
+          {runStretches.length === 0 && (
+            <p className="text-[11px] text-gray-500">No stretches yet.</p>
+          )}
+        
+          {runStretches.map((w,i)=>(
+            <div key={i} className="flex gap-2 mb-1">
+              <input
+                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
+                placeholder="Stretch"
+                value={w.name}
+                onChange={e=>{
+                  const next=[...runStretches];
+                  next[i]={...next[i],name:e.target.value};
+                  setRunStretches(next);
+                }}
+              />
+              <input
+                className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
+                placeholder="Reps/time"
+                value={w.reps}
+                onChange={e=>{
+                  const next=[...runStretches];
+                  next[i]={...next[i],reps:e.target.value};
+                  setRunStretches(next);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        
         <div className="space-y-2 mb-6">
           <p className="text-xs text-gray-400">Day</p>
           <select
