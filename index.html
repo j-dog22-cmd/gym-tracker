@@ -695,6 +695,8 @@ const WorkoutScreen = activeWorkout ? (
       {tab==="calendar" && Calendar}
       {tab==="settings" && SettingsView}
 
+      {WorkoutScreen}
+
       <div className="fixed bottom-4 inset-x-0 flex justify-center">
         <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
           <button onClick={()=>setTab("home")}>🏠</button>
