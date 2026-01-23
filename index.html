@@ -370,13 +370,13 @@ const DayPopup = popupDay !== null ? (() => {
     .map((l,i)=>({...l,_idx:i}))
     .filter(l=>sameDay(l.date,d));
 
-  const WorkoutScreen = activeWorkout ? (
+  
+const WorkoutScreen = activeWorkout ? (
   <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
 
+    {/* HEADER */}
     <div className="flex justify-between items-center mb-4">
-      <p className="text-lg font-semibold">
-        {activeWorkout.name}
-      </p>
+      <p className="text-lg font-semibold">{activeWorkout.name}</p>
       <button
         onClick={()=>setActiveWorkout(null)}
         className="text-sm text-gray-400"
@@ -384,6 +384,63 @@ const DayPopup = popupDay !== null ? (() => {
         Close
       </button>
     </div>
+
+    {/* RUN WORKOUT EXECUTION */}
+    {activeWorkout.type === "run" && (
+      <div className="space-y-6">
+
+        {/* RUN TYPE */}
+        <div>
+          <p className="text-sm text-gray-400 mb-2">Run Type</p>
+          <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+            <p className="text-base font-medium">{activeWorkout.runType}</p>
+          </div>
+        </div>
+
+        {/* Warm-up */}
+        {activeWorkout.warmup?.length > 0 && (
+          <div>
+            <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
+            {activeWorkout.warmup.map((w,i)=>(
+              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+                <p className="text-base font-medium">{w.name}</p>
+                <p className="text-sm text-gray-400">{w.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Stretches */}
+        {activeWorkout.stretches?.length > 0 && (
+          <div>
+            <p className="text-sm text-gray-400 mb-2">Stretches</p>
+            {activeWorkout.stretches.map((s,i)=>(
+              <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+                <p className="text-base font-medium">{s.name}</p>
+                <p className="text-sm text-gray-400">{s.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* MARK RUN AS DONE */}
+        <button
+          onClick={()=>{
+            const completedRun = {
+              ...activeWorkout,
+              completed: true,
+              date: new Date()
+            };
+            setLogs([...logs, completedRun]);
+            setActiveWorkout(null);
+          }}
+          className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
+        >
+          Mark Run as Done
+        </button>
+
+      </div>
+    )}
 
     {/* GYM WORKOUT EXECUTION */}
     {activeWorkout.type === "gym" && (
@@ -402,6 +459,57 @@ const DayPopup = popupDay !== null ? (() => {
           </div>
         )}
 
+        {/* Exercises */}
+        {activeWorkout.exercises?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Exercises</p>
+
+            {activeWorkout.exercises.map((ex,i)=>{
+
+              const sets = Number(ex.sets) || 0;
+              const completed = workoutProgress[i] || 0;
+
+              return (
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm mb-3">{ex.name}</p>
+
+                  <div className="flex flex-col gap-3">
+                    {[...Array(sets)].map((_,s)=>(
+                      <div
+                        key={s}
+                        onClick={()=>{
+                          const next = {...workoutProgress};
+                          next[i] = s + 1;
+                          setWorkoutProgress(next);
+                          setRestTimer(settings.rest);
+                        }}
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <div
+                          className={
+                            "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
+                            (s < completed
+                              ? "bg-green-500 border-green-500"
+                              : "border-gray-500")
+                          }
+                        >
+                          {s < completed && (
+                            <span className="text-white text-lg leading-none">✓</span>
+                          )}
+                        </div>
+
+                        <span className="text-sm text-gray-300">
+                          Set {s+1} — {ex.reps} reps
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Warm-down */}
         {activeWorkout.warmdown?.length > 0 && (
           <div>
@@ -417,101 +525,10 @@ const DayPopup = popupDay !== null ? (() => {
 
       </div>
     )}
-    
-    {/* Exercises */}
-    {activeWorkout.exercises?.length > 0 && (
-      <div>
-        <p className="text-xs text-gray-400 mb-1">Exercises</p>
-    
-        {activeWorkout.exercises.map((ex,i)=>{
-    
-          const sets = Number(ex.sets) || 0;
-          const completed = workoutProgress[i] || 0;
-    
-          return (
-            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-              <p className="text-sm mb-3">{ex.name}</p>
-    
-              <div className="flex flex-col gap-3">
-                {[...Array(sets)].map((_,s)=>(
-                  <div
-                    key={s}
-                    onClick={()=>{
-                      const next = {...workoutProgress};
-                      next[i] = s + 1;
-                      setWorkoutProgress(next);
-                      setRestTimer(settings.rest);
-                    }}
-                    className="flex items-center gap-3 cursor-pointer"
-                  >
-                    <div
-                      className={
-                        "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
-                        (s < completed
-                          ? "bg-green-500 border-green-500"
-                          : "border-gray-500")
-                      }
-                    >
-                      {s < completed && (
-                        <span className="text-white text-lg leading-none">✓</span>
-                      )}
-                    </div>
-    
-                    <span className="text-sm text-gray-300">
-                      Set {s+1} — {ex.reps} reps
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    )}
 
-    {/* RUN WORKOUT EXECUTION */}
-{activeWorkout.type === "run" && (
-  <div className="space-y-6">
-
-    {/* RUN TYPE */}
-    <div>
-      <p className="text-sm text-gray-400 mb-2">Run Type</p>
-      <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-        <p className="text-base font-medium">{activeWorkout.runType}</p>
-      </div>
-    </div>
-
-    {/* Warm-up */}
-    {activeWorkout.warmup?.length > 0 && (
-      <div>
-        <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
-        {activeWorkout.warmup.map((w,i)=>(
-          <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-            <p className="text-base font-medium">{w.name}</p>
-            <p className="text-sm text-gray-400">{w.reps}</p>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {/* Stretches */}
-    {activeWorkout.stretches?.length > 0 && (
-      <div>
-        <p className="text-sm text-gray-400 mb-2">Stretches</p>
-        {activeWorkout.stretches.map((w,i)=>(
-          <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
-            <p className="text-base font-medium">{w.name}</p>
-            <p className="text-sm text-gray-400">{w.reps}</p>
-          </div>
-        ))}
-      </div>
-    )}
-
-  </div>
-)}
   </div>
 ) : null;
-
+  
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
       <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
