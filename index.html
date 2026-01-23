@@ -36,7 +36,7 @@ function sameDay(a,b){
   return da.toDateString() === db.toDateString();
 }
 
-/* ---------------- RING ---------------- */
+/* ---------------- RING COMPONENT ---------------- */
 function Ring({ value, total, color }) {
   const size = 52, stroke = 6;
   const r = (size - stroke) / 2;
@@ -59,8 +59,7 @@ function Ring({ value, total, color }) {
     </svg>
   );
 }
-
-/* ---------------- APP ---------------- */
+/* ---------------- MAIN APP COMPONENT ---------------- */
 function App() {
   /* SETTINGS */
   const [settings,setSettings] = React.useState(()=>{
@@ -90,23 +89,23 @@ function App() {
   /* UI STATE */
   const [tab,setTab] = React.useState("home");
   const [activeDay,setActiveDay] = React.useState(dayIndex(today));
-  const [popupDay,setPopupDay] = React.useState(null); // index 0–6
+  const [popupDay,setPopupDay] = React.useState(null);
 
   const [showGymBuilder,setShowGymBuilder] = React.useState(false);
   const [showRunBuilder,setShowRunBuilder] = React.useState(false);
 
-  // Gym builder state
+  /* GYM BUILDER STATE */
   const [gymName,setGymName] = React.useState("");
   const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(today));
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
 
-  // Run builder state
+  /* RUN BUILDER STATE */
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
   const [runDayIndex,setRunDayIndex] = React.useState(dayIndex(today));
 
-  /* WEEK CALC */
+  /* WEEK CALCULATION */
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dayIndex(today));
 
@@ -128,7 +127,7 @@ function App() {
     return logs.filter(l => sameDay(l.date,d));
   }
 
-  /* ADD GYM WORKOUT */
+  /* SAVE GYM WORKOUT */
   function saveGymWorkout() {
     const date = dateFromWeekIndex(gymDayIndex);
     const newLog = {
@@ -145,7 +144,7 @@ function App() {
     setShowGymBuilder(false);
   }
 
-  /* ADD RUN */
+  /* SAVE RUN */
   function saveRun() {
     const date = dateFromWeekIndex(runDayIndex);
     const newLog = {
@@ -160,459 +159,7 @@ function App() {
     setShowRunBuilder(false);
   }
 
-  /* DELETE WORKOUT (by global index) */
+  /* DELETE WORKOUT */
   function deleteLog(globalIndex){
     setLogs(logs.filter((_,i)=>i!==globalIndex));
   }
-
-  /* HOME */
-  const Home = (
-    <div className="p-4 pb-32 space-y-4">
-      <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
-
-      {/* WEEK SELECTOR WITH DOTS + TODAY HIGHLIGHT */}
-      <div className="flex gap-2">
-        {WEEK.map((d,i)=>{
-          const dateObj = dateFromWeekIndex(i);
-          const hasGym = logs.some(l => l.type==="gym" && sameDay(l.date,dateObj));
-          const hasRun = logs.some(l => l.type==="run" && sameDay(l.date,dateObj));
-          let dotColor = null;
-          if (hasGym && hasRun) dotColor = "#ef4444";      // red
-          else if (hasRun) dotColor = "#38bdf8";           // blue
-          else if (hasGym) dotColor = "#22c55e";           // green
-
-          const isToday = sameDay(dateObj,today);
-
-          return (
-            <button
-              key={i}
-              onClick={()=>{
-                setActiveDay(i);
-                setPopupDay(i);
-              }}
-              className={
-                "p-3 rounded-xl soft-border flex flex-col items-center " +
-                (i===activeDay ? "bg-[#1C1C1E] " : "") +
-                (isToday ? "border border-white/40 bg-[#1C1C1E] " : "")
-              }
-            >
-              <p className="text-xs">{d}</p>
-              <p className={"text-sm " + (isToday ? "font-bold text-white" : "")}>
-                {dateObj.getDate()}
-              </p>
-              {dotColor && (
-                <div
-                  className="mt-1 rounded-full"
-                  style={{width:"4px",height:"4px",backgroundColor:dotColor}}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* WEEK PROGRESS */}
-      <div className="space-y-3">
-        <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
-          <div>
-            <p>Gym this week</p>
-            <p className="text-xs">{gymWeek}/{settings.weeklyGym}</p>
-          </div>
-          <Ring value={gymWeek} total={settings.weeklyGym} color={settings.gymColor} />
-        </div>
-        <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
-          <div>
-            <p>Runs this week</p>
-            <p className="text-xs">{runWeek}/{settings.weeklyRun}</p>
-          </div>
-          <Ring value={runWeek} total={settings.weeklyRun} color={settings.runColor} />
-        </div>
-      </div>
-
-      {/* TODAY / TOMORROW WITH DOTS PER WORKOUT */}
-      <div className="grid grid-cols-2 gap-3">
-        {[0,1].map(o=>{
-          const d = new Date();
-          d.setDate(today.getDate()+o);
-          const label = o === 0 ? "Today" : "Tomorrow";
-          const dayLogs = logsForDate(d);
-
-          return (
-            <div
-              key={o}
-              onClick={()=>setPopupDay(dayIndex(d))}
-              className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2"
-            >
-              <p className="text-xs">{label}</p>
-              <p className="font-semibold">{WEEK[dayIndex(d)]}</p>
-
-              {dayLogs.length > 0 ? (
-                dayLogs.map((l,i)=>(
-                  <p key={i} className="text-xs flex items-center gap-1">
-                    <span
-                      className="inline-block rounded-full"
-                      style={{
-                        width:"4px",
-                        height:"4px",
-                        backgroundColor:
-                          l.type === "gym" ? "#22c55e" :
-                          l.type === "run" ? "#38bdf8" :
-                          "#ef4444"
-                      }}
-                    />
-                    {l.name || (l.type==="gym" ? "Gym Workout" : "Run")}
-                  </p>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400">No workouts scheduled</p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* QUICK ADD */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={()=>{
-            setGymDayIndex(activeDay);
-            setShowGymBuilder(true);
-          }}
-          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-        >
-          ➕ New Workout
-        </button>
-        <button
-          onClick={()=>{
-            setRunDayIndex(activeDay);
-            setShowRunBuilder(true);
-          }}
-          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-        >
-          ➕ New Run
-        </button>
-      </div>
-
-      {/* MONTHLY GOALS */}
-      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">
-        <p className="font-semibold mb-2">Monthly Goals</p>
-        <p className="text-xs">
-          Gym {logs.filter(l=>l.type==="gym").length}/{settings.monthlyGym}
-        </p>
-        <p className="text-xs">
-          Run {logs.filter(l=>l.type==="run").length}/{settings.monthlyRun}
-        </p>
-      </div>
-    </div>
-  );
-
-  /* PLACEHOLDER CALENDAR & SETTINGS */
-  const Calendar = (
-    <div className="p-4">
-      <p className="font-semibold">Calendar (to be built next)</p>
-    </div>
-  );
-
-  const SettingsView = (
-    <div className="p-4 space-y-3">
-      <p className="font-semibold">Settings</p>
-      <input
-        className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-        value={settings.name}
-        onChange={e=>setSettings({...settings,name:e.target.value})}
-        placeholder="Name"
-      />
-      <button
-        onClick={()=>{
-          localStorage.clear();
-          location.reload();
-        }}
-        className="bg-red-500 p-3 rounded-xl text-sm"
-      >
-        Reset App
-      </button>
-    </div>
-  );
-
-  /* DAY POPUP WITH DELETE */
-  const DayPopup = popupDay !== null ? (() => {
-    const d = dateFromWeekIndex(popupDay);
-    const dayLogs = logs
-      .map((l,i)=>({...l,_idx:i}))
-      .filter(l=>sameDay(l.date,d));
-
-    return (
-      <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
-        <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
-          <div className="flex justify-between items-center mb-2">
-            <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
-            <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
-          </div>
-          {dayLogs.length === 0 ? (
-            <p className="text-xs text-gray-400">No workouts scheduled.</p>
-          ) : (
-            dayLogs.map((l,i)=>(
-              <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
-                <p className="text-sm font-semibold">
-                  {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
-                </p>
-                {l.type === "run" && (
-                  <p className="text-xs text-gray-400">Type: {l.runType}</p>
-                )}
-                {l.type === "gym" && (
-                  <>
-                    {l.warmup && l.warmup.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Warm-up</p>
-                        {l.warmup.map((w,j)=>(
-                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                        ))}
-                      </div>
-                    )}
-                    {l.exercises && l.exercises.length > 0 && (
-                      <div className="mt-1">
-                        <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
-                        {l.exercises.map((ex,j)=>(
-                          <p key={j} className="text-[11px]">
-                            • {ex.name} — {ex.sets} x {ex.reps}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-                <button
-                  onClick={()=>deleteLog(l._idx)}
-                  className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
-                >
-                  Delete Workout
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-    );
-  })() : null;
-
-  /* BOTTOM-SHEET GYM BUILDER (AUTO HEIGHT, NO ZOOM) */
-  const GymBuilder = showGymBuilder ? (
-    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
-      <div className="w-full max-h-[85%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <p className="font-semibold text-lg">New Gym Workout</p>
-          <button
-            onClick={()=>setShowGymBuilder(false)}
-            className="text-sm text-gray-400"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="space-y-2 mb-4">
-          <p className="text-xs text-gray-400">Routine name</p>
-          <input
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            placeholder="Push Day, Legs, Upper A..."
-            value={gymName}
-            onChange={e=>setGymName(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-gray-400">Warm-up</p>
-            <button
-              onClick={()=>setWarmupItems([...warmupItems,{name:"",reps:""}])}
-              className="text-xs text-blue-400"
-            >
-              + Add
-            </button>
-          </div>
-          {warmupItems.length === 0 && (
-            <p className="text-[11px] text-gray-500">No warm-up items yet.</p>
-          )}
-          {warmupItems.map((w,i)=>(
-            <div key={i} className="flex gap-2 mb-1">
-              <input
-                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Movement"
-                value={w.name}
-                onChange={e=>{
-                  const next=[...warmupItems];
-                  next[i]={...next[i],name:e.target.value};
-                  setWarmupItems(next);
-                }}
-              />
-              <input
-                className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Reps/time"
-                value={w.reps}
-                onChange={e=>{
-                  const next=[...warmupItems];
-                  next[i]={...next[i],reps:e.target.value};
-                  setWarmupItems(next);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-2 mb-4">
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-gray-400">Exercises</p>
-            <button
-              onClick={()=>setExercises([...exercises,{name:"",sets:"",reps:""}])}
-              className="text-xs text-blue-400"
-            >
-              + Add
-            </button>
-          </div>
-          {exercises.length === 0 && (
-            <p className="text-[11px] text-gray-500">No exercises yet.</p>
-          )}
-          {exercises.map((ex,i)=>(
-            <div key={i} className="flex gap-2 mb-1">
-              <input
-                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Exercise"
-                value={ex.name}
-                onChange={e=>{
-                  const next=[...exercises];
-                  next[i]={...next[i],name:e.target.value};
-                  setExercises(next);
-                }}
-              />
-              <input
-                className="w-20 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Sets"
-                value={ex.sets}
-                onChange={e=>{
-                  const next=[...exercises];
-                  next[i]={...next[i],sets:e.target.value};
-                  setExercises(next);
-                }}
-              />
-              <input
-                className="w-20 p-2 rounded-lg bg-[#2C2C2E] text-base"
-                placeholder="Reps"
-                value={ex.reps}
-                onChange={e=>{
-                  const next=[...exercises];
-                  next[i]={...next[i],reps:e.target.value};
-                  setExercises(next);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-2 mb-6">
-          <p className="text-xs text-gray-400">Day</p>
-          <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            value={gymDayIndex}
-            onChange={e=>setGymDayIndex(+e.target.value)}
-          >
-            {WEEK.map((d,i)=>(
-              <option key={i} value={i}>{d}</option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          onClick={saveGymWorkout}
-          className="w-full bg-blue-500 rounded-xl py-3 text-sm font-semibold"
-        >
-          Save Workout
-        </button>
-      </div>
-    </div>
-  ) : null;
-
-  /* BOTTOM-SHEET RUN BUILDER (AUTO HEIGHT, NO ZOOM) */
-  const RunBuilder = showRunBuilder ? (
-    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
-      <div className="w-full max-h-[70%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <p className="font-semibold text-lg">New Run</p>
-          <button
-            onClick={()=>setShowRunBuilder(false)}
-            className="text-sm text-gray-400"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="space-y-2 mb-4">
-          <p className="text-xs text-gray-400">Run name</p>
-          <input
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            placeholder="5K Tempo, Easy Loop..."
-            value={runName}
-            onChange={e=>setRunName(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2 mb-4">
-          <p className="text-xs text-gray-400">Run type</p>
-          <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            value={runType}
-            onChange={e=>setRunType(e.target.value)}
-          >
-            <option>Easy</option>
-            <option>Tempo</option>
-            <option>Long</option>
-            <option>Other</option>
-          </select>
-        </div>
-
-        <div className="space-y-2 mb-6">
-          <p className="text-xs text-gray-400">Day</p>
-          <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            value={runDayIndex}
-            onChange={e=>setRunDayIndex(+e.target.value)}
-          >
-            {WEEK.map((d,i)=>(
-              <option key={i} value={i}>{d}</option>
-            ))}
-          </select>
-        </div>
-
-        <button
-          onClick={saveRun}
-          className="w-full bg-blue-500 rounded-xl py-3 text-sm font-semibold"
-        >
-          Save Run
-        </button>
-      </div>
-    </div>
-  ) : null;
-
-  return (
-    <div>
-      {tab==="home" && Home}
-      {tab==="calendar" && Calendar}
-      {tab==="settings" && SettingsView}
-
-      <div className="fixed bottom-4 inset-x-0 flex justify-center">
-        <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
-          <button onClick={()=>setTab("home")}>🏠</button>
-          <button onClick={()=>setTab("calendar")}>📅</button>
-          <button onClick={()=>setTab("settings")}>⚙️</button>
-        </div>
-      </div>
-
-      {DayPopup}
-      {GymBuilder}
-      {RunBuilder}
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-</script>
-</body>
-</html>
