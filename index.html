@@ -964,6 +964,27 @@ const WorkoutScreen = activeWorkout ? (
         <p className="text-4xl font-extrabold mt-1">{restTimer}s</p>
       </div>
     )}
+    {/* RUN WORKOUT DONE BUTTON */}
+    {activeWorkout.type === "run" && (
+      <div className="mt-6">
+        <button
+          onClick={()=>{
+            // Log the run as completed
+            const completedRun = {
+              ...activeWorkout,
+              completed: true,
+              date: new Date()
+            };
+    
+            setLogs([...logs, completedRun]);
+            setActiveWorkout(null);
+          }}
+          className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold"
+        >
+          Mark Run as Done
+        </button>
+      </div>
+    )}
 
     {/* GYM WORKOUT EXECUTION */}
     {activeWorkout.type === "gym" && (
@@ -1051,57 +1072,6 @@ const WorkoutScreen = activeWorkout ? (
 
   </div>
 ) : null;
-    {/* RUN WORKOUT EXECUTION */}
-    {activeWorkout.type === "run" && (
-      <div className="space-y-4">
-
-        <p className="text-xs text-gray-400">Type: {activeWorkout.runType}</p>
-
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Stretches */}
-        {activeWorkout.stretches?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Stretches</p>
-            {activeWorkout.stretches.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-      </div>
-    )}
-
-  </div>
-) : null;  
-
-  /* REST TIMER COUNTDOWN */
-  React.useEffect(()=>{
-    if (restTimer === null) return;
-  
-    if (restTimer === 0) {
-      setRestTimer(null);
-      return;
-    }
-  
-    const t = setTimeout(()=>setRestTimer(restTimer - 1), 1000);
-    return ()=>clearTimeout(t);
-  
-  }, [restTimer]);
   
 return (
     <div>
