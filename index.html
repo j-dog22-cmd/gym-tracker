@@ -590,7 +590,105 @@ function App() {
       </div>
     </div>
   ) : null;
+const WorkoutScreen = activeWorkout ? (
+  <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
 
+    <div className="flex justify-between items-center mb-4">
+      <p className="text-lg font-semibold">
+        {activeWorkout.name}
+      </p>
+      <button
+        onClick={()=>setActiveWorkout(null)}
+        className="text-sm text-gray-400"
+      >
+        Close
+      </button>
+    </div>
+
+    {/* GYM WORKOUT EXECUTION */}
+    {activeWorkout.type === "gym" && (
+      <div className="space-y-4">
+
+        {/* Warm-up */}
+        {activeWorkout.warmup?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+            {activeWorkout.warmup.map((w,i)=>(
+              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                <p className="text-sm">{w.name}</p>
+                <p className="text-xs text-gray-400">{w.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Exercises */}
+        {activeWorkout.exercises?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Exercises</p>
+            {activeWorkout.exercises.map((ex,i)=>(
+              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                <p className="text-sm">{ex.name}</p>
+                <p className="text-xs text-gray-400">{ex.sets} x {ex.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Warm-down */}
+        {activeWorkout.warmdown?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
+            {activeWorkout.warmdown.map((w,i)=>(
+              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                <p className="text-sm">{w.name}</p>
+                <p className="text-xs text-gray-400">{w.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    )}
+
+    {/* RUN WORKOUT EXECUTION */}
+    {activeWorkout.type === "run" && (
+      <div className="space-y-4">
+
+        <p className="text-xs text-gray-400">Type: {activeWorkout.runType}</p>
+
+        {/* Warm-up */}
+        {activeWorkout.warmup?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+            {activeWorkout.warmup.map((w,i)=>(
+              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                <p className="text-sm">{w.name}</p>
+                <p className="text-xs text-gray-400">{w.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Stretches */}
+        {activeWorkout.stretches?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Stretches</p>
+            {activeWorkout.stretches.map((w,i)=>(
+              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                <p className="text-sm">{w.name}</p>
+                <p className="text-xs text-gray-400">{w.reps}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+) : null;
+  
   return (
     <div>
       {tab==="home" && Home}
