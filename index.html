@@ -65,7 +65,7 @@ function App() {
   /* SETTINGS */
   const [settings,setSettings] = React.useState(()=>{
     return JSON.parse(localStorage.getItem("settings")) || {
-      name:"Alex",
+      name:" ",
       weeklyGym:3,
       weeklyRun:3,
       monthlyGym:12,
@@ -167,7 +167,9 @@ function App() {
       stretches: runStretches
       
     };
-    setLogs([...logs,newLog]);
+    const next = [...plan];
+    next[runDayIndex].push(newLog);
+    setPlan(next);
     setRunName("");
     setRunType("Easy");
     setShowRunBuilder(false);
