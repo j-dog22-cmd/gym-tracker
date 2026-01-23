@@ -111,33 +111,25 @@ function App() {
   // Rest timer
   const [restTimer, setRestTimer] = React.useState(null);
 
+  // Weekly recurring plan
+  const [gymDayIndex, setGymDayIndex] = React.useState(0);
+  const [runDayIndex, setRunDayIndex] = React.useState(0);
+  
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
-  const [gymDate, setGymDate] = React.useState(
-    new Date().toISOString().split("T")[0]
-  );
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
   const [warmDownItems,setWarmDownItems] = React.useState([]);
-
+  
   // Run builder state
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
-  const [runDate, setRunDate] = React.useState(
-    new Date().toISOString().split("T")[0]
-  );
   const [runWarmup, setRunWarmup] = React.useState([]);
   const [runStretches, setRunStretches] = React.useState([]);
 
   /* WEEK CALC */
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dayIndex(today));
-
-  function dateFromWeekIndex(idx) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + idx);
-    return d;
-  }
 
   const weekLogs = logs.filter(l => {
     const d = new Date(l.date);
@@ -149,51 +141,49 @@ function App() {
   const runWeek = weekLogs.filter(l => l.type === "run" && l.completed).length;
 
   function logsForDate(d) {
-    return logs.filter(l => sameDay(l.date,d));
-  }
+  const idx = dayIndex(d);   // 0 = Monday, 1 = Tuesday, etc.
+  return logs.filter(l => l.dayIndex === idx);
+}
 
   /* ADD GYM WORKOUT (planned) */
-function saveGymWorkout() {
-  const date = new Date(gymDate);   // <-- FIXED
-
-  const newLog = {
-    type: "gym",
-    date,
-    name: gymName || "Gym Workout",
-    warmup: warmupItems,
-    exercises: exercises,
-    warmdown: warmDownItems,
+  function saveGymWorkout() {
+    const newPlan = {
+      type: "gym",
+      dayIndex: gymDayIndex,   // recurring weekly
+      name: gymName || "Gym Workout",
+      warmup: warmupItems,
+      exercises,
+      warmdown: warmDownItems,
+      completed: false
+    };
+  
+    setLogs([...logs, newPlan]);
+    setGymName("");
+    setWarmupItems([]);
+    setExercises([]);
+    setWarmDownItems([]);
+    setShowGymBuilder(false);
+  }
+  
+  /* ADD RUN (planned) */
+  function saveRun() {
+  const newPlan = {
+    type: "run",
+    dayIndex: runDayIndex,   // recurring weekly
+    name: runName || "Run",
+    runType,
+    warmup: runWarmup,
+    stretches: runStretches,
     completed: false
   };
 
-  setLogs([...logs, newLog]);
-  setGymName("");
-  setWarmupItems([]);
-  setExercises([]);
-  setWarmDownItems([]);
-  setShowGymBuilder(false);
+  setLogs([...logs, newPlan]);
+  setRunName("");
+  setRunType("Easy");
+  setRunWarmup([]);
+  setRunStretches([]);
+  setShowRunBuilder(false);
 }
-
-  /* ADD RUN (planned) */
-  function saveRun() {
-    const date = new Date(runDate);
-    const newLog = {
-      type: "run",
-      date,
-      name: runName || "Run",
-      runType,
-      warmup: runWarmup,
-      stretches: runStretches,
-      completed: false
-    };
-    setLogs([...logs,newLog]);
-    setRunName("");
-    setRunType("Easy");
-    setRunWarmup([]);
-    setRunStretches([]);
-    setShowRunBuilder(false);
-  }
-
   /* DELETE WORKOUT (by global index) */
   function deleteLog(globalIndex){
     setLogs(logs.filter((_,i)=>i!==globalIndex));
