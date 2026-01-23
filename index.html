@@ -123,7 +123,9 @@ function App() {
   // Run builder state
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
-  const [runDayIndex,setRunDayIndex] = React.useState(dayIndex(today));
+  const [runDate, setRunDate] = React.useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [runWarmup, setRunWarmup] = React.useState([]);
   const [runStretches, setRunStretches] = React.useState([]);
 
@@ -326,39 +328,40 @@ function saveGymWorkout() {
       </div>
 
       {/* QUICK ADD */}
-      <div className="grid grid-cols-2 gap-3 mt-2">
-        <button
-          onClick={()=>{
-            setGymDayIndex(activeDay);
-            setShowGymBuilder(true);
-          }}
-          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-        >
-          ➕ New Workout
-        </button>
-        <button
-          onClick={()=>{
-            setRunDayIndex(activeDay);
-            setShowRunBuilder(true);
-          }}
-          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-        >
-          ➕ New Run
-        </button>
+  <div className="grid grid-cols-2 gap-3 mt-2">
+    <button
+      onClick={()=>{
+        setGymDate(new Date().toISOString().split("T")[0]);
+        setShowGymBuilder(true);
+      }}
+      className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+    >
+      ➕ New Workout
+    </button>
+  
+    <button
+      onClick={()=>{
+        setRunDate(new Date().toISOString().split("T")[0]);
+        setShowRunBuilder(true);
+      }}
+      className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+    >
+      ➕ New Run
+    </button>
+  </div>
+  
+        {/* MONTHLY GOALS */}
+        <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-2">
+          <p className="font-semibold mb-2">Monthly Goals</p>
+          <p className="text-xs">
+            Gym {logs.filter(l=>l.type==="gym" && l.completed).length}/{settings.monthlyGym}
+          </p>
+          <p className="text-xs">
+            Run {logs.filter(l=>l.type==="run" && l.completed).length}/{settings.monthlyRun}
+          </p>
+        </div>
       </div>
-
-      {/* MONTHLY GOALS */}
-      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-2">
-        <p className="font-semibold mb-2">Monthly Goals</p>
-        <p className="text-xs">
-          Gym {logs.filter(l=>l.type==="gym" && l.completed).length}/{settings.monthlyGym}
-        </p>
-        <p className="text-xs">
-          Run {logs.filter(l=>l.type==="run" && l.completed).length}/{settings.monthlyRun}
-        </p>
-      </div>
-    </div>
-  );
+    );
 
   /* PLACEHOLDER CALENDAR & SETTINGS */
  const Calendar = (() => {
@@ -928,18 +931,15 @@ function saveGymWorkout() {
           ))}
         </div>
 
-        {/* DAY SELECTOR */}
+        {/* Date selector */}
         <div className="space-y-2 mb-6">
-          <p className="text-xs text-gray-400">Day</p>
-          <select
+          <p className="text-xs text-gray-400">Date</p>
+          <input
+            type="date"
             className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            value={runDayIndex}
-            onChange={e => setRunDayIndex(+e.target.value)}
-          >
-            {WEEK.map((d, i) => (
-              <option key={i} value={i}>{d}</option>
-            ))}
-          </select>
+            value={runDate}
+            onChange={e => setRunDate(e.target.value)}
+          />
         </div>
 
         {/* SAVE BUTTON */}
