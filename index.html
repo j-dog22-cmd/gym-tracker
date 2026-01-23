@@ -25,10 +25,13 @@
 <div id="root"></div>
 
 <script type="text/babel">
+
+/* ---------------- HELPERS ---------------- */
 const WEEK = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const dayIndex = d => d.getDay() === 0 ? 6 : d.getDay() - 1;
 const today = new Date();
 
+/* ---------------- RING ---------------- */
 function Ring({ value, total, color }) {
   const size = 52, stroke = 6;
   const r = (size - stroke) / 2;
@@ -52,7 +55,10 @@ function Ring({ value, total, color }) {
   );
 }
 
+/* ---------------- APP ---------------- */
 function App() {
+
+  /* SETTINGS */
   const [settings,setSettings] = React.useState({
     name:"Alex",
     weeklyGym:3,
@@ -64,19 +70,52 @@ function App() {
     runColor:"#38bdf8"
   });
 
+  /* LOGS */
   const [logs,setLogs] = React.useState([]);
+
+  /* UI STATE */
   const [activeDay,setActiveDay] = React.useState(dayIndex(today));
   const [popupDay,setPopupDay] = React.useState(null);
+  const [newType,setNewType] = React.useState("gym");
 
-  const weekStart = new Date(today); weekStart.setDate(today.getDate()-dayIndex(today));
-  const weekLogs = logs.filter(l=>new Date(l.date)>=weekStart);
-  const gymWeek = weekLogs.filter(l=>l.type==="gym").length;
-  const runWeek = weekLogs.filter(l=>l.type==="run").length;
+  /* WEEK CALC */
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dayIndex(today));
+
+  const weekLogs = logs.filter(l => {
+    const d = new Date(l.date);
+    return d >= weekStart;
+  });
+
+  const gymWeek = weekLogs.filter(l => l.type === "gym").length;
+  const runWeek = weekLogs.filter(l => l.type === "run").length;
+
+  /* ADD WORKOUT */
+  function addWorkout() {
+    const base = new Date(weekStart);
+    base.setDate(weekStart.getDate() + popupDay);
+
+    setLogs([...logs, {
+      type: newType,
+      date: base
+    }]);
+
+    setPopupDay(null);
+  }
+
+  /* GET LOGS FOR A GIVEN DATE */
+  function logsForDate(d) {
+    return logs.filter(l =>
+      new Date(l.date).toDateString() === d.toDateString()
+    );
+  }
 
   return (
     <div className="p-4 pb-32 space-y-4">
+
       <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
 
+      {/* WEEK SELECTOR */}
       <div className="flex gap-2">
         {WEEK.map((d,i)=>{
           const dateObj = new Date(weekStart);
@@ -84,7 +123,10 @@ function App() {
           return (
             <button
               key={i}
-              onClick={()=>{setActiveDay(i);setPopupDay(i);}}
+              onClick={()=>{
+                setActiveDay(i);
+                setPopupDay(i);
+              }}
               className={`p-3 rounded-xl soft-border ${i===activeDay?"bg-[#1C1C1E]":""}`}
             >
               <p className="text-xs">{d}</p>
@@ -94,6 +136,7 @@ function App() {
         })}
       </div>
 
+      {/* WEEK PROGRESS */}
       <div className="space-y-3">
         <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
           <div><p>Gym this week</p><p className="text-xs">{gymWeek}/{settings.weeklyGym}</p></div>
@@ -105,18 +148,26 @@ function App() {
         </div>
       </div>
 
+      {/* TODAY / TOMORROW */}
       <div className="grid grid-cols-2 gap-3">
         {[0,1].map(o=>{
-          const d = new Date(); d.setDate(today.getDate()+o);
+          const d = new Date();
+          d.setDate(today.getDate()+o);
           const label = o === 0 ? "Today" : "Tomorrow";
-          const dayLogs = logs.filter(l => new Date(l.date).toDateString() === d.toDateString());
+          const dayLogs = logsForDate(d);
+
           return (
-            <div key={o} className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2">
+            <div
+              key={o}
+              onClick={()=>setPopupDay(dayIndex(d))}
+              className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2"
+            >
               <p className="text-xs">{label}</p>
               <p className="font-semibold">{WEEK[dayIndex(d)]}</p>
+
               {dayLogs.length > 0 ? (
-                dayLogs.map((l, i) => (
-                  <p key={i} className="text-xs">✅ {l.type === "gym" ? "Workout" : "Run"}</p>
+                dayLogs.map((l,i)=>(
+                  <p key={i} className="text-xs">• {l.type === "gym" ? "Workout" : "Run"}</p>
                 ))
               ) : (
                 <p className="text-xs text-gray-400">No workouts scheduled</p>
@@ -126,25 +177,64 @@ function App() {
         })}
       </div>
 
+      {/* QUICK ADD */}
       <div className="grid grid-cols-2 gap-3">
-        <button onClick={()=>setPopupDay(activeDay)} className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">➕ New Workout</button>
-        <button onClick={()=>setPopupDay(activeDay)} className="p-4 bg-[#1C1C1E] rounded-2xl soft-border">➕ New Run</button>
+        <button
+          onClick={()=>setPopupDay(activeDay)}
+          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+        >
+          ➕ New Workout
+        </button>
+        <button
+          onClick={()=>setPopupDay(activeDay)}
+          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+        >
+          ➕ New Run
+        </button>
       </div>
 
+      {/* POPUP */}
       {popupDay !== null && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[#1C1C1E] p-6 rounded-2xl soft-border w-80 space-y-4">
             <p className="font-semibold text-lg">{WEEK[popupDay]} Routine</p>
-            <p className="text-sm text-gray-400">Add or view scheduled workouts for this day.</p>
-            <button onClick={() => setPopupDay(null)} className="text-xs text-blue-400">Close</button>
+
+            <div className="space-y-2">
+              <p className="text-sm">Add workout type:</p>
+
+              <select
+                value={newType}
+                onChange={e=>setNewType(e.target.value)}
+                className="w-full p-3 rounded-xl bg-[#2C2C2E]"
+              >
+                <option value="gym">Gym Workout</option>
+                <option value="run">Run</option>
+              </select>
+            </div>
+
+            <button
+              onClick={addWorkout}
+              className="w-full bg-blue-500 rounded-xl py-3"
+            >
+              Add Workout
+            </button>
+
+            <button
+              onClick={()=>setPopupDay(null)}
+              className="text-xs text-blue-400 w-full text-center"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
+
     </div>
   );
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
 </script>
 </body>
 </html>
