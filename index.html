@@ -384,10 +384,24 @@ function App() {
     const valid = dayNum >= 1 && dayNum <= daysInMonth;
 
     // Find logs for this date
-    const dayLogs = valid ? logs.filter(l => sameDay(l.date, dateObj)) : [];
-
-    const hasGym = dayLogs.some(l => l.type === "gym");
-    const hasRun = dayLogs.some(l => l.type === "run");
+    let hasGym = false;
+    let hasRun = false;
+    
+    if (valid) {
+      // 1. Completed logs (have real dates)
+      const completedLogs = logs.filter(l => l.date && sameDay(l.date, dateObj));
+    
+      if (completedLogs.some(l => l.type === "gym")) hasGym = true;
+      if (completedLogs.some(l => l.type === "run")) hasRun = true;
+    
+      // 2. Planned weekly logs (recurring)
+      const weekday = (dateObj.getDay() + 6) % 7; // convert Sun=0 → 6, Mon=1 → 0
+    
+      const plannedLogs = logs.filter(l => l.dayIndex === weekday);
+    
+      if (plannedLogs.some(l => l.type === "gym")) hasGym = true;
+      if (plannedLogs.some(l => l.type === "run")) hasRun = true;
+    }
 
     let dotColor = null;
     if (hasGym && hasRun) dotColor = "#ef4444"; // both
