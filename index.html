@@ -138,10 +138,10 @@ function App() {
       <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
 
       {/* WEEK */}
-      <div className="flex gap-2">
-                {WEEK.map((d,i)=>{
+            <div className="flex gap-2">
+        {WEEK.map((d,i)=>{
           const dateObj = new Date(weekStart);
-          dateObj.setDate(weekStart.getDate()+i);
+          dateObj.setDate(weekStart.getDate() + i);
           return (
             <button
               key={i}
@@ -152,11 +152,7 @@ function App() {
               <p className="text-sm">{dateObj.getDate()}</p>
             </button>
           );
-        })} className={`p-3 rounded-xl soft-border ${i===activeDay?"bg-[#1C1C1E]":""}`}>
-            <p className="text-xs">{d}</p>
-            <p className="text-sm">{new Date(weekStart).setDate(weekStart.getDate()+i) && new Date(weekStart).getDate()+i}</p>
-          </button>
-        ))}
+        })}
       </div>
 
       {/* WEEK PROGRESS */}
