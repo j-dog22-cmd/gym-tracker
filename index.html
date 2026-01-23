@@ -402,8 +402,6 @@ const DayPopup = popupDay !== null ? (() => {
           </div>
         )}
 
-        
-
         {/* Warm-down */}
         {activeWorkout.warmdown?.length > 0 && (
           <div>
@@ -419,6 +417,7 @@ const DayPopup = popupDay !== null ? (() => {
 
       </div>
     )}
+    
     {/* Exercises */}
     {activeWorkout.exercises?.length > 0 && (
       <div>
@@ -471,40 +470,45 @@ const DayPopup = popupDay !== null ? (() => {
     )}
 
     {/* RUN WORKOUT EXECUTION */}
-    {activeWorkout.type === "run" && (
-      <div className="space-y-4">
+{activeWorkout.type === "run" && (
+  <div className="space-y-6">
 
-        <p className="text-xs text-gray-400">Type: {activeWorkout.runType}</p>
+    {/* RUN TYPE */}
+    <div>
+      <p className="text-sm text-gray-400 mb-2">Run Type</p>
+      <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+        <p className="text-base font-medium">{activeWorkout.runType}</p>
+      </div>
+    </div>
 
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
+    {/* Warm-up */}
+    {activeWorkout.warmup?.length > 0 && (
+      <div>
+        <p className="text-sm text-gray-400 mb-2">Warm‑up</p>
+        {activeWorkout.warmup.map((w,i)=>(
+          <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+            <p className="text-base font-medium">{w.name}</p>
+            <p className="text-sm text-gray-400">{w.reps}</p>
           </div>
-        )}
-
-        {/* Stretches */}
-        {activeWorkout.stretches?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Stretches</p>
-            {activeWorkout.stretches.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
+        ))}
       </div>
     )}
 
+    {/* Stretches */}
+    {activeWorkout.stretches?.length > 0 && (
+      <div>
+        <p className="text-sm text-gray-400 mb-2">Stretches</p>
+        {activeWorkout.stretches.map((w,i)=>(
+          <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-3">
+            <p className="text-base font-medium">{w.name}</p>
+            <p className="text-sm text-gray-400">{w.reps}</p>
+          </div>
+        ))}
+      </div>
+    )}
+
+  </div>
+)}
   </div>
 ) : null;
 
