@@ -994,13 +994,25 @@ const WorkoutScreen = activeWorkout ? (
       </button>
     </div>
 
-    {/* REST TIMER */}
-    {restTimer !== null && (
-      <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-6 text-center">
-        <p className="text-base text-gray-300">Rest</p>
-        <p className="text-4xl font-extrabold mt-1">{restTimer}s</p>
-      </div>
-    )}
+    React.useEffect(() => {
+      if (restTimer === null) return;
+    
+      if (restTimer > 0) {
+        const interval = setInterval(() => {
+          setRestTimer(t => t - 1);
+        }, 1000);
+    
+        return () => clearInterval(interval);
+      }
+    
+      if (restTimer === 0) {
+        // Optional: phone vibration when rest ends
+        if (navigator.vibrate) {
+          navigator.vibrate(300);
+        }
+      }
+    }, [restTimer]);
+    
 
     {/* ---------------- RUN WORKOUT EXECUTION ---------------- */}
     {activeWorkout.type === "run" && (
@@ -1085,55 +1097,57 @@ const WorkoutScreen = activeWorkout ? (
           </div>
         )}
 
-        {/* Exercises */}
-        {activeWorkout.exercises?.length > 0 && (
-          <div>
-            <p className="text-sm text-gray-400 mb-2">Exercises</p>
-
-            {activeWorkout.exercises.map((ex,i)=>{
-              const sets = Number(ex.sets) || 0;
-              const completed = workoutProgress[i] || 0;
-
-              return (
-                <div key={i} className="p-4 bg-[#1C1C1E] rounded-2xl mb-4">
-                  <p className="text-lg font-semibold mb-4">{ex.name}</p>
-
-                  <div className="flex flex-col gap-4">
-                    {[...Array(sets)].map((_,s)=>(
+      {/* Exercises */}
+      {activeWorkout.exercises?.length > 0 && (
+        <div>
+          <p className="text-xs text-gray-400 mb-1">Exercises</p>
+      
+          {activeWorkout.exercises.map((ex, i) => {
+            const sets = Number(ex.sets) || 0;
+            const completed = workoutProgress[i] || 0;
+      
+            return (
+              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                <p className="text-sm mb-3">{ex.name}</p>
+      
+                <div className="flex flex-col gap-3">
+                  {[...Array(sets)].map((_, s) => (
+                    <div
+                      key={s}
+                      onClick={() => {
+                        const next = { ...workoutProgress };
+                        next[i] = s + 1;
+                        setWorkoutProgress(next);
+      
+                        // Start rest timer
+                        setRestTimer(settings.rest);
+                      }}
+                      className="flex items-center gap-3 cursor-pointer"
+                    >
                       <div
-                        key={s}
-                        onClick={()=>{
-                          const next = {...workoutProgress};
-                          next[i] = s + 1;
-                          setWorkoutProgress(next);
-                          setRestTimer(settings.rest);
-                        }}
-                        className="flex items-center gap-4 cursor-pointer"
+                        className={
+                          "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
+                          (s < completed
+                            ? "bg-green-500 border-green-500"
+                            : "border-gray-500")
+                        }
                       >
-                        <div
-                          className={
-                            "w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all " +
-                            (s < completed
-                              ? "bg-green-500 border-green-500"
-                              : "border-gray-500")
-                          }
-                        >
-                          {s < completed && (
-                            <span className="text-white text-xl leading-none">✓</span>
-                          )}
-                        </div>
-
-                        <span className="text-base text-gray-200">
-                          Set {s+1} — {ex.reps} reps
-                        </span>
+                        {s < completed && (
+                          <span className="text-white text-lg leading-none">✓</span>
+                        )}
                       </div>
-                    ))}
-                  </div>
+      
+                      <span className="text-sm text-gray-300">
+                        Set {s + 1} — {ex.reps} reps
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
         {/* Warm-down */}
         {activeWorkout.warmdown?.length > 0 && (
