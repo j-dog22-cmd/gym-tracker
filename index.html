@@ -533,68 +533,73 @@
       const MONTHLY_WORKOUT_GOAL = 12;
       const monthlyProgress = Math.min(1, workoutsThisMonth / MONTHLY_WORKOUT_GOAL);
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div className="text-2xl font-bold">
-          Hello, {userName || "Friend"}
-        </div>
-        <button onClick={() => navigate("/settings")}>
-          <i className="fa-solid fa-gear text-2xl"></i>
-        </button>
-      </div>
+      return (
+  <div className="p-4 flex flex-col gap-6">
 
-      {/* 7 DAY STRIP */}
-      <div>
-        <WeekdayStrip 
-          selectedDay={selectedDay} 
-          onSelect={setSelectedDay} 
+    {/* HEADER */}
+    <div className="flex justify-between items-center">
+      <div className="text-2xl font-bold">
+        Hello, {userName || "Friend"}
+      </div>
+      <button onClick={() => navigate("/settings")}>
+        <i className="fa-solid fa-gear text-2xl"></i>
+      </button>
+    </div>
+
+    {/* 7 DAY STRIP */}
+    <div>
+      <WeekdayStrip 
+        selectedDay={selectedDay} 
+        onSelect={setSelectedDay} 
+      />
+    </div>
+
+    {/* CUSTOMISABLE RINGS */}
+    <div>
+      <ProgressRings 
+        rings={userRings} 
+        onRingClick={handleRingClick} 
+      />
+    </div>
+
+    {/* YOUR PLAN */}
+    <div className="mt-2">
+      <h2 className="text-xl font-bold mb-2">Your Plan</h2>
+
+      <div className="flex flex-col gap-4">
+        <TodayBox 
+          plan={todayPlan} 
+          onSelect={handleSelectToday} 
+        />
+
+        <TomorrowBox 
+          plan={tomorrowPlan} 
+          onSelect={handleSelectTomorrow} 
         />
       </div>
+    </div>
 
-      {/* CUSTOMISABLE RINGS */}
-      <div>
-        <ProgressRings 
-          rings={userRings} 
-          onRingClick={handleRingClick} 
-        />
-      </div>
+    {/* QUICK ADD */}
+    <div className="mt-2">
+      <QuickAddRow 
+        onAddWorkout={openAddWorkout} 
+        onAddRun={openAddRun} 
+        onAddGym={openAddGym} 
+      />
+    </div>
 
-      {/* YOUR PLAN */}
-      <div className="mt-2">
-        <h2 className="text-xl font-bold mb-2">Your Plan</h2>
+    {/* MONTHLY GOALS */}
+    <div className="mt-4">
+      <h2 className="text-xl font-bold mb-2">Monthly Goals</h2>
 
-        <div className="flex flex-col gap-4">
-          <TodayBox 
-            plan={todayPlan} 
-            onSelect={handleSelectToday} 
-          />
+      <MonthlyGoals 
+        goals={userGoals} 
+        progress={goalProgress} 
+      />
+    </div>
 
-          <TomorrowBox 
-            plan={tomorrowPlan} 
-            onSelect={handleSelectTomorrow} 
-          />
-        </div>
-      </div>
-
-      {/* QUICK ADD */}
-      <div className="mt-2">
-        <QuickAddRow 
-          onAddWorkout={openAddWorkout} 
-          onAddRun={openAddRun} 
-          onAddGym={openAddGym} 
-        />
-      </div>
-
-      {/* MONTHLY GOALS */}
-      <div className="mt-4">
-        <h2 className="text-xl font-bold mb-2">Monthly Goals</h2>
-
-        <MonthlyGoals 
-          goals={userGoals} 
-          progress={goalProgress} 
-        />
-      </div>
-  );
+  </div>
+);
 }
 
 
