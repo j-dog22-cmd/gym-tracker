@@ -782,16 +782,19 @@ const DayPopup = popupDay !== null ? (() => {
           ))}
         </div>
 
-        {/* Date selector */}
-      <div className="space-y-2 mb-6">
-        <p className="text-xs text-gray-400">Date</p>
-        <input
-          type="date"
-          className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-          value={gymDate}
-          onChange={e => setGymDate(e.target.value)}
-        />
-      </div>
+        {/* Day selector */}
+        <div className="space-y-2 mb-6">
+          <p className="text-xs text-gray-400">Day</p>
+          <select
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
+            value={gymDayIndex}
+            onChange={e => setGymDayIndex(+e.target.value)}
+          >
+            {WEEK.map((d, i) => (
+              <option key={i} value={i}>{d}</option>
+            ))}
+          </select>
+        </div>
 
         <button
           onClick={saveGymWorkout}
@@ -928,15 +931,18 @@ const DayPopup = popupDay !== null ? (() => {
           ))}
         </div>
 
-        {/* Date selector */}
+        {/* Day selector */}
         <div className="space-y-2 mb-6">
-          <p className="text-xs text-gray-400">Date</p>
-          <input
-            type="date"
+          <p className="text-xs text-gray-400">Day</p>
+          <select
             className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            value={runDate}
-            onChange={e => setRunDate(e.target.value)}
-          />
+            value={runDayIndex}
+            onChange={e => setRunDayIndex(+e.target.value)}
+          >
+            {WEEK.map((d, i) => (
+              <option key={i} value={i}>{d}</option>
+            ))}
+          </select>
         </div>
 
         {/* SAVE BUTTON */}
