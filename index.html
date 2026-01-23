@@ -406,14 +406,44 @@ const DayPopup = popupDay !== null ? (() => {
         {activeWorkout.exercises?.length > 0 && (
           <div>
             <p className="text-xs text-gray-400 mb-1">Exercises</p>
-            {activeWorkout.exercises.map((ex,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{ex.name}</p>
-                <p className="text-xs text-gray-400">{ex.sets} x {ex.reps}</p>
-              </div>
-            ))}
+        
+            {activeWorkout.exercises.map((ex,i)=>{
+        
+              const sets = Number(ex.sets) || 0;
+              const completed = workoutProgress[i] || 0;
+        
+              return (
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm mb-3">{ex.name}</p>
+        
+                  <div className="flex flex-col gap-2">
+                    {[...Array(sets)].map((_,s)=>(
+                      <div
+                        key={s}
+                        onClick={()=>{
+                          const next = {...workoutProgress};
+                          next[i] = s + 1;
+                          setWorkoutProgress(next);
+                          setRestTimer(settings.rest);
+                        }}
+                        className={
+                          "p-3 rounded-xl cursor-pointer transition-all " +
+                          (s < completed
+                            ? "bg-green-600 text-white"
+                            : "bg-[#2A2A2A] text-gray-300")
+                        }
+                      >
+                        <p className="text-sm">
+                          Set {s+1} — {ex.reps} reps
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+          )}
 
         {/* Warm-down */}
         {activeWorkout.warmdown?.length > 0 && (
