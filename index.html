@@ -95,6 +95,8 @@ function App() {
   const [showGymBuilder,setShowGymBuilder] = React.useState(false);
   const [showRunBuilder,setShowRunBuilder] = React.useState(false);
 
+  const [activeWorkout, setActiveWorkout] = React.useState(null);
+
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
   const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(today));
