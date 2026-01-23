@@ -113,7 +113,8 @@ function App() {
 
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
-  const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(today));
+  const [gymDayIndex,setGymDayIndex] = React.useState(dayIndex(
+    new Date().toISOString().split("T")[0]);
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
   const [warmDownItems,setWarmDownItems] = React.useState([]);
@@ -150,7 +151,7 @@ function App() {
 
   /* ADD GYM WORKOUT (planned) */
   function saveGymWorkout() {
-    const date = dateFromWeekIndex(gymDayIndex);
+    const date = dateFromWeekIndex(gymDate);
     const newLog = {
       type: "gym",
       date,
@@ -778,19 +779,16 @@ function App() {
           ))}
         </div>
 
-        {/* Day selector */}
-        <div className="space-y-2 mb-6">
-          <p className="text-xs text-gray-400">Day</p>
-          <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
-            value={gymDayIndex}
-            onChange={e=>setGymDayIndex(+e.target.value)}
-          >
-            {WEEK.map((d,i)=>(
-              <option key={i} value={i}>{d}</option>
-            ))}
-          </select>
-        </div>
+        {/* Date selector */}
+      <div className="space-y-2 mb-6">
+        <p className="text-xs text-gray-400">Date</p>
+        <input
+          type="date"
+          className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
+          value={gymDate}
+          onChange={e => setGymDate(e.target.value)}
+        />
+      </div>
 
         <button
           onClick={saveGymWorkout}
