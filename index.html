@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fitness Planner v3</title>
+  <title>Fitness Planner</title>
 
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -170,7 +170,7 @@ function App() {
     <div className="p-4 pb-32 space-y-4">
       <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
 
-      {/* WEEK SELECTOR WITH DOTS */}
+      {/* WEEK SELECTOR WITH DOTS + TODAY HIGHLIGHT */}
       <div className="flex gap-2">
         {WEEK.map((d,i)=>{
           const dateObj = dateFromWeekIndex(i);
@@ -181,6 +181,8 @@ function App() {
           else if (hasRun) dotColor = "#38bdf8";           // blue
           else if (hasGym) dotColor = "#22c55e";           // green
 
+          const isToday = sameDay(dateObj,today);
+
           return (
             <button
               key={i}
@@ -188,10 +190,16 @@ function App() {
                 setActiveDay(i);
                 setPopupDay(i);
               }}
-              className={`p-3 rounded-xl soft-border flex flex-col items-center ${i===activeDay?"bg-[#1C1C1E]":""}`}
+              className={
+                "p-3 rounded-xl soft-border flex flex-col items-center " +
+                (i===activeDay ? "bg-[#1C1C1E] " : "") +
+                (isToday ? "border border-white/40 bg-[#1C1C1E] " : "")
+              }
             >
               <p className="text-xs">{d}</p>
-              <p className="text-sm">{dateObj.getDate()}</p>
+              <p className={"text-sm " + (isToday ? "font-bold text-white" : "")}>
+                {dateObj.getDate()}
+              </p>
               {dotColor && (
                 <div
                   className="mt-1 rounded-full"
@@ -309,7 +317,7 @@ function App() {
     <div className="p-4 space-y-3">
       <p className="font-semibold">Settings</p>
       <input
-        className="w-full p-3 rounded-xl bg-[#2C2C2E]"
+        className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
         value={settings.name}
         onChange={e=>setSettings({...settings,name:e.target.value})}
         placeholder="Name"
@@ -335,7 +343,7 @@ function App() {
 
     return (
       <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
-        <div className="w-full h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
+        <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
           <div className="flex justify-between items-center mb-2">
             <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
             <button onClick={()=>setPopupDay(null)} className="text-sm text-gray-400">Close</button>
@@ -387,10 +395,10 @@ function App() {
     );
   })() : null;
 
-  /* FULL-SCREEN GYM BUILDER */
+  /* BOTTOM-SHEET GYM BUILDER (AUTO HEIGHT, NO ZOOM) */
   const GymBuilder = showGymBuilder ? (
-    <div className="fixed inset-0 bg-black/60 z-50">
-      <div className="w-full h-full bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
+      <div className="w-full max-h-[85%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <p className="font-semibold text-lg">New Gym Workout</p>
           <button
@@ -404,7 +412,7 @@ function App() {
         <div className="space-y-2 mb-4">
           <p className="text-xs text-gray-400">Routine name</p>
           <input
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-sm"
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
             placeholder="Push Day, Legs, Upper A..."
             value={gymName}
             onChange={e=>setGymName(e.target.value)}
@@ -427,7 +435,7 @@ function App() {
           {warmupItems.map((w,i)=>(
             <div key={i} className="flex gap-2 mb-1">
               <input
-                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-xs"
+                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
                 placeholder="Movement"
                 value={w.name}
                 onChange={e=>{
@@ -437,7 +445,7 @@ function App() {
                 }}
               />
               <input
-                className="w-24 p-2 rounded-lg bg-[#2C2C2E] text-xs"
+                className="w-28 p-2 rounded-lg bg-[#2C2C2E] text-base"
                 placeholder="Reps/time"
                 value={w.reps}
                 onChange={e=>{
@@ -466,7 +474,7 @@ function App() {
           {exercises.map((ex,i)=>(
             <div key={i} className="flex gap-2 mb-1">
               <input
-                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-xs"
+                className="flex-1 p-2 rounded-lg bg-[#2C2C2E] text-base"
                 placeholder="Exercise"
                 value={ex.name}
                 onChange={e=>{
@@ -476,7 +484,7 @@ function App() {
                 }}
               />
               <input
-                className="w-16 p-2 rounded-lg bg-[#2C2C2E] text-xs"
+                className="w-20 p-2 rounded-lg bg-[#2C2C2E] text-base"
                 placeholder="Sets"
                 value={ex.sets}
                 onChange={e=>{
@@ -486,7 +494,7 @@ function App() {
                 }}
               />
               <input
-                className="w-16 p-2 rounded-lg bg-[#2C2C2E] text-xs"
+                className="w-20 p-2 rounded-lg bg-[#2C2C2E] text-base"
                 placeholder="Reps"
                 value={ex.reps}
                 onChange={e=>{
@@ -502,7 +510,7 @@ function App() {
         <div className="space-y-2 mb-6">
           <p className="text-xs text-gray-400">Day</p>
           <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-sm"
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
             value={gymDayIndex}
             onChange={e=>setGymDayIndex(+e.target.value)}
           >
@@ -522,10 +530,10 @@ function App() {
     </div>
   ) : null;
 
-  /* FULL-SCREEN RUN BUILDER */
+  /* BOTTOM-SHEET RUN BUILDER (AUTO HEIGHT, NO ZOOM) */
   const RunBuilder = showRunBuilder ? (
-    <div className="fixed inset-0 bg-black/60 z-50">
-      <div className="w-full h-full bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
+    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
+      <div className="w-full max-h-[70%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <p className="font-semibold text-lg">New Run</p>
           <button
@@ -539,7 +547,7 @@ function App() {
         <div className="space-y-2 mb-4">
           <p className="text-xs text-gray-400">Run name</p>
           <input
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-sm"
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
             placeholder="5K Tempo, Easy Loop..."
             value={runName}
             onChange={e=>setRunName(e.target.value)}
@@ -549,7 +557,7 @@ function App() {
         <div className="space-y-2 mb-4">
           <p className="text-xs text-gray-400">Run type</p>
           <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-sm"
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
             value={runType}
             onChange={e=>setRunType(e.target.value)}
           >
@@ -563,7 +571,7 @@ function App() {
         <div className="space-y-2 mb-6">
           <p className="text-xs text-gray-400">Day</p>
           <select
-            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-sm"
+            className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
             value={runDayIndex}
             onChange={e=>setRunDayIndex(+e.target.value)}
           >
