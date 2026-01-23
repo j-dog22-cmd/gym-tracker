@@ -227,17 +227,17 @@ function App() {
       </h2>
       <p>Rest timer: {workout.rest}s</p>
       <div className="grid grid-cols-4 gap-2">
-        {workout.sets.map((s,i)=>(
+                {workout.sets.map((s,i) => (
           <button
             key={i}
-            onClick={()=>{
-              const ns=[...workout.sets];
-              ns[i]=!ns[i];
-              setWorkout({...workout,sets:ns});
+            onClick={() => {
+              const ns = [...workout.sets];
+              ns[i] = !ns[i];
+              setWorkout({ ...workout, sets: ns });
             }}
-            className={`p-4 rounded-xl ${s?"bg-green-500":"bg-[#1C1C1E]"}`}
+            className={`p-4 rounded-xl ${s ? "bg-green-500" : "bg-[#1C1C1E]"}`}
           >
-            {i+1}
+            {i + 1}
           </button>
         ))}
       </div>
