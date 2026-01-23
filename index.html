@@ -84,6 +84,19 @@ function App() {
       runColor: "#38bdf8"
     };
   });
+
+  React.useEffect(() => {
+  if (restTimer === null) return;
+
+  const interval = setInterval(() => {
+    setRestTimer(prev => {
+      if (prev === 1) return null;
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [restTimer]);
   
   React.useEffect(() => {
     localStorage.setItem("settings", JSON.stringify(settings));
@@ -208,37 +221,30 @@ function App() {
 function handleSetComplete(exIndex, setIndex) {
   if (!activeWorkout || !activeWorkout.exercises) return;
 
-  const updated = { ...activeWorkout, exercises: [...activeWorkout.exercises] };
-  const ex = { ...updated.exercises[exIndex] };
+  // Clone workout
+  const updated = { ...activeWorkout };
+  const exercises = [...updated.exercises];
+  const exercise = { ...exercises[exIndex] };
+  const sets = [...exercise.sets];
 
-  ex.sets = ex.sets.map((s, i) =>
-    i === setIndex ? { ...s, completed: !s.completed } : s
-  );
+  // Toggle the set
+  sets[setIndex] = {
+    ...sets[setIndex],
+    completed: !sets[setIndex].completed
+  };
 
-  updated.exercises[exIndex] = ex;
+  exercise.sets = sets;
+  exercises[exIndex] = exercise;
+  updated.exercises = exercises;
+
+  // Update workout state
   setActiveWorkout(updated);
 
-  // Start rest timer when a set is ticked ON
-  const justCompleted = ex.sets[setIndex].completed;
-  if (justCompleted) {
+  // ⭐ Restart rest timer ONLY when ticking ON
+  if (sets[setIndex].completed) {
     setRestTimer(settings.defaultRest || 60);
   }
-}
-  /* REST TIMER COUNTDOWN */
-  React.useEffect(() => {
-    if (restTimer === null) return;
-
-    if (restTimer > 0) {
-      const id = setTimeout(() => {
-        setRestTimer(t => t - 1);
-      }, 1000);
-      return () => clearTimeout(id);
-    }
-
-    if (restTimer === 0) {
-      if (navigator.vibrate) navigator.vibrate(300);
-    }
-  }, [restTimer]);
+};
 
   /* HOME */
   const Home = (
