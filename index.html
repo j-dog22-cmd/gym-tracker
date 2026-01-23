@@ -985,39 +985,26 @@ const RunBuilder = showRunBuilder ? (
   </div>
 ) : null;
 
-const WorkoutScreen = activeWorkout ? (
-  <div className="fixed inset-0 bg-gradient-to-b from-black to-[#0f0f0f] z-50 p-6 overflow-y-auto text-lg">
+// ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
+React.useEffect(() => {
+  if (restTimer === null) return;
 
-    {/* HEADER */}
-    <div className="flex justify-between items-center mb-6">
-      <p className="text-2xl font-bold">{activeWorkout.name}</p>
-      <button
-        onClick={() => setActiveWorkout(null)}
-        className="text-gray-400 text-lg"
-      >
-        Close
-      </button>
-    </div>
-    
-     // ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
-  React.useEffect(() => {
-    if (restTimer === null) return;
-  
-    if (restTimer > 0) {
-      const interval = setInterval(() => {
-        setRestTimer(t => t - 1);
-      }, 1000);
-  
-      return () => clearInterval(interval);
-    }
-  
-    if (restTimer === 0) {
-      if (navigator.vibrate) navigator.vibrate(300);
-    }
-  }, [restTimer]);
-  
-  // ⭐ NOW YOUR WORKOUT SCREEN JSX BEGINS
-  const WorkoutScreen = activeWorkout ? (
+  if (restTimer > 0) {
+    const interval = setInterval(() => {
+      setRestTimer(t => t - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }
+
+  if (restTimer === 0) {
+    if (navigator.vibrate) navigator.vibrate(300);
+  }
+}, [restTimer]);
+
+
+// ⭐ WORKOUT SCREEN JSX
+const WorkoutScreen = activeWorkout ? (
   <div className="fixed inset-0 bg-gradient-to-b from-black to-[#0f0f0f] z-50 p-6 overflow-y-auto text-lg">
 
     {/* HEADER */}
@@ -1038,6 +1025,7 @@ const WorkoutScreen = activeWorkout ? (
         <p className="text-4xl font-extrabold mt-1">{restTimer}s</p>
       </div>
     )}
+
     {/* ---------------- RUN WORKOUT EXECUTION ---------------- */}
     {activeWorkout.type === "run" && (
       <div className="space-y-6">
@@ -1085,15 +1073,12 @@ const WorkoutScreen = activeWorkout ? (
               date: new Date()
             };
 
-            // Add to logs
             setLogs([...logs, completed]);
 
-            // Remove from plan
             const next = [...plan];
             next[activeWorkout.dayIndex].splice(activeWorkout.workoutIndex, 1);
             setPlan(next);
 
-            // Close screen
             setActiveWorkout(null);
           }}
           className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
@@ -1121,57 +1106,56 @@ const WorkoutScreen = activeWorkout ? (
           </div>
         )}
 
-      {/* Exercises */}
-      {activeWorkout.exercises?.length > 0 && (
-        <div>
-          <p className="text-xs text-gray-400 mb-1">Exercises</p>
-      
-          {activeWorkout.exercises.map((ex, i) => {
-            const sets = Number(ex.sets) || 0;
-            const completed = workoutProgress[i] || 0;
-      
-            return (
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm mb-3">{ex.name}</p>
-      
-                <div className="flex flex-col gap-3">
-                  {[...Array(sets)].map((_, s) => (
-                    <div
-                      key={s}
-                      onClick={() => {
-                        const next = { ...workoutProgress };
-                        next[i] = s + 1;
-                        setWorkoutProgress(next);
-      
-                        // Start rest timer
-                        setRestTimer(settings.rest);
-                      }}
-                      className="flex items-center gap-3 cursor-pointer"
-                    >
+        {/* Exercises */}
+        {activeWorkout.exercises?.length > 0 && (
+          <div>
+            <p className="text-xs text-gray-400 mb-1">Exercises</p>
+
+            {activeWorkout.exercises.map((ex, i) => {
+              const sets = Number(ex.sets) || 0;
+              const completed = workoutProgress[i] || 0;
+
+              return (
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm mb-3">{ex.name}</p>
+
+                  <div className="flex flex-col gap-3">
+                    {[...Array(sets)].map((_, s) => (
                       <div
-                        className={
-                          "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
-                          (s < completed
-                            ? "bg-green-500 border-green-500"
-                            : "border-gray-500")
-                        }
+                        key={s}
+                        onClick={() => {
+                          const next = { ...workoutProgress };
+                          next[i] = s + 1;
+                          setWorkoutProgress(next);
+
+                          setRestTimer(settings.rest);
+                        }}
+                        className="flex items-center gap-3 cursor-pointer"
                       >
-                        {s < completed && (
-                          <span className="text-white text-lg leading-none">✓</span>
-                        )}
+                        <div
+                          className={
+                            "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
+                            (s < completed
+                              ? "bg-green-500 border-green-500"
+                              : "border-gray-500")
+                          }
+                        >
+                          {s < completed && (
+                            <span className="text-white text-lg leading-none">✓</span>
+                          )}
+                        </div>
+
+                        <span className="text-sm text-gray-300">
+                          Set {s + 1} — {ex.reps} reps
+                        </span>
                       </div>
-      
-                      <span className="text-sm text-gray-300">
-                        Set {s + 1} — {ex.reps} reps
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
 
         {/* Warm-down */}
         {activeWorkout.warmdown?.length > 0 && (
@@ -1195,15 +1179,12 @@ const WorkoutScreen = activeWorkout ? (
               date: new Date()
             };
 
-            // Add to logs
             setLogs([...logs, completed]);
 
-            // Remove from plan
             const next = [...plan];
             next[activeWorkout.dayIndex].splice(activeWorkout.workoutIndex, 1);
             setPlan(next);
 
-            // Close screen
             setActiveWorkout(null);
           }}
           className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
@@ -1216,7 +1197,6 @@ const WorkoutScreen = activeWorkout ? (
 
   </div>
 ) : null;
-  
 return (
     <div>
       {tab==="home" && Home}
