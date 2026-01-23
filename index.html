@@ -963,79 +963,89 @@ const WorkoutScreen = activeWorkout ? (
     </div>
   )}
 
-    {/* GYM WORKOUT EXECUTION */}
-    {activeWorkout.type === "gym" && (
-      <div className="space-y-4">
+   {/* GYM WORKOUT EXECUTION */}
+{activeWorkout.type === "gym" && (
+  <div className="space-y-4">
 
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
+    {/* Warm-up */}
+    {activeWorkout.warmup?.length > 0 && (
+      <div>
+        <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+        {activeWorkout.warmup.map((w,i)=>(
+          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+            <p className="text-sm">{w.name}</p>
+            <p className="text-xs text-gray-400">{w.reps}</p>
           </div>
-        )}
-
-        {/* Exercises */}
-        {activeWorkout.exercises?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Exercises</p>
-        
-            {activeWorkout.exercises.map((ex,i)=>{
-        
-              const sets = Number(ex.sets) || 0;
-              const completed = workoutProgress[i] || 0;
-        
-              return (
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm mb-2">{ex.name}</p>
-        
-                  <div className="flex flex-col gap-2">
-                    {[...Array(sets)].map((_,s)=>(
-                      <label key={s} className="flex items-center gap-2">
-                       <input
-                          type="checkbox"
-                          checked={s < completed}
-                          onChange={()=>{
-                            const next = {...workoutProgress};
-                            next[i] = s + 1;
-                            setWorkoutProgress(next);
-                            setRestTimer(settings.rest);
-                          }}
-                          className="w-6 h-6 accent-green-500 rounded-lg"
-                        />
-                        <span className="text-xs text-gray-300">
-                          Set {s+1} — {ex.reps} reps
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Warm-down */}
-        {activeWorkout.warmdown?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-            {activeWorkout.warmdown.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
+        ))}
       </div>
     )}
 
+    {/* Exercises */}
+    {activeWorkout.exercises?.length > 0 && (
+      <div>
+        <p className="text-xs text-gray-400 mb-1">Exercises</p>
+
+        {activeWorkout.exercises.map((ex,i)=>{
+
+          const sets = Number(ex.sets) || 0;
+          const completed = workoutProgress[i] || 0;
+
+          return (
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm mb-3">{ex.name}</p>
+
+              <div className="flex flex-col gap-3">
+                {[...Array(sets)].map((_,s)=>(
+                  <div
+                    key={s}
+                    onClick={()=>{
+                      const next = {...workoutProgress};
+                      next[i] = s + 1;
+                      setWorkoutProgress(next);
+                      setRestTimer(settings.rest);
+                    }}
+                    className="flex items-center gap-3 cursor-pointer"
+                  >
+                    <div
+                      className={
+                        "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all " +
+                        (s < completed
+                          ? "bg-green-500 border-green-500"
+                          : "border-gray-500")
+                      }
+                    >
+                      {s < completed && (
+                        <span className="text-white text-lg leading-none">✓</span>
+                      )}
+                    </div>
+
+                    <span className="text-sm text-gray-300">
+                      Set {s+1} — {ex.reps} reps
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    {/* Warm-down */}
+    {activeWorkout.warmdown?.length > 0 && (
+      <div>
+        <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
+        {activeWorkout.warmdown.map((w,i)=>(
+          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+            <p className="text-sm">{w.name}</p>
+            <p className="text-xs text-gray-400">{w.reps}</p>
+          </div>
+        ))}
+      </div>
+    )}
+
+  </div>
+)}
     {/* RUN WORKOUT EXECUTION */}
     {activeWorkout.type === "run" && (
       <div className="space-y-4">
