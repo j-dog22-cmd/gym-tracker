@@ -998,25 +998,25 @@ const WorkoutScreen = activeWorkout ? (
         Close
       </button>
     </div>
-// ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
-React.useEffect(() => {
-  if (restTimer === null) return;
-
-  if (restTimer > 0) {
-    const interval = setInterval(() => {
-      setRestTimer(t => t - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }
-
-  if (restTimer === 0) {
-    if (navigator.vibrate) navigator.vibrate(300);
-  }
-}, [restTimer]);
-
-// ⭐ NOW YOUR WORKOUT SCREEN JSX BEGINS
-const WorkoutScreen = activeWorkout ? (
+    // ⭐ REST TIMER COUNTDOWN — MUST BE ABOVE JSX
+    React.useEffect(() => {
+      if (restTimer === null) return;
+    
+      if (restTimer > 0) {
+        const interval = setInterval(() => {
+          setRestTimer(t => t - 1);
+        }, 1000);
+    
+        return () => clearInterval(interval);
+      }
+    
+      if (restTimer === 0) {
+        if (navigator.vibrate) navigator.vibrate(300);
+      }
+    }, [restTimer]);
+    
+    // ⭐ NOW YOUR WORKOUT SCREEN JSX BEGINS
+    const WorkoutScreen = activeWorkout ? (
   <div className="fixed inset-0 bg-gradient-to-b from-black to-[#0f0f0f] z-50 p-6 overflow-y-auto text-lg">
 
     {/* HEADER */}
