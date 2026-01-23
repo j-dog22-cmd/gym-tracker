@@ -72,21 +72,22 @@ function Ring({ value, total, color }) {
 /* ---------------- APP ---------------- */
 function App() {
   /* SETTINGS */
-  const [settings,setSettings] = React.useState(()=>{
+  const [settings, setSettings] = React.useState(() => {
     return JSON.parse(localStorage.getItem("settings")) || {
-      name:"Alex",
-      weeklyGym:3,
-      weeklyRun:3,
-      monthlyGym:12,
-      monthlyRun:12,
-      rest:60,
-      gymColor:"#22c55e",
-      runColor:"#38bdf8"
+      name: "Alex",
+      weeklyGym: 3,
+      weeklyRun: 3,
+      monthlyGym: 12,
+      monthlyRun: 12,
+      defaultRest: 60,     // ← fixed
+      gymColor: "#22c55e",
+      runColor: "#38bdf8"
     };
   });
-  React.useEffect(()=>{
-    localStorage.setItem("settings",JSON.stringify(settings));
-  },[settings]);
+  
+  React.useEffect(() => {
+    localStorage.setItem("settings", JSON.stringify(settings));
+  }, [settings]);
 
   /* LOGS */
   // logs now store both planned + completed workouts
@@ -110,6 +111,7 @@ function App() {
 
   // Rest timer
   const [restTimer, setRestTimer] = React.useState(null);
+  const [activeWorkout, setActiveWorkout] = React.useState(null);
 
   // Weekly recurring plan
   const [gymDayIndex, setGymDayIndex] = React.useState(0);
@@ -188,7 +190,26 @@ function App() {
   function deleteLog(globalIndex){
     setLogs(logs.filter((_,i)=>i!==globalIndex));
   }
+  
+function handleSetComplete(exIndex, setIndex) {
+  if (!activeWorkout || !activeWorkout.exercises) return;
 
+  const updated = { ...activeWorkout, exercises: [...activeWorkout.exercises] };
+  const ex = { ...updated.exercises[exIndex] };
+
+  ex.sets = ex.sets.map((s, i) =>
+    i === setIndex ? { ...s, completed: !s.completed } : s
+  );
+
+  updated.exercises[exIndex] = ex;
+  setActiveWorkout(updated);
+
+  // Start rest timer when a set is ticked ON
+  const justCompleted = ex.sets[setIndex].completed;
+  if (justCompleted) {
+    setRestTimer(settings.defaultRest || 60);
+  }
+}
   /* REST TIMER COUNTDOWN */
   React.useEffect(() => {
     if (restTimer === null) return;
@@ -989,20 +1010,37 @@ const DayPopup = popupDay !== null ? (() => {
         </button>
       </div>
 
-      {/* REST TIMER */}
+      {activeWorkout.exercises.map((ex, exIndex) => (
+      <div key={exIndex} className="mb-4">
+        <p className="font-semibold mb-2">{ex.name}</p>
+    
+        {ex.sets.map((set, setIndex) => (
+          <div key={setIndex} className="flex items-center gap-2 mb-1">
+            <input
+              type="checkbox"
+              checked={set.completed}
+              onChange={() => handleSetComplete(exIndex, setIndex)}
+              className="w-5 h-5 accent-green-500"
+            />
+            <p className="text-sm">{set.weight}kg × {set.reps}</p>
+          </div>
+        ))}
+      </div>
+    ))}
+      
       {restTimer !== null && (
-        <div className="p-4 bg-[#1C1C1E] rounded-2xl mb-4 text-center">
-          <p className="text-xs text-gray-300">Rest</p>
-          <p className="text-3xl font-bold mt-1">{restTimer}s</p>
-        </div>
-      )}
-
-      <button
-        onClick={() => setRestTimer(settings.rest)}
-        className="w-full bg-gray-700 rounded-xl py-2 text-xs mb-4"
-      >
-        Start Rest
-      </button>
+      <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
+        <p className="text-xs text-gray-300">Rest</p>
+        <p className="text-lg font-semibold">{restTimer}s</p>
+      </div>
+    )}
+    
+    <button
+      onClick={finishWorkout}
+      className="w-full bg-green-600 rounded-xl py-3 text-sm font-semibold mt-4"
+    >
+      Mark Workout as Done
+    </button>
 
       {/* GYM WORKOUT EXECUTION */}
       {activeWorkout.type === "gym" && (
