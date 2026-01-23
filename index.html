@@ -106,7 +106,8 @@ function App() {
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
   const [runDayIndex,setRunDayIndex] = React.useState(dayIndex(today));
-  const [warmDownItems,setWarmDownItems] = React.useState([]);
+  const [runWarmup, setRunWarmup] = React.useState([]);
+  const [runStretches, setRunStretches] = React.useState([]);
 
   /* WEEK CALC */
   const weekStart = new Date(today);
