@@ -549,73 +549,74 @@ function App() {
   })();
 
   /* SETTINGS VIEW */
-  const SettingsView = (
+function SettingsView({ settings, setSettings, goals, updateGoal }) {
+  return (
     <div className="p-4 space-y-3">
       <p className="font-semibold">Settings</p>
+
       <input
         className="w-full p-3 rounded-xl bg-[#2C2C2E] text-base"
         value={settings.name}
-        onChange={e=>setSettings({...settings,name:e.target.value})}
+        onChange={e => setSettings({ ...settings, name: e.target.value })}
         placeholder="Name"
       />
 
       {/* GOALS */}
-    <div className="bg-[#1C1C1E] p-4 rounded-2xl soft-border space-y-6 mt-6">
-    
-      <p className="font-semibold text-sm">Workout Goals</p>
-    
-      {/* GYM GOALS */}
-      <div className="space-y-3">
-        <p className="text-xs text-gray-400">Gym Goals</p>
-    
-        <div>
-          <p className="text-[11px] text-gray-400 mb-1">Weekly Gym Goal</p>
-          <input
-            type="number"
-            value={goals.gym.weekly}
-            onChange={(e) => updateGoal("gym", "weekly", e.target.value)}
-            className="w-full bg-black rounded-xl p-2 text-sm"
-          />
-        </div>
-    
-        <div>
-          <p className="text-[11px] text-gray-400 mb-1">Monthly Gym Goal</p>
-          <input
-            type="number"
-            value={goals.gym.monthly}
-            onChange={(e) => updateGoal("gym", "monthly", e.target.value)}
-            className="w-full bg-black rounded-xl p-2 text-sm"
-          />
-        </div>
-      </div>
-    
-      {/* RUN GOALS */}
-      <div className="space-y-3">
-        <p className="text-xs text-gray-400">Run Goals</p>
-    
-        <div>
-          <p className="text-[11px] text-gray-400 mb-1">Weekly Run Goal</p>
-          <input
-            type="number"
-            value={goals.run.weekly}
-            onChange={(e) => updateGoal("run", "weekly", e.target.value)}
-            className="w-full bg-black rounded-xl p-2 text-sm"
-          />
-        </div>
-    
-        <div>
-          <p className="text-[11px] text-gray-400 mb-1">Monthly Run Goal</p>
-          <input
-            type="number"
-            value={goals.run.monthly}
-            onChange={(e) => updateGoal("run", "monthly", e.target.value)}
-            className="w-full bg-black rounded-xl p-2 text-sm"
-          />
-        </div>
-      </div>
-    
-    </div>
+      <div className="bg-[#1C1C1E] p-4 rounded-2xl soft-border space-y-6 mt-6">
+        <p className="font-semibold text-sm">Workout Goals</p>
 
+        {/* GYM GOALS */}
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">Gym Goals</p>
+
+          <div>
+            <p className="text-[11px] text-gray-400 mb-1">Weekly Gym Goal</p>
+            <input
+              type="number"
+              value={goals.gym.weekly}
+              onChange={(e) => updateGoal("gym", "weekly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <p className="text-[11px] text-gray-400 mb-1">Monthly Gym Goal</p>
+            <input
+              type="number"
+              value={goals.gym.monthly}
+              onChange={(e) => updateGoal("gym", "monthly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* RUN GOALS */}
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">Run Goals</p>
+
+          <div>
+            <p className="text-[11px] text-gray-400 mb-1">Weekly Run Goal</p>
+            <input
+              type="number"
+              value={goals.run.weekly}
+              onChange={(e) => updateGoal("run", "weekly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <p className="text-[11px] text-gray-400 mb-1">Monthly Run Goal</p>
+            <input
+              type="number"
+              value={goals.run.monthly}
+              onChange={(e) => updateGoal("run", "monthly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* REST TIMER */}
       <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2">
         <p className="text-sm font-semibold">Rest Timer (seconds)</p>
         <input
@@ -634,7 +635,7 @@ function App() {
       </div>
 
       <button
-        onClick={()=>{
+        onClick={() => {
           localStorage.clear();
           location.reload();
         }}
@@ -644,7 +645,7 @@ function App() {
       </button>
     </div>
   );
-
+}
   /* DAY POPUP */
   const DayPopup = popupDay !== null ? (() => {
     const dayLogs = logs
@@ -1287,8 +1288,15 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, restTimer, setRestT
     <div>
       {tab==="home" && Home}
       {tab==="calendar" && Calendar}
-      {tab==="settings" && SettingsView}
-
+      {tab==="settings" && (
+        <SettingsView
+          settings={settings}
+          setSettings={setSettings}
+          goals={goals}
+          updateGoal={updateGoal}
+        />
+      )}
+      
       {WorkoutScreen}
 
       <div className="fixed bottom-4 inset-x-0 flex justify-center">
