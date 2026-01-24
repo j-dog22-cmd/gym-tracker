@@ -139,7 +139,7 @@ function App() {
   const [runWarmup, setRunWarmup] = React.useState([]);
   const [runStretches, setRunStretches] = React.useState([]);
   
-  const [goals, setGoals] = useState({
+  const [goals, setGoals] = React.useState({
       gym: { weekly: 3, monthly: 12 },
       run: { weekly: 2, monthly: 8 }
     });
