@@ -842,7 +842,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
 
       {/* REST TIMER */}
       <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2">
-        <p className="text-sm font-semibold">Rest Timer (seconds)</p>
+        <p className="text-base font-semibold">Rest Timer (seconds)</p>
         <input
           type="number"
           min="5"
@@ -863,7 +863,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
           localStorage.clear();
           location.reload();
         }}
-        className="bg-red-500 p-3 rounded-xl text-sm"
+        className="bg-red-500 p-3 rounded-xl text-base"
       >
         Reset App
       </button>
