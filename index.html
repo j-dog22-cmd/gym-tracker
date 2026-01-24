@@ -1003,51 +1003,50 @@ function App() {
 
   /* WORKOUT SCREEN */
   const WorkoutScreen = activeWorkout ? (
-    <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
+  <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-lg font-semibold">{activeWorkout.name}</p>
-        <button
-          onClick={() => {
-            setActiveWorkout(null);
-            setRestTimer(null);
-          }}
-          className="text-sm text-gray-400"
-        >
-          Close
-        </button>
+    {/* HEADER */}
+    <div className="flex justify-between items-center mb-4">
+      <p className="text-lg font-semibold">{activeWorkout.name}</p>
+      <button
+        onClick={() => {
+          setActiveWorkout(null);
+          setRestTimer(null);
+        }}
+        className="text-sm text-gray-400"
+      >
+        Close
+      </button>
+    </div>
+
+    {/* BIG REST TIMER AT TOP */}
+    {restTimer !== null && (
+      <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-6">
+        <p className="text-sm text-gray-400">Rest</p>
+        <p className="text-5xl font-bold mt-1">{restTimer}s</p>
       </div>
+    )}
 
-     {/* GYM WARMUP/WARMDOWN */}
-      {activeWorkout.type === "gym" && (
-        <div className="space-y-4 mt-6">
-          {activeWorkout.warmup?.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-              {activeWorkout.warmup.map((w,i)=>(
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm">{w.name}</p>
-                  <p className="text-xs text-gray-400">{w.reps}</p>
-                </div>
-              ))}
-            </div>
-          
-      
-    {/* REST TIMER */}
-        {restTimer !== null && (
-          <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
-            <p className="text-xs text-gray-300">Rest</p>
-            <p className="text-lg font-semibold">{restTimer}s</p>
+    {/* WARM-UP */}
+    {activeWorkout.warmup?.length > 0 && (
+      <div className="mb-6">
+        <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+        {activeWorkout.warmup.map((w,i)=>(
+          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+            <p className="text-sm">{w.name}</p>
+            <p className="text-xs text-gray-400">{w.reps}</p>
           </div>
-        )}
-      
-      {/* EXERCISES WITH SETS */}
-      {Array.isArray(activeWorkout.exercises) && activeWorkout.exercises.map((ex, exIndex) => {
+        ))}
+      </div>
+    )}
+
+    {/* EXERCISES + SETS */}
+    {Array.isArray(activeWorkout.exercises) &&
+      activeWorkout.exercises.map((ex, exIndex) => {
         const sets = Array.isArray(ex.sets) ? ex.sets : [];
 
         return (
-          <div key={exIndex} className="mb-4">
+          <div key={exIndex} className="mb-6">
             <p className="font-semibold mb-2">{ex.name}</p>
 
             {sets.length === 0 && (
@@ -1075,22 +1074,45 @@ function App() {
             ))}
           </div>
         );
-      })}
+      })
+    }
 
-          {activeWorkout.warmdown?.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-              {activeWorkout.warmdown.map((w,i)=>(
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm">{w.name}</p>
-                  <p className="text-xs text-gray-400">{w.reps}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+    {/* WARM-DOWN */}
+    {activeWorkout.warmdown?.length > 0 && (
+      <div className="mb-6">
+        <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
+        {activeWorkout.warmdown.map((w,i)=>(
+          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+            <p className="text-sm">{w.name}</p>
+            <p className="text-xs text-gray-400">{w.reps}</p>
+          </div>
+        ))}
+      </div>
+    )}
 
+    {/* MARK AS DONE */}
+    <button
+      onClick={() => {
+        setLogs(logs.map((log, idx) => {
+          if (idx === activeWorkout.logIndex) {
+            return {
+              ...log,
+              completed: true,
+              date: activeWorkout.date || new Date()
+            };
+          }
+          return log;
+        }));
+        setActiveWorkout(null);
+        setRestTimer(null);
+      }}
+      className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
+    >
+      Mark as Done
+    </button>
+
+  </div>
+) : null;
       {/* RUN EXECUTION */}
       {activeWorkout.type === "run" && (
         <div className="space-y-4 mt-6">
