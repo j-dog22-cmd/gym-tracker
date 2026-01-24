@@ -72,12 +72,73 @@ function Ring({ value, total, color }) {
   /* ---------------- line graph ---------------- */
   function MiniLineGraph({ data, color }) {
     const max = Math.max(...data, 1);
+    const min = 0;
+  
+    const width = 200;   // bigger width
+    const height = 80;   // bigger height
+    const padding = 20;  // space for axes
+  
     const points = data
-      .map((v, i) => `${(i / (data.length - 1)) * 100},${100 - (v / max) * 100}`)
+      .map((v, i) => {
+        const x = padding + (i / (data.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((v - min) / (max - min)) * (height - padding * 2);
+        return `${x},${y}`;
+      })
       .join(" ");
   
     return (
-      <svg viewBox="0 0 100 100" className="w-full h-12">
+      <svg
+        width="100%"
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="mt-2"
+      >
+        {/* Y‑axis */}
+        <line
+          x1={padding}
+          y1={padding}
+          x2={padding}
+          y2={height - padding}
+          stroke="#555"
+          strokeWidth="1"
+        />
+  
+        {/* X‑axis */}
+        <line
+          x1={padding}
+          y1={height - padding}
+          x2={width - padding}
+          y2={height - padding}
+          stroke="#555"
+          strokeWidth="1"
+        />
+  
+        {/* Y‑axis labels */}
+        <text x={padding - 6} y={height - padding + 4} fontSize="8" textAnchor="end" fill="#888">
+          0
+        </text>
+        <text x={padding - 6} y={padding + 4} fontSize="8" textAnchor="end" fill="#888">
+          {max}
+        </text>
+  
+        {/* X‑axis labels (W1, W2, W3...) */}
+        {data.map((_, i) => {
+          const x = padding + (i / (data.length - 1)) * (width - padding * 2);
+          return (
+            <text
+              key={i}
+              x={x}
+              y={height - padding + 12}
+              fontSize="8"
+              textAnchor="middle"
+              fill="#888"
+            >
+              W{i + 1}
+            </text>
+          );
+        })}
+  
+        {/* Line */}
         <polyline
           fill="none"
           stroke={color}
@@ -659,7 +720,7 @@ function App() {
 
       {/* GOALS */}
       <div className="bg-[#1C1C1E] p-4 rounded-2xl soft-border space-y-6 mt-6">
-        <p className="font-semibold text-sm">Workout Goals</p>
+        <p className="font-semibold text-base">Workout Goals</p>
 
         {/* GYM GOALS */}
         <div className="space-y-3">
@@ -668,7 +729,7 @@ function App() {
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Weekly Gym Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-sm"
+              className="w-full bg-black rounded-xl p-2 text-base"
               value={tempGoals.gymWeekly}
               onChange={e =>
                 setTempGoals(prev => ({ ...prev, gymWeekly: e.target.value }))
@@ -682,7 +743,7 @@ function App() {
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Monthly Gym Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-sm"
+              className="w-full bg-black rounded-xl p-2 text-base"
               value={tempGoals.gymMonthly}
               onChange={e =>
                 setTempGoals(prev => ({ ...prev, gymMonthly: e.target.value }))
@@ -701,7 +762,7 @@ function App() {
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Weekly Run Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-sm"
+              className="w-full bg-black rounded-xl p-2 text-base"
               value={tempGoals.runWeekly}
               onChange={e =>
                 setTempGoals(prev => ({ ...prev, runWeekly: e.target.value }))
@@ -715,7 +776,7 @@ function App() {
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Monthly Run Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-sm"
+              className="w-full bg-black rounded-xl p-2 text-base"
               value={tempGoals.runMonthly}
               onChange={e =>
                 setTempGoals(prev => ({ ...prev, runMonthly: e.target.value }))
