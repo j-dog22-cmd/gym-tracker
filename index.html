@@ -117,13 +117,32 @@ function CombinedLineGraph({ gymData, runData, gymColor, runColor }) {
         strokeWidth="1.4"
       />
 
-      {/* Y labels */}
-      <text x={padding - 10} y={height - padding + 4} fontSize="12" textAnchor="end" fill="#aaa">
-        0
-      </text>
-      <text x={padding - 10} y={padding + 4} fontSize="12" textAnchor="end" fill="#aaa">
-        {max}
-      </text>
+     {/* Y-axis labels 0–5 */}
+<text
+  x={padding - 10}
+  y={height - padding + 4}
+  fontSize="12"
+  textAnchor="end"
+  fill="#aaa"
+>
+  0
+</text>
+
+{[1, 2, 3, 4, 5].map((n) => {
+  const y = height - padding - ((n - min) / (max - min)) * (height - padding * 2);
+  return (
+    <text
+      key={n}
+      x={padding - 10}
+      y={y + 4}
+      fontSize="12"
+      textAnchor="end"
+      fill="#aaa"
+    >
+      {n}
+    </text>
+  );
+})}
 
       {/* X labels */}
       {gymPoints.map((p, i) => (
