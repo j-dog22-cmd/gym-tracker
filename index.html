@@ -332,16 +332,17 @@ function App() {
         <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
           <div>
             <p>Gym this week</p>
-            <p className="text-xs">{gymWeek}/{settings.weeklyGym}</p>
+            <p className="text-xs">{gymWeek}/{goals.gym.weekly}</p>
           </div>
-          <Ring value={gymWeek} total={settings.weeklyGym} color={settings.gymColor} />
+          <Ring value={gymWeek} total={goals.gym.weekly} color={settings.gymColor} />
         </div>
+      
         <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border flex justify-between items-center">
           <div>
             <p>Runs this week</p>
-            <p className="text-xs">{runWeek}/{settings.weeklyRun}</p>
+            <p className="text-xs">{runWeek}/{goals.run.weekly}</p>
           </div>
-          <Ring value={runWeek} total={settings.weeklyRun} color={settings.runColor} />
+          <Ring value={runWeek} total={goals.run.weekly} color={settings.runColor} />
         </div>
       </div>
 
@@ -419,11 +420,13 @@ function App() {
       {/* MONTHLY GOALS */}
       <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-2">
         <p className="font-semibold mb-2">Monthly Goals</p>
+      
         <p className="text-xs">
-          Gym {logs.filter(l=>l.type==="gym" && l.completed).length}/{settings.monthlyGym}
+          Gym {logs.filter(l => l.type === "gym" && l.completed).length}/{goals.gym.monthly}
         </p>
+      
         <p className="text-xs">
-          Run {logs.filter(l=>l.type==="run" && l.completed).length}/{settings.monthlyRun}
+          Run {logs.filter(l => l.type === "run" && l.completed).length}/{goals.run.monthly}
         </p>
       </div>
     </div>
