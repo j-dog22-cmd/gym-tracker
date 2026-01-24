@@ -138,7 +138,21 @@ function App() {
   const [runType,setRunType] = React.useState("Easy");
   const [runWarmup, setRunWarmup] = React.useState([]);
   const [runStretches, setRunStretches] = React.useState([]);
-
+  
+  const [goals, setGoals] = useState({
+      gym: { weekly: 3, monthly: 12 },
+      run: { weekly: 2, monthly: 8 }
+    });
+  
+      function updateGoal(type, period, value) {
+      setGoals(prev => ({
+        ...prev,
+        [type]: {
+          ...prev[type],
+          [period]: Number(value)
+        }
+      }));
+    }
   /* WEEK CALC */
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dayIndex(today));
@@ -174,21 +188,6 @@ function App() {
             setLogs={setLogs}
           />)
     : null;
-  
-    const [goals, setGoals] = useState({
-    gym: { weekly: 3, monthly: 12 },
-    run: { weekly: 2, monthly: 8 }
-  });
-
-    function updateGoal(type, period, value) {
-    setGoals(prev => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        [period]: Number(value)
-      }
-    }));
-  }
   
   /* ADD GYM WORKOUT (planned) */
   function saveGymWorkout() {
