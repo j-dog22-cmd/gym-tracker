@@ -278,11 +278,11 @@ function App() {
     current.setDate(current.getDate() + 7);
   }
 
-    const gymWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
+   const gymWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
   logs.filter(l =>
-    l.completed === true &&
-    l.type === "gym" &&
-    l.dateCompleted &&
+    l?.completed === true &&
+    l?.type === "gym" &&
+    l?.dateCompleted &&
     new Date(l.dateCompleted) >= weekStart &&
     new Date(l.dateCompleted) < weekEnd
   ).length
@@ -290,9 +290,9 @@ function App() {
 
 const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
   logs.filter(l =>
-    l.completed === true &&
-    l.type === "run" &&
-    l.dateCompleted &&
+    l?.completed === true &&
+    l?.type === "run" &&
+    l?.dateCompleted &&
     new Date(l.dateCompleted) >= weekStart &&
     new Date(l.dateCompleted) < weekEnd
   ).length
