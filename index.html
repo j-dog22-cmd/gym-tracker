@@ -1019,6 +1019,29 @@ function App() {
         </button>
       </div>
 
+     {/* GYM WARMUP/WARMDOWN */}
+      {activeWorkout.type === "gym" && (
+        <div className="space-y-4 mt-6">
+          {activeWorkout.warmup?.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+              {activeWorkout.warmup.map((w,i)=>(
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm">{w.name}</p>
+                  <p className="text-xs text-gray-400">{w.reps}</p>
+                </div>
+              ))}
+            </div>
+          
+      
+    {/* REST TIMER */}
+        {restTimer !== null && (
+          <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
+            <p className="text-xs text-gray-300">Rest</p>
+            <p className="text-lg font-semibold">{restTimer}s</p>
+          </div>
+        )}
+      
       {/* EXERCISES WITH SETS */}
       {Array.isArray(activeWorkout.exercises) && activeWorkout.exercises.map((ex, exIndex) => {
         const sets = Array.isArray(ex.sets) ? ex.sets : [];
@@ -1053,29 +1076,6 @@ function App() {
           </div>
         );
       })}
-
-      {/* REST TIMER */}
-      {restTimer !== null && (
-        <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
-          <p className="text-xs text-gray-300">Rest</p>
-          <p className="text-lg font-semibold">{restTimer}s</p>
-        </div>
-      )}
-
-      {/* GYM WARMUP/WARMDOWN */}
-      {activeWorkout.type === "gym" && (
-        <div className="space-y-4 mt-6">
-          {activeWorkout.warmup?.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-              {activeWorkout.warmup.map((w,i)=>(
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm">{w.name}</p>
-                  <p className="text-xs text-gray-400">{w.reps}</p>
-                </div>
-              ))}
-            </div>
-          )}
 
           {activeWorkout.warmdown?.length > 0 && (
             <div>
