@@ -79,32 +79,33 @@ function App() {
       weeklyRun: 3,
       monthlyGym: 12,
       monthlyRun: 12,
-      defaultRest: 60,     // ← fixed
+      defaultRest: 60,
       gymColor: "#22c55e",
       runColor: "#38bdf8"
     };
   });
 
+  // Rest timer state
+  const [restTimer, setRestTimer] = React.useState(null);
+
   React.useEffect(() => {
-  if (restTimer === null) return;
+    if (restTimer === null) return;
 
-  const interval = setInterval(() => {
-    setRestTimer(prev => {
-      if (prev === 1) return null;
-      return prev - 1;
-    });
-  }, 1000);
+    const interval = setInterval(() => {
+      setRestTimer(prev => {
+        if (prev === 1) return null;
+        return prev - 1;
+      });
+    }, 1000);
 
-  return () => clearInterval(interval);
-}, [restTimer]);
-  
+    return () => clearInterval(interval);
+  }, [restTimer]);
+
   React.useEffect(() => {
     localStorage.setItem("settings", JSON.stringify(settings));
   }, [settings]);
 
   /* LOGS */
-  // logs now store both planned + completed workouts
-  // completed ones are counted in the rings
   const [logs,setLogs] = React.useState(()=>{
     return JSON.parse(localStorage.getItem("logs")) || [];
   });
@@ -115,207 +116,184 @@ function App() {
   /* UI STATE */
   const [tab,setTab] = React.useState("home");
   const [activeDay,setActiveDay] = React.useState(dayIndex(today));
-  const [popupDay,setPopupDay] = React.useState(null); // index 0–6
+  const [popupDay,setPopupDay] = React.useState(null);
 
   const [showGymBuilder,setShowGymBuilder] = React.useState(false);
   const [showRunBuilder,setShowRunBuilder] = React.useState(false);
 
-  // Rest timer
-  const [restTimer, setRestTimer] = React.useState(null);
   const [activeWorkout, setActiveWorkout] = React.useState(null);
 
   // Weekly recurring plan
   const [gymDayIndex, setGymDayIndex] = React.useState(0);
   const [runDayIndex, setRunDayIndex] = React.useState(0);
-  
+
   // Gym builder state
   const [gymName,setGymName] = React.useState("");
   const [warmupItems,setWarmupItems] = React.useState([]);
   const [exercises,setExercises] = React.useState([]);
   const [warmDownItems,setWarmDownItems] = React.useState([]);
-  
+
   // Run builder state
   const [runName,setRunName] = React.useState("");
   const [runType,setRunType] = React.useState("Easy");
   const [runWarmup, setRunWarmup] = React.useState([]);
   const [runStretches, setRunStretches] = React.useState([]);
 
-    const finishWorkout = () => {
-    setLogs(logs.map((log) => {
-      if (
-        sameDay(log.date, activeWorkout.date) &&
-        log.name === activeWorkout.name &&
-        log.type === activeWorkout.type
-      ) {
-        return { ...log, completed: true };
-      }
-      return log;
-    }));
-  
-    setActiveWorkout(null);
-    setRestTimer(null);
-  };
-    
   /* WEEK CALC */
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dayIndex(today));
 
   const weekLogs = logs.filter(l => {
+    if (!l.date) return false;
     const d = new Date(l.date);
     return d >= weekStart;
   });
 
-  // Rings now count ONLY completed workouts
   const gymWeek = weekLogs.filter(l => l.type === "gym" && l.completed).length;
   const runWeek = weekLogs.filter(l => l.type === "run" && l.completed).length;
 
   function logsForDate(d) {
-  const idx = dayIndex(d);   // 0 = Monday, 1 = Tuesday, etc.
-  return logs.filter(l => l.dayIndex === idx);
-}
+    const idx = dayIndex(d);
+    return logs.filter(l => l.dayIndex === idx);
+  }
 
   /* ADD GYM WORKOUT (planned) */
-function saveGymWorkout() {
-  // Convert reps string into actual sets
-  const grouped = {};
+  function saveGymWorkout() {
+    const grouped = {};
 
-  exercises.forEach(ex => {
-    const [setsStr, repsStr] = ex.reps.split("x").map(s => s.trim());
-    const sets = parseInt(setsStr);
-    const reps = parseInt(repsStr);
+    exercises.forEach(ex => {
+      const setsCount = parseInt(ex.sets);
+      const reps = parseInt(ex.reps);
 
-    if (!grouped[ex.name]) grouped[ex.name] = [];
+      if (!ex.name || !Number.isFinite(setsCount) || !Number.isFinite(reps)) return;
 
-    for (let i = 0; i < sets; i++) {
-      grouped[ex.name].push({ weight: 0, reps, completed: false });
-    }
-  });
+      if (!grouped[ex.name]) grouped[ex.name] = [];
 
-  const finalExercises = Object.entries(grouped).map(([name, sets]) => ({
-    name,
-    sets
-  }));
+      for (let i = 0; i < setsCount; i++) {
+        grouped[ex.name].push({ weight: 0, reps, completed: false });
+      }
+    });
 
-  const newPlan = {
-    type: "gym",
-    dayIndex: gymDayIndex,
-    name: gymName || "Gym Workout",
-    warmup: warmupItems,
-    exercises: finalExercises,
-    warmdown: warmDownItems,
-    completed: false
-  };
+    const finalExercises = Object.entries(grouped).map(([name, sets]) => ({
+      name,
+      sets
+    }));
 
-  setLogs([...logs, newPlan]);
-  setGymName("");
-  setWarmupItems([]);
-  setExercises([]);
-  setWarmDownItems([]);
-  setShowGymBuilder(false);
-}
-  
+    const newPlan = {
+      type: "gym",
+      dayIndex: gymDayIndex,
+      name: gymName || "Gym Workout",
+      warmup: warmupItems,
+      exercises: finalExercises,
+      warmdown: warmDownItems,
+      completed: false
+    };
+
+    setLogs([...logs, newPlan]);
+    setGymName("");
+    setWarmupItems([]);
+    setExercises([]);
+    setWarmDownItems([]);
+    setShowGymBuilder(false);
+  }
+
   /* ADD RUN (planned) */
   function saveRun() {
-  const newPlan = {
-    type: "run",
-    dayIndex: runDayIndex,   // recurring weekly
-    name: runName || "Run",
-    runType,
-    warmup: runWarmup,
-    stretches: runStretches,
-    completed: false
-  };
+    const newPlan = {
+      type: "run",
+      dayIndex: runDayIndex,
+      name: runName || "Run",
+      runType,
+      warmup: runWarmup,
+      stretches: runStretches,
+      completed: false
+    };
 
-  setLogs([...logs, newPlan]);
-  setRunName("");
-  setRunType("Easy");
-  setRunWarmup([]);
-  setRunStretches([]);
-  setShowRunBuilder(false);
-}
+    setLogs([...logs, newPlan]);
+    setRunName("");
+    setRunType("Easy");
+    setRunWarmup([]);
+    setRunStretches([]);
+    setShowRunBuilder(false);
+  }
+
   /* DELETE WORKOUT (by global index) */
   function deleteLog(globalIndex){
     setLogs(logs.filter((_,i)=>i!==globalIndex));
   }
-  
-function handleSetComplete(exIndex, setIndex) {
-  if (!activeWorkout || !activeWorkout.exercises) return;
 
-  // Clone workout
-  const updated = { ...activeWorkout };
-  const exercises = [...updated.exercises];
-  const exercise = { ...exercises[exIndex] };
-  const sets = [...exercise.sets];
+  function handleSetComplete(exIndex, setIndex) {
+    if (!activeWorkout || !activeWorkout.exercises) return;
 
-  // Toggle the set
-  sets[setIndex] = {
-    ...sets[setIndex],
-    completed: !sets[setIndex].completed
-  };
+    const updated = { ...activeWorkout };
+    const exercisesCopy = [...updated.exercises];
+    const exercise = { ...exercisesCopy[exIndex] };
+    const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
 
-  exercise.sets = sets;
-  exercises[exIndex] = exercise;
-  updated.exercises = exercises;
+    if (!sets[setIndex]) return;
 
-  // Update workout state
-  setActiveWorkout(updated);
+    const toggled = {
+      ...sets[setIndex],
+      completed: !sets[setIndex].completed
+    };
+    sets[setIndex] = toggled;
 
-  // ⭐ Restart rest timer ONLY when ticking ON
-  if (sets[setIndex].completed) {
-    setRestTimer(settings.defaultRest || 60);
+    exercise.sets = sets;
+    exercisesCopy[exIndex] = exercise;
+    updated.exercises = exercisesCopy;
+
+    setActiveWorkout(updated);
+
+    if (toggled.completed) {
+      setRestTimer(settings.defaultRest || 60);
+    }
   }
-};
 
   /* HOME */
   const Home = (
     <div className="p-5 pb-40 space-y-6">
       <h1 className="text-2xl font-semibold">Hey, {settings.name}</h1>
 
-   {/* WEEK SELECTOR WITH DOTS + TODAY HIGHLIGHT */}
-<div className="flex gap-2 mt-3">
-  {WEEK.map((d, i) => {
-    // Check if this weekday has recurring workouts
-    const hasGym = logs.some(l => l.type === "gym" && l.dayIndex === i);
-    const hasRun = logs.some(l => l.type === "run" && l.dayIndex === i);
+      {/* WEEK SELECTOR */}
+      <div className="flex gap-2 mt-3">
+        {WEEK.map((d, i) => {
+          const hasGym = logs.some(l => l.type === "gym" && l.dayIndex === i);
+          const hasRun = logs.some(l => l.type === "run" && l.dayIndex === i);
 
-    let dotColor = null;
-    if (hasGym && hasRun) dotColor = "#ef4444";      // red
-    else if (hasRun) dotColor = "#38bdf8";           // blue
-    else if (hasGym) dotColor = "#22c55e";           // green
+          let dotColor = null;
+          if (hasGym && hasRun) dotColor = "#ef4444";
+          else if (hasRun) dotColor = "#38bdf8";
+          else if (hasGym) dotColor = "#22c55e";
 
-    // Today highlight
-    const isToday = dayIndex(today) === i;
+          const isToday = dayIndex(today) === i;
 
-    return (
-      <button
-        key={i}
-        onClick={() => {
-          setActiveDay(i);
-          setPopupDay(i);
-        }}
-        className={
-          "p-3 rounded-xl soft-border flex flex-col items-center " +
-          (i === activeDay ? "bg-[#1C1C1E] " : "") +
-          (isToday ? "border border-white/40 bg-[#1C1C1E] " : "")
-        }
-      >
-        <p className="text-xs">{d}</p>
-
-        {/* Show weekday abbreviation */}
-        <p className={"text-sm " + (isToday ? "font-bold text-white" : "")}>
-          {d.slice(0, 3)}
-        </p>
-
-        {dotColor && (
-          <div
-            className="mt-1 rounded-full"
-            style={{ width: "4px", height: "4px", backgroundColor: dotColor }}
-          />
-        )}
-      </button>
-    );
-  })}
-</div>
+          return (
+            <button
+              key={i}
+              onClick={() => {
+                setActiveDay(i);
+                setPopupDay(i);
+              }}
+              className={
+                "p-3 rounded-xl soft-border flex flex-col items-center " +
+                (i === activeDay ? "bg-[#1C1C1E] " : "") +
+                (isToday ? "border border-white/40 bg-[#1C1C1E] " : "")
+              }
+            >
+              <p className="text-xs">{d}</p>
+              <p className={"text-sm " + (isToday ? "font-bold text-white" : "")}>
+                {d.slice(0, 3)}
+              </p>
+              {dotColor && (
+                <div
+                  className="mt-1 rounded-full"
+                  style={{ width: "4px", height: "4px", backgroundColor: dotColor }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {/* WEEK PROGRESS */}
       <div className="space-y-4 mt-4">
@@ -338,7 +316,7 @@ function handleSetComplete(exIndex, setIndex) {
       {/* PLAN HEADER */}
       <p className="text-lg font-semibold mt-4">Your Plan</p>
 
-      {/* TODAY / TOMORROW WITH DOTS PER WORKOUT */}
+      {/* TODAY / TOMORROW */}
       <div className="grid grid-cols-2 gap-3">
         {[0,1].map(o=>{
           const d = new Date();
@@ -383,171 +361,162 @@ function handleSetComplete(exIndex, setIndex) {
         })}
       </div>
 
-    {/* QUICK ADD */}
-    <div className="grid grid-cols-2 gap-3 mt-2">
-      <button
-        onClick={()=>{
-          setGymDayIndex(activeDay);   // use weekday index
-          setShowGymBuilder(true);
-        }}
-        className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-      >
-        ➕ New Workout
-      </button>
-    
-      <button
-        onClick={()=>{
-          setRunDayIndex(activeDay);   // use weekday index
-          setShowRunBuilder(true);
-        }}
-        className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
-      >
-        ➕ New Run
-      </button>
-    </div>
-  
-        {/* MONTHLY GOALS */}
-        <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-2">
-          <p className="font-semibold mb-2">Monthly Goals</p>
-          <p className="text-xs">
-            Gym {logs.filter(l=>l.type==="gym" && l.completed).length}/{settings.monthlyGym}
-          </p>
-          <p className="text-xs">
-            Run {logs.filter(l=>l.type==="run" && l.completed).length}/{settings.monthlyRun}
-          </p>
-        </div>
-      </div>
-    );
-
-  /* PLACEHOLDER CALENDAR & SETTINGS */
- const Calendar = (() => {
-  // Build a full month grid
-  const [currentMonth, setCurrentMonth] = React.useState(() => {
-    const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-  });
-
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-
-  // First day of month
-  const firstDay = new Date(year, month, 1);
-  const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-
-  // Days in month
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  // Build array of 42 cells (6 weeks)
-  const cells = [];
-  for (let i = 0; i < 42; i++) {
-    const dayNum = i - startDay + 1;
-    const dateObj = new Date(year, month, dayNum);
-    const valid = dayNum >= 1 && dayNum <= daysInMonth;
-
-    // Find logs for this date
-    let hasGym = false;
-    let hasRun = false;
-    
-    if (valid) {
-      // 1. Completed logs (have real dates)
-      const completedLogs = logs.filter(l => l.date && sameDay(l.date, dateObj));
-    
-      if (completedLogs.some(l => l.type === "gym")) hasGym = true;
-      if (completedLogs.some(l => l.type === "run")) hasRun = true;
-    
-      // 2. Planned weekly logs (recurring)
-      const weekday = (dateObj.getDay() + 6) % 7; // convert Sun=0 → 6, Mon=1 → 0
-    
-      const plannedLogs = logs.filter(l => l.dayIndex === weekday);
-    
-      if (plannedLogs.some(l => l.type === "gym")) hasGym = true;
-      if (plannedLogs.some(l => l.type === "run")) hasRun = true;
-    }
-
-    let dotColor = null;
-    if (hasGym && hasRun) dotColor = "#ef4444"; // both
-    else if (hasGym) dotColor = "#22c55e";
-    else if (hasRun) dotColor = "#38bdf8";
-
-    const isToday = valid && sameDay(dateObj, today);
-
-    cells.push({
-      valid,
-      dateObj,
-      dayNum,
-      dotColor,
-      isToday
-    });
-  }
-
-  return (
-    <div className="p-5 pb-32 space-y-4">
-      <div className="flex justify-between items-center">
+      {/* QUICK ADD */}
+      <div className="grid grid-cols-2 gap-3 mt-2">
         <button
-          onClick={() =>
-            setCurrentMonth(new Date(year, month - 1, 1))
-          }
-          className="text-xl"
+          onClick={()=>{
+            setGymDayIndex(activeDay);
+            setShowGymBuilder(true);
+          }}
+          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
         >
-          ‹
+          ➕ New Workout
         </button>
 
-        <p className="text-lg font-semibold">
-          {currentMonth.toLocaleString("default", { month: "long" })} {year}
+        <button
+          onClick={()=>{
+            setRunDayIndex(activeDay);
+            setShowRunBuilder(true);
+          }}
+          className="p-4 bg-[#1C1C1E] rounded-2xl soft-border"
+        >
+          ➕ New Run
+        </button>
+      </div>
+
+      {/* MONTHLY GOALS */}
+      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-2">
+        <p className="font-semibold mb-2">Monthly Goals</p>
+        <p className="text-xs">
+          Gym {logs.filter(l=>l.type==="gym" && l.completed).length}/{settings.monthlyGym}
         </p>
-
-        <button
-          onClick={() =>
-            setCurrentMonth(new Date(year, month + 1, 1))
-          }
-          className="text-xl"
-        >
-          ›
-        </button>
-      </div>
-
-      {/* Weekday labels */}
-      <div className="grid grid-cols-7 text-center text-xs text-gray-400">
-        {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
-          <p key={d}>{d}</p>
-        ))}
-      </div>
-
-      {/* Calendar grid */}
-      <div className="grid grid-cols-7 gap-2 mt-2">
-        {cells.map((c, i) => (
-          <button
-            key={i}
-            disabled={!c.valid}
-            onClick={() => {
-              setPopupDay(dayIndex(c.dateObj));
-              setActiveDay(dayIndex(c.dateObj));
-            }}
-            className={
-              "h-14 rounded-xl flex flex-col items-center justify-center soft-border " +
-              (c.valid ? "bg-[#1C1C1E]" : "opacity-20") +
-              (c.isToday ? " border border-white/40" : "")
-            }
-          >
-            <p className="text-sm">{c.valid ? c.dayNum : ""}</p>
-
-            {c.dotColor && (
-              <div
-                className="mt-1 rounded-full"
-                style={{
-                  width: "5px",
-                  height: "5px",
-                  backgroundColor: c.dotColor
-                }}
-              />
-            )}
-          </button>
-        ))}
+        <p className="text-xs">
+          Run {logs.filter(l=>l.type==="run" && l.completed).length}/{settings.monthlyRun}
+        </p>
       </div>
     </div>
   );
-})();;
 
+  /* CALENDAR */
+  const Calendar = (() => {
+    const [currentMonth, setCurrentMonth] = React.useState(() => {
+      const d = new Date();
+      return new Date(d.getFullYear(), d.getMonth(), 1);
+    });
+
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const dayNum = i - startDay + 1;
+      const dateObj = new Date(year, month, dayNum);
+      const valid = dayNum >= 1 && dayNum <= daysInMonth;
+
+      let hasGym = false;
+      let hasRun = false;
+
+      if (valid) {
+        const completedLogs = logs.filter(l => l.date && sameDay(l.date, dateObj));
+
+        if (completedLogs.some(l => l.type === "gym")) hasGym = true;
+        if (completedLogs.some(l => l.type === "run")) hasRun = true;
+
+        const weekday = (dateObj.getDay() + 6) % 7;
+        const plannedLogs = logs.filter(l => l.dayIndex === weekday);
+
+        if (plannedLogs.some(l => l.type === "gym")) hasGym = true;
+        if (plannedLogs.some(l => l.type === "run")) hasRun = true;
+      }
+
+      let dotColor = null;
+      if (hasGym && hasRun) dotColor = "#ef4444";
+      else if (hasGym) dotColor = "#22c55e";
+      else if (hasRun) dotColor = "#38bdf8";
+
+      const isToday = valid && sameDay(dateObj, today);
+
+      cells.push({
+        valid,
+        dateObj,
+        dayNum,
+        dotColor,
+        isToday
+      });
+    }
+
+    return (
+      <div className="p-5 pb-32 space-y-4">
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() =>
+              setCurrentMonth(new Date(year, month - 1, 1))
+            }
+            className="text-xl"
+          >
+            ‹
+          </button>
+
+          <p className="text-lg font-semibold">
+            {currentMonth.toLocaleString("default", { month: "long" })} {year}
+          </p>
+
+          <button
+            onClick={() =>
+              setCurrentMonth(new Date(year, month + 1, 1))
+            }
+            className="text-xl"
+          >
+            ›
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 text-center text-xs text-gray-400">
+          {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
+            <p key={d}>{d}</p>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 mt-2">
+          {cells.map((c, i) => (
+            <button
+              key={i}
+              disabled={!c.valid}
+              onClick={() => {
+                setPopupDay(dayIndex(c.dateObj));
+                setActiveDay(dayIndex(c.dateObj));
+              }}
+              className={
+                "h-14 rounded-xl flex flex-col items-center justify-center soft-border " +
+                (c.valid ? "bg-[#1C1C1E]" : "opacity-20") +
+                (c.isToday ? " border border-white/40" : "")
+              }
+            >
+              <p className="text-sm">{c.valid ? c.dayNum : ""}</p>
+
+              {c.dotColor && (
+                <div
+                  className="mt-1 rounded-full"
+                  style={{
+                    width: "5px",
+                    height: "5px",
+                    backgroundColor: c.dotColor
+                  }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  })();
+
+  /* SETTINGS VIEW */
   const SettingsView = (
     <div className="p-4 space-y-3">
       <p className="font-semibold">Settings</p>
@@ -564,8 +533,13 @@ function handleSetComplete(exIndex, setIndex) {
           type="number"
           min="5"
           max="300"
-          value={settings.rest}
-          onChange={e => setSettings({...settings, rest: Number(e.target.value)})}
+          value={settings.defaultRest}
+          onChange={e =>
+            setSettings({
+              ...settings,
+              defaultRest: Number(e.target.value) || 0
+            })
+          }
           className="w-full p-2 rounded-xl bg-[#2A2A2A] text-sm"
         />
       </div>
@@ -582,127 +556,125 @@ function handleSetComplete(exIndex, setIndex) {
     </div>
   );
 
-  /* DAY POPUP WITH START + DELETE */
-const DayPopup = popupDay !== null ? (() => {
-  // popupDay is already a weekday index (0–6)
-  const dayLogs = logs
-    .map((l, i) => ({ ...l, _idx: i }))
-    .filter(l => l.dayIndex === popupDay);   // match by weekday, not date
+  /* DAY POPUP */
+  const DayPopup = popupDay !== null ? (() => {
+    const dayLogs = logs
+      .map((l, i) => ({ ...l, _idx: i }))
+      .filter(l => l.dayIndex === popupDay);
 
-  return (
-    <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
-      <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
-        <div className="flex justify-between items-center mb-2">
-          <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
-          <button onClick={() => setPopupDay(null)} className="text-sm text-gray-400">
-            Close
-          </button>
-        </div>
+    return (
+      <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-40">
+        <div className="w-full max-h-[80%] bg-[#111111] rounded-t-3xl p-5 space-y-3 overflow-y-auto">
+          <div className="flex justify-between items-center mb-2">
+            <p className="font-semibold text-lg">{WEEK[popupDay]} routines</p>
+            <button onClick={() => setPopupDay(null)} className="text-sm text-gray-400">
+              Close
+            </button>
+          </div>
 
-        {dayLogs.length === 0 ? (
-          <p className="text-xs text-gray-400">No workouts scheduled.</p>
-        ) : (
-          dayLogs.map((l, i) => (
-            <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
-              {/* TITLE */}
-              <p className="text-sm font-semibold">
-                {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
-                {l.completed && (
-                  <span className="ml-1 text-[10px] text-green-400">✓ Done</span>
+          {dayLogs.length === 0 ? (
+            <p className="text-xs text-gray-400">No workouts scheduled.</p>
+          ) : (
+            dayLogs.map((l, i) => (
+              <div key={i} className="p-3 rounded-2xl bg-[#1C1C1E] soft-border space-y-2">
+                <p className="text-sm font-semibold">
+                  {l.type === "gym" ? (l.name || "Gym Workout") : (l.name || "Run")}
+                  {l.completed && (
+                    <span className="ml-1 text-[10px] text-green-400">✓ Done</span>
+                  )}
+                </p>
+
+                {l.type === "run" && (
+                  <>
+                    <p className="text-xs text-gray-400">Type: {l.runType}</p>
+
+                    {l.warmup && l.warmup.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
+                        {l.warmup.map((w, j) => (
+                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                        ))}
+                      </div>
+                    )}
+
+                    {l.stretches && l.stretches.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Stretches</p>
+                        {l.stretches.map((w, j) => (
+                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
-              </p>
 
-              {/* RUN SECTION */}
-              {l.type === "run" && (
-                <>
-                  <p className="text-xs text-gray-400">Type: {l.runType}</p>
+                {l.type === "gym" && (
+                  <>
+                    {l.warmup && l.warmup.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
+                        {l.warmup.map((w, j) => (
+                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                        ))}
+                      </div>
+                    )}
 
-                  {l.warmup && l.warmup.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
-                      {l.warmup.map((w, j) => (
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
+                    {l.exercises && l.exercises.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
+                        {l.exercises.map((ex, j) => (
+                          <p key={j} className="text-[11px]">
+                            • {ex.name}
+                            {Array.isArray(ex.sets) && ex.sets.length > 0
+                              ? ` — ${ex.sets.length} sets`
+                              : ""}
+                          </p>
+                        ))}
+                      </div>
+                    )}
 
-                  {l.stretches && l.stretches.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Stretches</p>
-                      {l.stretches.map((w, j) => (
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
+                    {l.warmdown && l.warmdown.length > 0 && (
+                      <div className="mt-1">
+                        <p className="text-[11px] text-gray-400 mb-1">Warm‑down</p>
+                        {l.warmdown.map((w, j) => (
+                          <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
 
-              {/* GYM SECTION */}
-              {l.type === "gym" && (
-                <>
-                  {l.warmup && l.warmup.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Warm‑up</p>
-                      {l.warmup.map((w, j) => (
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
+                <button
+                  onClick={() => {
+                    setActiveWorkout({
+                      ...l,
+                      logIndex: l._idx,
+                      date: new Date(),
+                      completed: false
+                    });
+                    setRestTimer(null);
+                    setPopupDay(null);
+                  }}
+                  className="w-full bg-green-600 rounded-xl py-2 text-xs"
+                >
+                  Start Workout
+                </button>
 
-                  {l.exercises && l.exercises.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Exercises</p>
-                      {l.exercises.map((ex, j) => (
-                        <p key={j} className="text-[11px]">
-                          • {ex.name} — {ex.sets} x {ex.reps}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-
-                  {l.warmdown && l.warmdown.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-[11px] text-gray-400 mb-1">Warm‑down</p>
-                      {l.warmdown.map((w, j) => (
-                        <p key={j} className="text-[11px]">• {w.name} ({w.reps})</p>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* START WORKOUT */}
-              <button
-                onClick={() => {
-                  setActiveWorkout({
-                    ...l,
-                    date: new Date(),   // actual workout date when you start it
-                    completed: false
-                  });
-                  setRestTimer(null);
-                  setPopupDay(null);
-                }}
-                className="w-full bg-green-600 rounded-xl py-2 text-xs"
-              >
-                Start Workout
-              </button>
-
-              {/* DELETE BUTTON */}
-              <button
-                onClick={() => deleteLog(l._idx)}
-                className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
-              >
-                Delete Workout
-              </button>
-            </div>
-          ))
-        )}
+                <button
+                  onClick={() => deleteLog(l._idx)}
+                  className="w-full bg-red-600 rounded-xl py-2 text-xs mt-1"
+                >
+                  Delete Workout
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </div>
-  );
-})() : null;
+    );
+  })() : null;
 
-  /* BOTTOM-SHEET GYM BUILDER */
+  /* GYM BUILDER */
   const GymBuilder = showGymBuilder ? (
     <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
       <div className="w-full max-h-[85%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
@@ -881,11 +853,10 @@ const DayPopup = popupDay !== null ? (() => {
     </div>
   ) : null;
 
-  /* BOTTOM-SHEET RUN BUILDER */
+  /* RUN BUILDER */
   const RunBuilder = showRunBuilder ? (
     <div className="fixed inset-0 bg-black/60 flex items-end justify-center z-50">
       <div className="w-full max-h-[85%] bg-[#111111] rounded-t-3xl pt-4 px-5 pb-6 overflow-y-auto">
-        {/* HEADER */}
         <div className="flex justify-between items-center mb-4">
           <p className="font-semibold text-lg">New Run</p>
           <button
@@ -964,7 +935,7 @@ const DayPopup = popupDay !== null ? (() => {
           ))}
         </div>
 
-        {/* RUN STRETCHES / WARM-DOWN */}
+        {/* RUN STRETCHES */}
         <div className="space-y-2 mb-6">
           <div className="flex justify-between items-center">
             <p className="text-xs text-gray-400">Stretches / Warm‑down</p>
@@ -1020,7 +991,6 @@ const DayPopup = popupDay !== null ? (() => {
           </select>
         </div>
 
-        {/* SAVE BUTTON */}
         <button
           onClick={saveRun}
           className="w-full bg-blue-500 rounded-xl py-3 text-sm font-semibold"
@@ -1029,160 +999,153 @@ const DayPopup = popupDay !== null ? (() => {
         </button>
       </div>
     </div>
-) : null;
-  
-  /* WORKOUT SCREEN */
-const WorkoutScreen = activeWorkout ? (
-  <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
+  ) : null;
 
-    {/* HEADER */}
-    <div className="flex justify-between items-center mb-4">
-      <p className="text-lg font-semibold">{activeWorkout.name}</p>
+  /* WORKOUT SCREEN */
+  const WorkoutScreen = activeWorkout ? (
+    <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
+
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-lg font-semibold">{activeWorkout.name}</p>
+        <button
+          onClick={() => {
+            setActiveWorkout(null);
+            setRestTimer(null);
+          }}
+          className="text-sm text-gray-400"
+        >
+          Close
+        </button>
+      </div>
+
+      {/* EXERCISES WITH SETS */}
+      {Array.isArray(activeWorkout.exercises) && activeWorkout.exercises.map((ex, exIndex) => {
+        const sets = Array.isArray(ex.sets) ? ex.sets : [];
+
+        return (
+          <div key={exIndex} className="mb-4">
+            <p className="font-semibold mb-2">{ex.name}</p>
+
+            {sets.length === 0 && (
+              <p className="text-xs text-gray-500">No sets added</p>
+            )}
+
+            {sets.map((set, setIndex) => (
+              <div
+                key={setIndex}
+                className="flex items-center justify-between bg-[#1C1C1E] p-3 rounded-xl mb-2"
+              >
+                <input
+                  type="checkbox"
+                  checked={!!set.completed}
+                  onChange={() => handleSetComplete(exIndex, setIndex)}
+                  className="w-5 h-5 accent-green-500"
+                />
+
+                <div className="flex-1 ml-3">
+                  <p className="text-sm font-medium">
+                    {set.weight}kg × {set.reps} reps
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+
+      {/* REST TIMER */}
+      {restTimer !== null && (
+        <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
+          <p className="text-xs text-gray-300">Rest</p>
+          <p className="text-lg font-semibold">{restTimer}s</p>
+        </div>
+      )}
+
+      {/* GYM WARMUP/WARMDOWN */}
+      {activeWorkout.type === "gym" && (
+        <div className="space-y-4 mt-6">
+          {activeWorkout.warmup?.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+              {activeWorkout.warmup.map((w,i)=>(
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm">{w.name}</p>
+                  <p className="text-xs text-gray-400">{w.reps}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeWorkout.warmdown?.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
+              {activeWorkout.warmdown.map((w,i)=>(
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm">{w.name}</p>
+                  <p className="text-xs text-gray-400">{w.reps}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* RUN EXECUTION */}
+      {activeWorkout.type === "run" && (
+        <div className="space-y-4 mt-6">
+          <p className="text-xs text-gray-400">Type: {activeWorkout.runType}</p>
+
+          {activeWorkout.warmup?.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+              {activeWorkout.warmup.map((w,i)=>(
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm">{w.name}</p>
+                  <p className="text-xs text-gray-400">{w.reps}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeWorkout.stretches?.length > 0 && (
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Stretches</p>
+              {activeWorkout.stretches.map((w,i)=>(
+                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+                  <p className="text-sm">{w.name}</p>
+                  <p className="text-xs text-gray-400">{w.reps}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MARK AS DONE */}
       <button
         onClick={() => {
+          setLogs(logs.map((log, idx) => {
+            if (idx === activeWorkout.logIndex) {
+              return {
+                ...log,
+                completed: true,
+                date: activeWorkout.date || new Date()
+              };
+            }
+            return log;
+          }));
           setActiveWorkout(null);
           setRestTimer(null);
         }}
-        className="text-sm text-gray-400"
+        className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-6"
       >
-        Close
+        Mark as Done
       </button>
     </div>
+  ) : null;
 
-    {/* SAFE EXERCISE RENDERING */}
-{Array.isArray(activeWorkout.exercises) && activeWorkout.exercises.map((ex, exIndex) => {
-  const sets = Array.isArray(ex.sets) ? ex.sets : [];
-
-  return (
-    <div key={exIndex} className="mb-4">
-      <p className="font-semibold mb-2">{ex.name}</p>
-
-      {sets.length === 0 && (
-        <p className="text-xs text-gray-500">No sets added</p>
-      )}
-
-      {sets.map((set, setIndex) => (
-        <div
-          key={setIndex}
-          className="flex items-center justify-between bg-[#1C1C1E] p-3 rounded-xl mb-2"
-        >
-          {/* TICK BOX */}
-          <input
-            type="checkbox"
-            checked={set.completed}
-            onChange={() => handleSetComplete(exIndex, setIndex)}
-            className="w-5 h-5 accent-green-500"
-          />
-
-          {/* SET DETAILS */}
-          <div className="flex-1 ml-3">
-            <p className="text-sm font-medium">
-              {set.weight}kg × {set.reps} reps
-            </p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-})}
-
-    {/* REST TIMER */}
-    {restTimer !== null && (
-      <div className="mt-4 p-3 rounded-xl bg-[#1C1C1E] flex items-center justify-between">
-        <p className="text-xs text-gray-300">Rest</p>
-        <p className="text-lg font-semibold">{restTimer}s</p>
-      </div>
-    )}
-
-    {/* GYM WORKOUT EXECUTION */}
-    {activeWorkout.type === "gym" && (
-      <div className="space-y-4 mt-6">
-
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Warm-down */}
-        {activeWorkout.warmdown?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-            {activeWorkout.warmdown.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-      </div>
-    )}
-
-    {/* RUN WORKOUT EXECUTION */}
-    {activeWorkout.type === "run" && (
-      <div className="space-y-4 mt-6">
-        <p className="text-xs text-gray-400">Type: {activeWorkout.runType}</p>
-
-        {/* Warm-up */}
-        {activeWorkout.warmup?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Stretches */}
-        {activeWorkout.stretches?.length > 0 && (
-          <div>
-            <p className="text-xs text-gray-400 mb-1">Stretches</p>
-            {activeWorkout.stretches.map((w,i)=>(
-              <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                <p className="text-sm">{w.name}</p>
-                <p className="text-xs text-gray-400">{w.reps}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    )}
-
-    {/* FINAL MARK AS DONE */}
-    <button
-      onClick={() => {
-        setLogs(logs.map((log, idx) => {
-          if (
-            sameDay(log.date, activeWorkout.date) &&
-            log.name === activeWorkout.name &&
-            log.type === activeWorkout.type
-          ) {
-            return {...log, completed: true};
-          }
-          return log;
-        }));
-        setActiveWorkout(null);
-        setRestTimer(null);
-      }}
-      className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-6"
-    >
-      Mark as Done
-    </button>
-
-  </div>
-) : null;
+  /* MAIN RENDER */
   return (
     <div>
       {tab==="home" && Home}
