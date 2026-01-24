@@ -638,8 +638,14 @@ function App() {
     );
   })();
 
-  /* SETTINGS VIEW */
-function SettingsView({ settings, setSettings, goals, updateGoal }) {
+  function SettingsView({ settings, setSettings, goals, updateGoal }) {
+  const [tempGoals, setTempGoals] = React.useState({
+    gymWeekly: goals.gym.weekly.toString(),
+    gymMonthly: goals.gym.monthly.toString(),
+    runWeekly: goals.run.weekly.toString(),
+    runMonthly: goals.run.monthly.toString()
+  });
+  
   return (
     <div className="p-4 space-y-3">
       <p className="font-semibold">Settings</p>
@@ -662,20 +668,28 @@ function SettingsView({ settings, setSettings, goals, updateGoal }) {
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Weekly Gym Goal</p>
             <input
-              type="number"
-              value={goals.gym.weekly}
-              onChange={(e) => updateGoal("gym", "weekly", e.target.value)}
               className="w-full bg-black rounded-xl p-2 text-sm"
+              value={tempGoals.gymWeekly}
+              onChange={e =>
+                setTempGoals(prev => ({ ...prev, gymWeekly: e.target.value }))
+              }
+              onBlur={() =>
+                updateGoal("gym", "weekly", tempGoals.gymWeekly)
+              }
             />
           </div>
 
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Monthly Gym Goal</p>
             <input
-              type="number"
-              value={goals.gym.monthly}
-              onChange={(e) => updateGoal("gym", "monthly", e.target.value)}
               className="w-full bg-black rounded-xl p-2 text-sm"
+              value={tempGoals.gymMonthly}
+              onChange={e =>
+                setTempGoals(prev => ({ ...prev, gymMonthly: e.target.value }))
+              }
+              onBlur={() =>
+                updateGoal("gym", "monthly", tempGoals.gymMonthly)
+              }
             />
           </div>
         </div>
@@ -687,20 +701,28 @@ function SettingsView({ settings, setSettings, goals, updateGoal }) {
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Weekly Run Goal</p>
             <input
-              type="number"
-              value={goals.run.weekly}
-              onChange={(e) => updateGoal("run", "weekly", e.target.value)}
               className="w-full bg-black rounded-xl p-2 text-sm"
+              value={tempGoals.runWeekly}
+              onChange={e =>
+                setTempGoals(prev => ({ ...prev, runWeekly: e.target.value }))
+              }
+              onBlur={() =>
+                updateGoal("run", "weekly", tempGoals.runWeekly)
+              }
             />
           </div>
 
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Monthly Run Goal</p>
             <input
-              type="number"
-              value={goals.run.monthly}
-              onChange={(e) => updateGoal("run", "monthly", e.target.value)}
               className="w-full bg-black rounded-xl p-2 text-sm"
+              value={tempGoals.runMonthly}
+              onChange={e =>
+                setTempGoals(prev => ({ ...prev, runMonthly: e.target.value }))
+              }
+              onBlur={() =>
+                updateGoal("run", "monthly", tempGoals.runMonthly)
+              }
             />
           </div>
         </div>
