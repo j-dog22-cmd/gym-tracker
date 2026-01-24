@@ -251,24 +251,24 @@ function App() {
   }
 
     const gymWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
-    logs.filter(l =>
-      l.completed &&
-      l.type === "gym" &&
-      l.date &&
-      new Date(l.date) >= weekStart &&
-      new Date(l.date) < weekEnd
-    ).length
-  );
-  
-  const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
-    logs.filter(l =>
-      l.completed &&
-      l.type === "run" &&
-      l.date &&
-      new Date(l.date) >= weekStart &&
-      new Date(l.date) < weekEnd
-    ).length
-  );
+  logs.filter(l =>
+    l.completed === true &&
+    l.type === "gym" &&
+    l.dateCompleted &&
+    new Date(l.dateCompleted) >= weekStart &&
+    new Date(l.dateCompleted) < weekEnd
+  ).length
+);
+
+const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
+  logs.filter(l =>
+    l.completed === true &&
+    l.type === "run" &&
+    l.dateCompleted &&
+    new Date(l.dateCompleted) >= weekStart &&
+    new Date(l.dateCompleted) < weekEnd
+  ).length
+);
 
   /* UI STATE */
   const [tab,setTab] = React.useState("home");
