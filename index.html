@@ -157,11 +157,23 @@ function App() {
     return logs.filter(l => l.dayIndex === idx);
   }
   const WorkoutScreen = activeWorkout
-      ? (activeWorkout.type === "gym"
-          ? <GymWorkoutScreen />
-          : <RunWorkoutScreen />)
-      : null;
-
+    ? (activeWorkout.type === "gym"
+        ? <GymWorkoutScreen
+            activeWorkout={activeWorkout}
+            setActiveWorkout={setActiveWorkout}
+            restTimer={restTimer}
+            setRestTimer={setRestTimer}
+            logs={logs}
+            setLogs={setLogs}
+            handleSetComplete={handleSetComplete}
+          />
+        : <RunWorkoutScreen
+            activeWorkout={activeWorkout}
+            setActiveWorkout={setActiveWorkout}
+            logs={logs}
+            setLogs={setLogs}
+          />)
+    : null;
   /* ADD GYM WORKOUT (planned) */
   function saveGymWorkout() {
     const grouped = {};
