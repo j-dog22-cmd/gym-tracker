@@ -70,85 +70,111 @@ function Ring({ value, total, color }) {
 }
 
   /* ---------------- line graph ---------------- */
-  function MiniLineGraph({ data, color }) {
-    const max = Math.max(...data, 1);
-    const min = 0;
-  
-    const width = 260;   // bigger width
-    const height = 120;   // bigger height
-    const padding = 28;  // space for axes
-  
-    const points = data
+  function CombinedLineGraph({ gymData, runData, gymColor, runColor }) {
+  const max = Math.max(...gymData, ...runData, 1);
+  const min = 0;
+
+  const width = 300;   // bigger
+  const height = 150;  // bigger
+  const padding = 32;  // more room for labels
+
+  function makePoints(data) {
+    return data
       .map((v, i) => {
         const x = padding + (i / (data.length - 1)) * (width - padding * 2);
         const y = height - padding - ((v - min) / (max - min)) * (height - padding * 2);
         return `${x},${y}`;
       })
       .join(" ");
-  
-    return (
-      <svg
-        width="100%"
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
-        className="mt-2"
-      >
-        {/* Y‑axis */}
-        <line
-          x1={padding}
-          y1={padding}
-          x2={padding}
-          y2={height - padding}
-          stroke="#555"
-          strokeWidth="1"
-        />
-  
-        {/* X‑axis */}
-        <line
-          x1={padding}
-          y1={height - padding}
-          x2={width - padding}
-          y2={height - padding}
-          stroke="#555"
-          strokeWidth="1"
-        />
-  
-        {/* Y‑axis labels */}
-        <text x={padding - 6} y={height - padding + 4} fontSize="8" textAnchor="end" fill="#888">
-          0
-        </text>
-        <text x={padding - 6} y={padding + 4} fontSize="8" textAnchor="end" fill="#888">
-          {max}
-        </text>
-  
-        {/* X‑axis labels (W1, W2, W3...) */}
-        {data.map((_, i) => {
-          const x = padding + (i / (data.length - 1)) * (width - padding * 2);
-          return (
-            <text
-              key={i}
-              x={x}
-              y={height - padding + 12}
-              fontSize="8"
-              textAnchor="middle"
-              fill="#888"
-            >
-              W{i + 1}
-            </text>
-          );
-        })}
-  
-        {/* Line */}
-        <polyline
-          fill="none"
-          stroke={color}
-          strokeWidth="2"
-          points={points}
-        />
-      </svg>
-    );
   }
 
+  const gymPoints = makePoints(gymData);
+  const runPoints = makePoints(runData);
+
+  return (
+    <svg
+      width="100%"
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="mt-3"
+    >
+      {/* Y-axis */}
+      <line
+        x1={padding}
+        y1={padding}
+        x2={padding}
+        y2={height - padding}
+        stroke="#666"
+        strokeWidth="1.2"
+      />
+
+      {/* X-axis */}
+      <line
+        x1={padding}
+        y1={height - padding}
+        x2={width - padding}
+        y2={height - padding}
+        stroke="#666"
+        strokeWidth="1.2"
+      />
+
+      {/* Y labels */}
+      <text x={padding - 8} y={height - padding + 4} fontSize="10" textAnchor="end" fill="#aaa">
+        0
+      </text>
+      <text x={padding - 8} y={padding + 4} fontSize="10" textAnchor="end" fill="#aaa">
+        {max}
+      </text>
+
+      {/* X labels */}
+      {gymData.map((_, i) => {
+        const x = padding + (i / (gymData.length - 1)) * (width - padding * 2);
+        return (
+          <text
+            key={i}
+            x={x}
+            y={height - padding + 16}
+            fontSize="10"
+            textAnchor="middle"
+            fill="#aaa"
+          >
+            W{i + 1}
+          </text>
+        );
+      })}
+
+      {/* Gym line */}
+      <polyline
+        fill="none"
+        stroke={gymColor}
+        strokeWidth="2.5"
+        points={gymPoints}
+      />
+
+      {/* Run line */}
+      <polyline
+        fill="none"
+        stroke={runColor}
+        strokeWidth="2.5"
+        points={runPoints}
+      />
+
+      {/* Gym dots */}
+      {gymData.map((v, i) => {
+        const x = padding + (i / (gymData.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((v - min) / (max - min)) * (height - padding * 2);
+        return <circle key={"g" + i} cx={x} cy={y} r="3" fill={gymColor} />;
+      })}
+
+      {/* Run dots */}
+      {runData.map((v, i) => {
+        const x = padding + (i / (runData.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((v - min) / (max - min)) * (height - padding * 2);
+        return <circle key={"r" + i} cx={x} cy={y} r="3" fill={runColor} />;
+      })}
+    </svg>
+  );
+}
 /* ---------------- APP ---------------- */
 function App() {
   /* SETTINGS */
@@ -685,7 +711,12 @@ function App() {
   
           <div>
             <p className="text-xs text-gray-400 mb-1">Gym</p>
-            <MiniLineGraph data={gymWeeksOfMonth} color={settings.gymColor} />
+            <CombinedLineGraph
+              gymData={gymWeeksOfMonth}
+              runData={runWeeksOfMonth}
+              gymColor={settings.gymColor}
+              runColor={settings.runColor}
+           />
           </div>
   
           <div>
