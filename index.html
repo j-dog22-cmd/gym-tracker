@@ -156,6 +156,11 @@ function App() {
     const idx = dayIndex(d);
     return logs.filter(l => l.dayIndex === idx);
   }
+  const WorkoutScreen = activeWorkout
+      ? (activeWorkout.type === "gym"
+          ? <GymWorkoutScreen />
+          : <RunWorkoutScreen />)
+      : null;
 
   /* ADD GYM WORKOUT (planned) */
   function saveGymWorkout() {
@@ -1001,146 +1006,92 @@ function App() {
     </div>
   ) : null;
 
-  /* WORKOUT SCREEN */
-  const WorkoutScreen = activeWorkout ? (
-  <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
+function GymWorkoutScreen() {
+  return (
+    <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
 
-    {/* HEADER */}
-    <div className="flex justify-between items-center mb-4">
-      <p className="text-lg font-semibold">{activeWorkout.name}</p>
-      <button
-        onClick={() => {
-          setActiveWorkout(null);
-          setRestTimer(null);
-        }}
-        className="text-sm text-gray-400"
-      >
-        Close
-      </button>
-    </div>
-
-    {/* BIG REST TIMER AT TOP */}
-    {restTimer !== null && (
-      <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-6">
-        <p className="text-sm text-gray-400">Rest</p>
-        <p className="text-5xl font-bold mt-1">{restTimer}s</p>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-lg font-semibold">{activeWorkout.name}</p>
+        <button
+          onClick={() => {
+            setActiveWorkout(null);
+            setRestTimer(null);
+          }}
+          className="text-sm text-gray-400"
+        >
+          Close
+        </button>
       </div>
-    )}
 
-    {/* WARM-UP */}
-    {activeWorkout.warmup?.length > 0 && (
-      <div className="mb-6">
-        <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-        {activeWorkout.warmup.map((w,i)=>(
-          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-            <p className="text-sm">{w.name}</p>
-            <p className="text-xs text-gray-400">{w.reps}</p>
-          </div>
-        ))}
-      </div>
-    )}
+      {/* BIG REST TIMER */}
+      {restTimer !== null && (
+        <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-6">
+          <p className="text-sm text-gray-400">Rest</p>
+          <p className="text-5xl font-bold mt-1">{restTimer}s</p>
+        </div>
+      )}
 
-    {/* EXERCISES + SETS */}
-    {Array.isArray(activeWorkout.exercises) &&
-      activeWorkout.exercises.map((ex, exIndex) => {
-        const sets = Array.isArray(ex.sets) ? ex.sets : [];
+      {/* WARM-UP */}
+      {activeWorkout.warmup?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+          {activeWorkout.warmup.map((w,i)=>(
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm">{w.name}</p>
+              <p className="text-xs text-gray-400">{w.reps}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
-        return (
-          <div key={exIndex} className="mb-6">
-            <p className="font-semibold mb-2">{ex.name}</p>
+      {/* EXERCISES + SETS */}
+      {Array.isArray(activeWorkout.exercises) &&
+        activeWorkout.exercises.map((ex, exIndex) => {
+          const sets = Array.isArray(ex.sets) ? ex.sets : [];
 
-            {sets.length === 0 && (
-              <p className="text-xs text-gray-500">No sets added</p>
-            )}
+          return (
+            <div key={exIndex} className="mb-6">
+              <p className="font-semibold mb-2">{ex.name}</p>
 
-            {sets.map((set, setIndex) => (
-              <div
-                key={setIndex}
-                className="flex items-center justify-between bg-[#1C1C1E] p-3 rounded-xl mb-2"
-              >
-                <input
-                  type="checkbox"
-                  checked={!!set.completed}
-                  onChange={() => handleSetComplete(exIndex, setIndex)}
-                  className="w-5 h-5 accent-green-500"
-                />
+              {sets.length === 0 && (
+                <p className="text-xs text-gray-500">No sets added</p>
+              )}
 
-                <div className="flex-1 ml-3">
-                  <p className="text-sm font-medium">
-                    {set.weight}kg × {set.reps} reps
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        );
-      })
-    }
+              {sets.map((set, setIndex) => (
+                <div
+                  key={setIndex}
+                  className="flex items-center justify-between bg-[#1C1C1E] p-3 rounded-xl mb-2"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!set.completed}
+                    onChange={() => handleSetComplete(exIndex, setIndex)}
+                    className="w-5 h-5 accent-green-500"
+                  />
 
-    {/* WARM-DOWN */}
-    {activeWorkout.warmdown?.length > 0 && (
-      <div className="mb-6">
-        <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-        {activeWorkout.warmdown.map((w,i)=>(
-          <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-            <p className="text-sm">{w.name}</p>
-            <p className="text-xs text-gray-400">{w.reps}</p>
-          </div>
-        ))}
-      </div>
-    )}
-
-    {/* MARK AS DONE */}
-    <button
-      onClick={() => {
-        setLogs(logs.map((log, idx) => {
-          if (idx === activeWorkout.logIndex) {
-            return {
-              ...log,
-              completed: true,
-              date: activeWorkout.date || new Date()
-            };
-          }
-          return log;
-        }));
-        setActiveWorkout(null);
-        setRestTimer(null);
-      }}
-      className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
-    >
-      Mark as Done
-    </button>
-
-  </div>
-) : null;
-      {/* RUN EXECUTION */}
-      {activeWorkout.type === "run" && (
-        <div className="space-y-4 mt-6">
-          <p className="text-xs text-gray-400">Type: {activeWorkout.runType}</p>
-
-          {activeWorkout.warmup?.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-              {activeWorkout.warmup.map((w,i)=>(
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm">{w.name}</p>
-                  <p className="text-xs text-gray-400">{w.reps}</p>
+                  <div className="flex-1 ml-3">
+                    <p className="text-sm font-medium">
+                      {set.weight}kg × {set.reps} reps
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          )}
+          );
+        })
+      }
 
-          {activeWorkout.stretches?.length > 0 && (
-            <div>
-              <p className="text-xs text-gray-400 mb-1">Stretches</p>
-              {activeWorkout.stretches.map((w,i)=>(
-                <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-                  <p className="text-sm">{w.name}</p>
-                  <p className="text-xs text-gray-400">{w.reps}</p>
-                </div>
-              ))}
+      {/* WARM-DOWN */}
+      {activeWorkout.warmdown?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
+          {activeWorkout.warmdown.map((w,i)=>(
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm">{w.name}</p>
+              <p className="text-xs text-gray-400">{w.reps}</p>
             </div>
-          )}
+          ))}
         </div>
       )}
 
@@ -1160,12 +1111,86 @@ function App() {
           setActiveWorkout(null);
           setRestTimer(null);
         }}
-        className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-6"
+        className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
       >
         Mark as Done
       </button>
+
     </div>
-  ) : null;
+  );
+}
+
+  function RunWorkoutScreen() {
+  return (
+    <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
+
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-lg font-semibold">{activeWorkout.name}</p>
+        <button
+          onClick={() => {
+            setActiveWorkout(null);
+            setRestTimer(null);
+          }}
+          className="text-sm text-gray-400"
+        >
+          Close
+        </button>
+      </div>
+
+      {/* RUN TYPE */}
+      <p className="text-xs text-gray-400 mb-4">Type: {activeWorkout.runType}</p>
+
+      {/* WARM-UP */}
+      {activeWorkout.warmup?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+          {activeWorkout.warmup.map((w,i)=>(
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm">{w.name}</p>
+              <p className="text-xs text-gray-400">{w.reps}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* STRETCHES */}
+      {activeWorkout.stretches?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 mb-1">Stretches</p>
+          {activeWorkout.stretches.map((w,i)=>(
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm">{w.name}</p>
+              <p className="text-xs text-gray-400">{w.reps}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MARK AS DONE */}
+      <button
+        onClick={() => {
+          setLogs(logs.map((log, idx) => {
+            if (idx === activeWorkout.logIndex) {
+              return {
+                ...log,
+                completed: true,
+                date: activeWorkout.date || new Date()
+              };
+            }
+            return log;
+          }));
+          setActiveWorkout(null);
+          setRestTimer(null);
+        }}
+        className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
+      >
+        Mark as Done
+      </button>
+
+    </div>
+  );
+}
 
   /* MAIN RENDER */
   return (
