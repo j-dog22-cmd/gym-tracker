@@ -249,9 +249,6 @@ function App() {
     }
   }, [timeLeft, restEndTime]);
 
-    return () => clearInterval(interval);
-  }, [restTimer]);
-
   React.useEffect(() => {
     localStorage.setItem("settings", JSON.stringify(settings));
   }, [settings]);
