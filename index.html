@@ -219,35 +219,35 @@ function App() {
     };
   });
 
-   // Background‑safe rest timer
-  const [restEndTime, setRestEndTime] = React.useState(null);
-  const [now, setNow] = React.useState(Date.now());
-  
-  // Update "now" every 500ms
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 500);
-  
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Start rest timer
-  function startRest(seconds) {
-    setRestEndTime(Date.now() + seconds * 1000);
+// Background‑safe rest timer
+const [restEndTime, setRestEndTime] = React.useState(null);
+const [currentTime, setCurrentTime] = React.useState(Date.now());
+
+// Update currentTime every 500ms
+React.useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentTime(Date.now());
+  }, 500);
+
+  return () => clearInterval(interval);
+}, []);
+
+// Start rest timer
+function startRest(seconds) {
+  setRestEndTime(Date.now() + seconds * 1000);
+}
+
+// Time left
+const timeLeft = restEndTime
+  ? Math.max(0, Math.floor((restEndTime - currentTime) / 1000))
+  : 0;
+
+// When timer finishes
+React.useEffect(() => {
+  if (restEndTime && timeLeft === 0) {
+    setRestEndTime(null);
   }
-  
-  // Time left
-  const timeLeft = restEndTime
-    ? Math.max(0, Math.floor((restEndTime - now) / 1000))
-    : 0;
-  
-  // When timer finishes
-  React.useEffect(() => {
-    if (restEndTime && timeLeft === 0) {
-      setRestEndTime(null);
-    }
-  }, [timeLeft, restEndTime]);
+}, [timeLeft, restEndTime]);
 
   React.useEffect(() => {
     localStorage.setItem("settings", JSON.stringify(settings));
