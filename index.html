@@ -374,8 +374,6 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
         ? <GymWorkoutScreen
             activeWorkout={activeWorkout}
             setActiveWorkout={setActiveWorkout}
-            restTimer={restTimer}
-            setRestTimer={setRestTimer}
             logs={logs}
             setLogs={setLogs}
             handleSetComplete={handleSetComplete}
@@ -476,7 +474,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
     setActiveWorkout(updated);
 
     if (toggled.completed) {
-      setRestTimer(settings.defaultRest || 60);
+    startRest(settings.defaultRest || 60);
     }
   }
 
@@ -980,7 +978,6 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
                       date: new Date(),
                       completed: false
                     });
-                    setRestTimer(null);
                     setPopupDay(null);
                   }}
                   className="w-full bg-green-600 rounded-xl py-2 text-xs"
@@ -1329,7 +1326,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
     </div>
   ) : null;
 
-function GymWorkoutScreen({ activeWorkout, setActiveWorkout, restTimer, setRestTimer, logs, setLogs, handleSetComplete }) {
+function GymWorkoutScreen({ activeWorkout, setActiveWorkout, setRestTimer, logs, setLogs, handleSetComplete }) {
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
 
