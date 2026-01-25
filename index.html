@@ -1347,15 +1347,14 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, restTimer, setRestT
       </div>
 
       {/* BIG REST TIMER (fixed) */}
-      {restTimer !== null && (
-        <div className="px-5">
-          <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-3">
-            <p className="text-sm text-gray-400">Rest</p>
-            <p className="text-5xl font-bold mt-1">{restTimer}s</p>
-          </div>
+      {restEndTime !== null && (
+      <div className="px-5">
+        <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-3">
+          <p className="text-sm text-gray-400">Rest</p>
+          <p className="text-5xl font-bold mt-1">{timeLeft}s</p>
         </div>
-      )}
-
+      </div>
+    )}
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-5 pb-10">
 
