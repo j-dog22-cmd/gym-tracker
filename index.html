@@ -369,22 +369,26 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
     const idx = dayIndex(d);
     return logs.filter(l => l.dayIndex === idx);
   }
-  const WorkoutScreen = activeWorkout
-    ? (activeWorkout.type === "gym"
-        ? <GymWorkoutScreen
-            activeWorkout={activeWorkout}
-            setActiveWorkout={setActiveWorkout}
-            logs={logs}
-            setLogs={setLogs}
-            handleSetComplete={handleSetComplete}
-          />
-        : <RunWorkoutScreen
-            activeWorkout={activeWorkout}
-            setActiveWorkout={setActiveWorkout}
-            logs={logs}
-            setLogs={setLogs}
-          />)
-    : null;
+  const WorkoutScreen = (
+    <div style={{ display: activeWorkout ? "block" : "none" }}>
+      {activeWorkout?.type === "gym" ? (
+        <GymWorkoutScreen
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          logs={logs}
+          setLogs={setLogs}
+          handleSetComplete={handleSetComplete}
+        />
+      ) : (
+        <RunWorkoutScreen
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          logs={logs}
+          setLogs={setLogs}
+        />
+      )}
+    </div>
+  );
   
   /* ADD GYM WORKOUT (planned) */
   function saveGymWorkout() {
