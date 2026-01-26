@@ -1331,16 +1331,24 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
     </div>
   ) : null;
 
-function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, handleSetComplete }) {
+function GymWorkoutScreen({
+  activeWorkout,
+  setActiveWorkout,
+  setActiveTab,
+  logs,
+  setLogs,
+  handleSetComplete
+}) {
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
 
-      {/* HEADER (fixed) */}
+      {/* HEADER */}
       <div className="p-5 pb-3 flex justify-between items-center">
         <p className="text-lg font-semibold">{activeWorkout?.name}</p>
+
         <button
           onClick={() => {
-            setActiveWorkout(null);
+            setActiveTab("workout");   // ⭐ navigate back
           }}
           className="text-sm text-gray-400"
         >
@@ -1348,7 +1356,7 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
         </button>
       </div>
 
-      {/* BIG REST TIMER (fixed) */}
+      {/* REST TIMER */}
       {restEndTime !== null && (
         <div className="px-5">
           <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-3">
@@ -1365,7 +1373,7 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
         {activeWorkout?.warmup?.length > 0 && (
           <div className="mb-6">
             <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout?.warmup?.map((w, i) => (
+            {activeWorkout.warmup.map((w, i) => (
               <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
                 <p className="text-sm">{w.name}</p>
                 <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1374,7 +1382,7 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
           </div>
         )}
 
-        {/* EXERCISES + SETS */}
+        {/* EXERCISES */}
         {Array.isArray(activeWorkout?.exercises) &&
           activeWorkout.exercises.map((ex, exIndex) => {
             const sets = Array.isArray(ex.sets) ? ex.sets : [];
@@ -1415,7 +1423,7 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
         {activeWorkout?.warmdown?.length > 0 && (
           <div className="mb-6">
             <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-            {activeWorkout?.warmdown?.map((w, i) => (
+            {activeWorkout.warmdown.map((w, i) => (
               <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
                 <p className="text-sm">{w.name}</p>
                 <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1439,7 +1447,8 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
                 return log;
               })
             );
-            setActiveWorkout(null);
+
+            setActiveTab("workout");   // ⭐ go back
           }}
           className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
         >
@@ -1451,113 +1460,67 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
   );
 }
   
-function RunWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs }) {
-
-  if (!activeWorkout) return null;   // ⭐ prevents all crashes
-
-  return (
-    <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
-
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <p className="text-lg font-semibold">{activeWorkout.name}</p>
-        <button
-          onClick={() => {
-            setActiveWorkout(null);
-          }}
-          className="text-sm text-gray-400"
-        >
-          Close
-        </button>
-      </div>
-
-      {/* RUN TYPE */}
-      <p className="text-xs text-gray-400 mb-4">
-        Type: {activeWorkout.runType}
-      </p>
-
-      {/* WARM-UP */}
-      {activeWorkout.warmup?.length > 0 && (
-        <div className="mb-6">
-          <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-          {activeWorkout.warmup.map((w, i) => (
-            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-              <p className="text-sm">{w.name}</p>
-              <p className="text-xs text-gray-400">{w.reps}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* STRETCHES */}
-      {activeWorkout.stretches?.length > 0 && (
-        <div className="mb-6">
-          <p className="text-xs text-gray-400 mb-1">Stretches</p>
-          {activeWorkout.stretches.map((w, i) => (
-            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
-              <p className="text-sm">{w.name}</p>
-              <p className="text-xs text-gray-400">{w.reps}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* MARK AS DONE */}
-      <button
-        onClick={() => {
-          setLogs(
-            logs.map((log, idx) => {
-              if (idx === activeWorkout.logIndex) {
-                return {
-                  ...log,
-                  completed: true,
-                  date: activeWorkout.date || new Date()
-                };
-              }
-              return log;
-            })
-          );
-          setActiveWorkout(null);
-        }}
-        className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
-      >
-        Mark as Done
-      </button>
-
-    </div>
-  );
-}
-  
   /* MAIN RENDER */
-  return (
-    <div>
-      {tab==="home" && Home}
-      {tab==="calendar" && Calendar}
-      {tab==="settings" && (
-        <SettingsView
-          settings={settings}
-          setSettings={setSettings}
-          goals={goals}
-          updateGoal={updateGoal}
+/* MAIN RENDER */
+return (
+  <div>
+
+    {tab === "home" && <Home />}
+    {tab === "calendar" && <Calendar />}
+    {tab === "settings" && (
+      <SettingsView
+        settings={settings}
+        setSettings={setSettings}
+        goals={goals}
+        updateGoal={updateGoal}
+      />
+    )}
+
+    {tab === "workout" && (
+      <WorkoutTab
+        activeWorkout={activeWorkout}
+        setActiveWorkout={setActiveWorkout}
+        setTab={setTab}
+      />
+    )}
+
+    {tab === "execute" && (
+      activeWorkout?.type === "gym" ? (
+        <GymWorkoutScreen
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          setActiveTab={setTab}
+          logs={logs}
+          setLogs={setLogs}
+          handleSetComplete={handleSetComplete}
         />
-      )}
-      
-      {WorkoutScreen}
+      ) : (
+        <RunWorkoutScreen
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          setActiveTab={setTab}
+          logs={logs}
+          setLogs={setLogs}
+        />
+      )
+    )}
 
-      <div className="fixed bottom-4 inset-x-0 flex justify-center">
-        <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
-          <button onClick={()=>setTab("home")}>🏠</button>
-          <button onClick={()=>setTab("calendar")}>📅</button>
-          <button onClick={()=>setTab("settings")}>⚙️</button>
-        </div>
+    {/* Bottom Navigation */}
+    <div className="fixed bottom-4 inset-x-0 flex justify-center">
+      <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
+        <button onClick={() => setTab("home")}>🏠</button>
+        <button onClick={() => setTab("calendar")}>📅</button>
+        <button onClick={() => setTab("settings")}>⚙️</button>
+        <button onClick={() => setTab("workout")}>💪</button>
       </div>
-
-      {DayPopup}
-      {GymBuilder}
-      {RunBuilder}
     </div>
-  );
-}
+
+    {DayPopup}
+    {GymBuilder}
+    {RunBuilder}
+
+  </div>
+);
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
