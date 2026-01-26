@@ -1450,13 +1450,14 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
     </div>
   );
 }
-  function RunWorkoutScreen() {
+  
+  function RunWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs }) {
   return (
     <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
 
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
-        <p className="text-lg font-semibold">{activeWorkout.name}</p>
+        <p className="text-lg font-semibold">{activeWorkout?.name}</p>
         <button
           onClick={() => {
             setActiveWorkout(null);
@@ -1468,13 +1469,15 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
       </div>
 
       {/* RUN TYPE */}
-      <p className="text-xs text-gray-400 mb-4">Type: {activeWorkout.runType}</p>
+      <p className="text-xs text-gray-400 mb-4">
+        Type: {activeWorkout?.runType}
+      </p>
 
       {/* WARM-UP */}
-      {activeWorkout.warmup?.length > 0 && (
+      {activeWorkout?.warmup?.length > 0 && (
         <div className="mb-6">
           <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-          {activeWorkout.warmup.map((w,i)=>(
+          {activeWorkout?.warmup?.map((w, i) => (
             <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
               <p className="text-sm">{w.name}</p>
               <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1484,10 +1487,10 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
       )}
 
       {/* STRETCHES */}
-      {activeWorkout.stretches?.length > 0 && (
+      {activeWorkout?.stretches?.length > 0 && (
         <div className="mb-6">
           <p className="text-xs text-gray-400 mb-1">Stretches</p>
-          {activeWorkout.stretches.map((w,i)=>(
+          {activeWorkout?.stretches?.map((w, i) => (
             <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
               <p className="text-sm">{w.name}</p>
               <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1499,16 +1502,18 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
       {/* MARK AS DONE */}
       <button
         onClick={() => {
-          setLogs(logs.map((log, idx) => {
-            if (idx === activeWorkout.logIndex) {
-              return {
-                ...log,
-                completed: true,
-                date: activeWorkout.date || new Date()
-              };
-            }
-            return log;
-          }));
+          setLogs(
+            logs.map((log, idx) => {
+              if (idx === activeWorkout?.logIndex) {
+                return {
+                  ...log,
+                  completed: true,
+                  date: activeWorkout?.date || new Date()
+                };
+              }
+              return log;
+            })
+          );
           setActiveWorkout(null);
         }}
         className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
@@ -1519,7 +1524,6 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
     </div>
   );
 }
-
   /* MAIN RENDER */
   return (
     <div>
