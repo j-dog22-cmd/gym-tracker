@@ -1326,9 +1326,9 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
     </div>
   ) : null;
 
-function GymWorkoutScreen({ activeWorkout, setActiveWorkout, setRestTimer, logs, setLogs, handleSetComplete }) {
+function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, handleSetComplete }) {
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
 
       {/* HEADER (fixed) */}
       <div className="p-5 pb-3 flex justify-between items-center">
