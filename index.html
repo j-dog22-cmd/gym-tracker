@@ -454,34 +454,35 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
   function deleteLog(globalIndex){
     setLogs(logs.filter((_,i)=>i!==globalIndex));
   }
-
+  
   function handleSetComplete(exIndex, setIndex) {
-    if (!activeWorkout || !activeWorkout.exercises) return;
-
-    const updated = { ...activeWorkout };
-    const exercisesCopy = [...updated.exercises];
-    const exercise = { ...exercisesCopy[exIndex] };
-    const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
-
-    if (!sets[setIndex]) return;
-
-    const toggled = {
-      ...sets[setIndex],
-      completed: !sets[setIndex].completed
+    if (!activeWorkout?.exercises) return;
+  
+    const updatedExercises = activeWorkout.exercises.map((ex, i) => {
+      if (i !== exIndex) return ex;
+  
+      const updatedSets = ex.sets.map((s, j) => {
+        if (j !== setIndex) return s;
+        return { ...s, completed: !s.completed };
+      });
+  
+      return { ...ex, sets: updatedSets };
+    });
+  
+    const updatedWorkout = {
+      ...activeWorkout,
+      exercises: updatedExercises
     };
-    sets[setIndex] = toggled;
-
-    exercise.sets = sets;
-    exercisesCopy[exIndex] = exercise;
-    updated.exercises = exercisesCopy;
-
-    setActiveWorkout(updated);
-
+  
+    setActiveWorkout(updatedWorkout);
+  
+    const toggled = updatedExercises[exIndex].sets[setIndex];
+  
     if (toggled.completed) {
-    startRest(settings.defaultRest || 60);
+      startRest(settings.defaultRest || 60);
     }
   }
-
+    
   /* HOME */
   const Home = (
     <div className="p-5 pb-40 space-y-6">
