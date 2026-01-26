@@ -77,19 +77,19 @@ function Ring({ value, total, color }) {
 
 /* ---------------- APP ---------------- */
 function App() {
-  /* SETTINGS */
-  const [settings, setSettings] = React.useState(() => {
-    return JSON.parse(localStorage.getItem("settings")) || {
-      name: "User",
-      weeklyGym: 3,
-      weeklyRun: 3,
-      monthlyGym: 12,
-      monthlyRun: 12,
-      defaultRest: 60,
-      gymColor: "#22c55e",
-      runColor: "#38bdf8"
-    };
-  });
+/* SETTINGS */
+const [settings, setSettings] = React.useState(() => {
+  return JSON.parse(localStorage.getItem("settings")) || {
+    name: "User",
+    weeklyGym: "3",
+    weeklyRun: "3",
+    monthlyGym: "12",
+    monthlyRun: "12",
+    defaultRest: "60",
+    gymColor: "#22c55e",
+    runColor: "#38bdf8"
+  };
+});
 
   // Rest timer state
   const [restTimer, setRestTimer] = React.useState(null);
@@ -150,15 +150,15 @@ function App() {
       run: { weekly: 2, monthly: 8 }
     });
   
-      function updateGoal(type, period, value) {
-      setGoals(prev => ({
-        ...prev,
-        [type]: {
-          ...prev[type],
-          [period]: Number(value)
-        }
-      }));
+  function updateGoal(type, period, value) {
+  setGoals(prev => ({
+    ...prev,
+    [type]: {
+      ...prev[type],
+      [period]: value   // keep as string while typing
     }
+  }));
+} 
   /* WEEK CALC */
   const weekStart = new Date(today);
   weekStart.setDate(today.getDate() - dayIndex(today));
