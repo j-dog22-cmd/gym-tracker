@@ -146,9 +146,9 @@ const [settings, setSettings] = React.useState(() => {
   const [runStretches, setRunStretches] = React.useState([]);
   
   const [goals, setGoals] = React.useState({
-      gym: { weekly: 3, monthly: 12 },
-      run: { weekly: 2, monthly: 8 }
-    });
+    gym: { weekly: "3", monthly: "12" },
+    run: { weekly: "2", monthly: "8" }
+  });
   
   function updateGoal(type, period, value) {
   setGoals(prev => ({
