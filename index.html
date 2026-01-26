@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JPB Fitness</title>
+  <title>Fitness Planner</title>
 
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -69,140 +69,6 @@ function Ring({ value, total, color }) {
   );
 }
 
-/* ---------------- line graph ---------------- */
-function CombinedLineGraph({ gymData, runData, gymColor, runColor }) {
-  const rawMax = Math.max(...gymData, ...runData, 1);
-  const max = Math.max(5, rawMax + 1);   // always at least 5, with headroom
-  const min = 0;
-
-  const width = window.innerWidth - 40;  // ⭐ full width minus padding
-  const height = 220;                    // ⭐ taller graph
-  const padding = 40;                    // ⭐ more breathing room
-
-  function makePoints(data) {
-    return data.map((v, i) => {
-      const x = padding + (i / (data.length - 1)) * (width - padding * 2);
-      const y = height - padding - ((v - min) / (max - min)) * (height - padding * 2);
-      return { x, y };
-    });
-  }
-
-  const gymPoints = makePoints(gymData);
-  const runPoints = makePoints(runData);
-
-  return (
-    <svg
-      width="100%"
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="mt-3"
-    >
-      {/* Y-axis */}
-      <line
-        x1={padding}
-        y1={padding}
-        x2={padding}
-        y2={height - padding}
-        stroke="#666"
-        strokeWidth="1.4"
-      />
-
-      {/* X-axis */}
-      <line
-        x1={padding}
-        y1={height - padding}
-        x2={width - padding}
-        y2={height - padding}
-        stroke="#666"
-        strokeWidth="1.4"
-      />
-
-     {/* Y-axis labels 0–5 */}
-<text
-  x={padding - 10}
-  y={height - padding + 4}
-  fontSize="12"
-  textAnchor="end"
-  fill="#aaa"
->
-  0
-</text>
-
-{[1, 2, 3, 4, 5].map((n) => {
-  const y = height - padding - ((n - min) / (max - min)) * (height - padding * 2);
-  return (
-    <text
-      key={n}
-      x={padding - 10}
-      y={y + 4}
-      fontSize="12"
-      textAnchor="end"
-      fill="#aaa"
-    >
-      {n}
-    </text>
-  );
-})}
-
-      {/* X labels */}
-      {gymPoints.map((p, i) => (
-        <text
-          key={i}
-          x={p.x}
-          y={height - padding + 20}
-          fontSize="12"
-          textAnchor="middle"
-          fill="#aaa"
-        >
-          W{i + 1}
-        </text>
-      ))}
-
-      {/* Gym line */}
-      <polyline
-        fill="none"
-        stroke={gymColor}
-        strokeWidth="3"
-        points={gymPoints.map(p => `${p.x},${p.y}`).join(" ")}
-      />
-
-      {/* Run line */}
-      <polyline
-        fill="none"
-        stroke={runColor}
-        strokeWidth="3"
-        points={runPoints.map(p => `${p.x},${p.y}`).join(" ")}
-      />
-
-      {/* Dots */}
-      {gymPoints.map((p, i) => {
-        const same = gymData[i] === runData[i];
-        return (
-          <circle
-            key={"g" + i}
-            cx={p.x}
-            cy={p.y}
-            r="5"
-            fill={same ? "red" : gymColor}
-          />
-        );
-      })}
-
-      {runPoints.map((p, i) => {
-        const same = gymData[i] === runData[i];
-        return (
-          <circle
-            key={"r" + i}
-            cx={p.x}
-            cy={p.y}
-            r="5"
-            fill={same ? "red" : runColor}
-          />
-        );
-      })}
-    </svg>
-  );
-}
 /* ---------------- APP ---------------- */
 function App() {
   /* SETTINGS */
@@ -219,35 +85,21 @@ function App() {
     };
   });
 
-// Background‑safe rest timer
-const [restEndTime, setRestEndTime] = React.useState(null);
-const [currentTime, setCurrentTime] = React.useState(Date.now());
+  // Rest timer state
+  const [restTimer, setRestTimer] = React.useState(null);
 
-// Update currentTime every 500ms
-React.useEffect(() => {
-  const interval = setInterval(() => {
-    setCurrentTime(Date.now());
-  }, 500);
+  React.useEffect(() => {
+    if (restTimer === null) return;
 
-  return () => clearInterval(interval);
-}, []);
+    const interval = setInterval(() => {
+      setRestTimer(prev => {
+        if (prev === 1) return null;
+        return prev - 1;
+      });
+    }, 1000);
 
-// Start rest timer
-function startRest(seconds) {
-  setRestEndTime(Date.now() + seconds * 1000);
-}
-
-// Time left
-const timeLeft = restEndTime
-  ? Math.max(0, Math.floor((restEndTime - currentTime) / 1000))
-  : 0;
-
-// When timer finishes
-React.useEffect(() => {
-  if (restEndTime && timeLeft === 0) {
-    setRestEndTime(null);
-  }
-}, [timeLeft, restEndTime]);
+    return () => clearInterval(interval);
+  }, [restTimer]);
 
   React.useEffect(() => {
     localStorage.setItem("settings", JSON.stringify(settings));
@@ -260,57 +112,6 @@ React.useEffect(() => {
   React.useEffect(()=>{
     localStorage.setItem("logs",JSON.stringify(logs));
   },[logs]);
-
-  // Build weekly data for the current month
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  
-  // First and last day of the month
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  
-  // Convert JS Sunday=0 → Monday=0
-  function weekday(d) {
-    return (d.getDay() + 6) % 7;
-  }
-  
-  // Build week ranges inside this month
-  const monthWeeks = [];
-  let current = new Date(firstDay);
-  
-  // Move back to Monday of the first week
-  current.setDate(current.getDate() - weekday(current));
-  
-  while (current <= lastDay) {
-    const weekStart = new Date(current);
-    const weekEnd = new Date(current);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-  
-    monthWeeks.push({ weekStart, weekEnd });
-  
-    current.setDate(current.getDate() + 7);
-  }
-
-   const gymWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
-  logs.filter(l =>
-    l?.completed === true &&
-    l?.type === "gym" &&
-    l?.dateCompleted &&
-    new Date(l.dateCompleted) >= weekStart &&
-    new Date(l.dateCompleted) < weekEnd
-  ).length
-);
-
-const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
-  logs.filter(l =>
-    l?.completed === true &&
-    l?.type === "run" &&
-    l?.dateCompleted &&
-    new Date(l.dateCompleted) >= weekStart &&
-    new Date(l.dateCompleted) < weekEnd
-  ).length
-);
 
   /* UI STATE */
   const [tab,setTab] = React.useState("home");
@@ -369,26 +170,24 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
     const idx = dayIndex(d);
     return logs.filter(l => l.dayIndex === idx);
   }
-  const WorkoutScreen = (
-    <div style={{ display: activeWorkout ? "block" : "none" }}>
-      {activeWorkout?.type === "gym" ? (
-        <GymWorkoutScreen
-          activeWorkout={activeWorkout}
-          setActiveWorkout={setActiveWorkout}
-          logs={logs}
-          setLogs={setLogs}
-          handleSetComplete={handleSetComplete}
-        />
-      ) : activeWorkout?.type === "run" ? (
-        <RunWorkoutScreen
-          activeWorkout={activeWorkout}
-          setActiveWorkout={setActiveWorkout}
-          logs={logs}
-          setLogs={setLogs}
-        />
-      ) : null}
-    </div>
-  );
+  const WorkoutScreen = activeWorkout
+    ? (activeWorkout.type === "gym"
+        ? <GymWorkoutScreen
+            activeWorkout={activeWorkout}
+            setActiveWorkout={setActiveWorkout}
+            restTimer={restTimer}
+            setRestTimer={setRestTimer}
+            logs={logs}
+            setLogs={setLogs}
+            handleSetComplete={handleSetComplete}
+          />
+        : <RunWorkoutScreen
+            activeWorkout={activeWorkout}
+            setActiveWorkout={setActiveWorkout}
+            logs={logs}
+            setLogs={setLogs}
+          />)
+    : null;
   
   /* ADD GYM WORKOUT (planned) */
   function saveGymWorkout() {
@@ -454,35 +253,34 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
   function deleteLog(globalIndex){
     setLogs(logs.filter((_,i)=>i!==globalIndex));
   }
-  
+
   function handleSetComplete(exIndex, setIndex) {
-    if (!activeWorkout?.exercises) return;
-  
-    const updatedExercises = activeWorkout.exercises.map((ex, i) => {
-      if (i !== exIndex) return ex;
-  
-      const updatedSets = ex.sets.map((s, j) => {
-        if (j !== setIndex) return s;
-        return { ...s, completed: !s.completed };
-      });
-  
-      return { ...ex, sets: updatedSets };
-    });
-  
-    const updatedWorkout = {
-      ...activeWorkout,
-      exercises: updatedExercises
+    if (!activeWorkout || !activeWorkout.exercises) return;
+
+    const updated = { ...activeWorkout };
+    const exercisesCopy = [...updated.exercises];
+    const exercise = { ...exercisesCopy[exIndex] };
+    const sets = Array.isArray(exercise.sets) ? [...exercise.sets] : [];
+
+    if (!sets[setIndex]) return;
+
+    const toggled = {
+      ...sets[setIndex],
+      completed: !sets[setIndex].completed
     };
-  
-    setActiveWorkout(updatedWorkout);
-  
-    const toggled = updatedExercises[exIndex].sets[setIndex];
-  
+    sets[setIndex] = toggled;
+
+    exercise.sets = sets;
+    exercisesCopy[exIndex] = exercise;
+    updated.exercises = exercisesCopy;
+
+    setActiveWorkout(updated);
+
     if (toggled.completed) {
-      startRest(settings.defaultRest || 60);
+      setRestTimer(settings.defaultRest || 60);
     }
   }
-    
+
   /* HOME */
   const Home = (
     <div className="p-5 pb-40 space-y-6">
@@ -633,51 +431,51 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
       </div>
     </div>
   );
-  
+
   /* CALENDAR */
   const Calendar = (() => {
     const [currentMonth, setCurrentMonth] = React.useState(() => {
       const d = new Date();
       return new Date(d.getFullYear(), d.getMonth(), 1);
     });
-  
+
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-  
+
     const firstDay = new Date(year, month, 1);
     const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-  
+
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-  
+
     const cells = [];
     for (let i = 0; i < 42; i++) {
       const dayNum = i - startDay + 1;
       const dateObj = new Date(year, month, dayNum);
       const valid = dayNum >= 1 && dayNum <= daysInMonth;
-  
+
       let hasGym = false;
       let hasRun = false;
-  
+
       if (valid) {
         const completedLogs = logs.filter(l => l.date && sameDay(l.date, dateObj));
-  
+
         if (completedLogs.some(l => l.type === "gym")) hasGym = true;
         if (completedLogs.some(l => l.type === "run")) hasRun = true;
-  
+
         const weekday = (dateObj.getDay() + 6) % 7;
         const plannedLogs = logs.filter(l => l.dayIndex === weekday);
-  
+
         if (plannedLogs.some(l => l.type === "gym")) hasGym = true;
         if (plannedLogs.some(l => l.type === "run")) hasRun = true;
       }
-  
+
       let dotColor = null;
       if (hasGym && hasRun) dotColor = "#ef4444";
       else if (hasGym) dotColor = "#22c55e";
       else if (hasRun) dotColor = "#38bdf8";
-  
+
       const isToday = valid && sameDay(dateObj, today);
-  
+
       cells.push({
         valid,
         dateObj,
@@ -686,7 +484,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
         isToday
       });
     }
-  
+
     return (
       <div className="p-5 pb-32 space-y-4">
         <div className="flex justify-between items-center">
@@ -698,11 +496,11 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
           >
             ‹
           </button>
-  
+
           <p className="text-lg font-semibold">
             {currentMonth.toLocaleString("default", { month: "long" })} {year}
           </p>
-  
+
           <button
             onClick={() =>
               setCurrentMonth(new Date(year, month + 1, 1))
@@ -712,13 +510,13 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
             ›
           </button>
         </div>
-  
+
         <div className="grid grid-cols-7 text-center text-xs text-gray-400">
           {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
             <p key={d}>{d}</p>
           ))}
         </div>
-  
+
         <div className="grid grid-cols-7 gap-2 mt-2">
           {cells.map((c, i) => (
             <button
@@ -735,7 +533,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
               }
             >
               <p className="text-sm">{c.valid ? c.dayNum : ""}</p>
-  
+
               {c.dotColor && (
                 <div
                   className="mt-1 rounded-full"
@@ -749,32 +547,12 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
             </button>
           ))}
         </div>
-  
-        {/* ⭐ MONTHLY WEEK TRENDS ADDED HERE ⭐ */}
-      <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border mt-4 space-y-4">
-        <p className="font-semibold">This Month’s Weekly Trends</p>
-      
-        <CombinedLineGraph
-          gymData={gymWeeksOfMonth}
-          runData={runWeeksOfMonth}
-          gymColor={settings.gymColor}
-          runColor={settings.runColor}
-        />
       </div>
-      {/* ⭐ END OF ADDED SECTION ⭐ */}
-        
-            </div>
-          );
-        })();
+    );
+  })();
 
-  function SettingsView({ settings, setSettings, goals, updateGoal }) {
-  const [tempGoals, setTempGoals] = React.useState({
-    gymWeekly: goals.gym.weekly.toString(),
-    gymMonthly: goals.gym.monthly.toString(),
-    runWeekly: goals.run.weekly.toString(),
-    runMonthly: goals.run.monthly.toString()
-  });
-  
+  /* SETTINGS VIEW */
+function SettingsView({ settings, setSettings, goals, updateGoal }) {
   return (
     <div className="p-4 space-y-3">
       <p className="font-semibold">Settings</p>
@@ -788,7 +566,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
 
       {/* GOALS */}
       <div className="bg-[#1C1C1E] p-4 rounded-2xl soft-border space-y-6 mt-6">
-        <p className="font-semibold text-base">Workout Goals</p>
+        <p className="font-semibold text-sm">Workout Goals</p>
 
         {/* GYM GOALS */}
         <div className="space-y-3">
@@ -797,28 +575,20 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Weekly Gym Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-base"
-              value={tempGoals.gymWeekly}
-              onChange={e =>
-                setTempGoals(prev => ({ ...prev, gymWeekly: e.target.value }))
-              }
-              onBlur={() =>
-                updateGoal("gym", "weekly", tempGoals.gymWeekly)
-              }
+              type="number"
+              value={goals.gym.weekly}
+              onChange={(e) => updateGoal("gym", "weekly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
             />
           </div>
 
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Monthly Gym Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-base"
-              value={tempGoals.gymMonthly}
-              onChange={e =>
-                setTempGoals(prev => ({ ...prev, gymMonthly: e.target.value }))
-              }
-              onBlur={() =>
-                updateGoal("gym", "monthly", tempGoals.gymMonthly)
-              }
+              type="number"
+              value={goals.gym.monthly}
+              onChange={(e) => updateGoal("gym", "monthly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
             />
           </div>
         </div>
@@ -830,28 +600,20 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Weekly Run Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-base"
-              value={tempGoals.runWeekly}
-              onChange={e =>
-                setTempGoals(prev => ({ ...prev, runWeekly: e.target.value }))
-              }
-              onBlur={() =>
-                updateGoal("run", "weekly", tempGoals.runWeekly)
-              }
+              type="number"
+              value={goals.run.weekly}
+              onChange={(e) => updateGoal("run", "weekly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
             />
           </div>
 
           <div>
             <p className="text-[11px] text-gray-400 mb-1">Monthly Run Goal</p>
             <input
-              className="w-full bg-black rounded-xl p-2 text-base"
-              value={tempGoals.runMonthly}
-              onChange={e =>
-                setTempGoals(prev => ({ ...prev, runMonthly: e.target.value }))
-              }
-              onBlur={() =>
-                updateGoal("run", "monthly", tempGoals.runMonthly)
-              }
+              type="number"
+              value={goals.run.monthly}
+              onChange={(e) => updateGoal("run", "monthly", e.target.value)}
+              className="w-full bg-black rounded-xl p-2 text-sm"
             />
           </div>
         </div>
@@ -859,7 +621,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
 
       {/* REST TIMER */}
       <div className="p-4 bg-[#1C1C1E] rounded-2xl soft-border space-y-2">
-        <p className="text-base font-semibold">Rest Timer (seconds)</p>
+        <p className="text-sm font-semibold">Rest Timer (seconds)</p>
         <input
           type="number"
           min="5"
@@ -871,7 +633,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
               defaultRest: Number(e.target.value) || 0
             })
           }
-          className="w-full p-2 rounded-xl bg-[#2A2A2A] text-base"
+          className="w-full p-2 rounded-xl bg-[#2A2A2A] text-sm"
         />
       </div>
 
@@ -880,7 +642,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
           localStorage.clear();
           location.reload();
         }}
-        className="bg-red-500 p-3 rounded-xl text-base"
+        className="bg-red-500 p-3 rounded-xl text-sm"
       >
         Reset App
       </button>
@@ -983,6 +745,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
                       date: new Date(),
                       completed: false
                     });
+                    setRestTimer(null);
                     setPopupDay(null);
                   }}
                   className="w-full bg-green-600 rounded-xl py-2 text-xs"
@@ -1181,7 +944,7 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
         </button>
       </div>
     </div>
-  );
+  ) : null;
 
   /* RUN BUILDER */
   const RunBuilder = showRunBuilder ? (
@@ -1329,26 +1092,19 @@ const runWeeksOfMonth = monthWeeks.map(({ weekStart, weekEnd }) =>
         </button>
       </div>
     </div>
-  );
+  ) : null;
 
-function GymWorkoutScreen({
-  activeWorkout,
-  setActiveWorkout,
-  setActiveTab,
-  logs,
-  setLogs,
-  handleSetComplete
-}) {
+function GymWorkoutScreen({ activeWorkout, setActiveWorkout, restTimer, setRestTimer, logs, setLogs, handleSetComplete }) {
   return (
-    <div className="fixed inset-0 bg-black z-50 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black z-50 flex flex-col">
 
-      {/* HEADER */}
+      {/* HEADER (fixed) */}
       <div className="p-5 pb-3 flex justify-between items-center">
-        <p className="text-lg font-semibold">{activeWorkout?.name}</p>
-
+        <p className="text-lg font-semibold">{activeWorkout.name}</p>
         <button
           onClick={() => {
-            setActiveTab("workout");   // ⭐ navigate back
+            setActiveWorkout(null);
+            setRestTimer(null);
           }}
           className="text-sm text-gray-400"
         >
@@ -1356,12 +1112,12 @@ function GymWorkoutScreen({
         </button>
       </div>
 
-      {/* REST TIMER */}
-      {restEndTime !== null && (
+      {/* BIG REST TIMER (fixed) */}
+      {restTimer !== null && (
         <div className="px-5">
           <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-3">
             <p className="text-sm text-gray-400">Rest</p>
-            <p className="text-5xl font-bold mt-1">{timeLeft}s</p>
+            <p className="text-5xl font-bold mt-1">{restTimer}s</p>
           </div>
         </div>
       )}
@@ -1370,10 +1126,10 @@ function GymWorkoutScreen({
       <div className="flex-1 overflow-y-auto px-5 pb-10">
 
         {/* WARM-UP */}
-        {activeWorkout?.warmup?.length > 0 && (
+        {activeWorkout.warmup?.length > 0 && (
           <div className="mb-6">
             <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w, i) => (
+            {activeWorkout.warmup.map((w,i)=>(
               <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
                 <p className="text-sm">{w.name}</p>
                 <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1382,8 +1138,8 @@ function GymWorkoutScreen({
           </div>
         )}
 
-        {/* EXERCISES */}
-        {Array.isArray(activeWorkout?.exercises) &&
+        {/* EXERCISES + SETS */}
+        {Array.isArray(activeWorkout.exercises) &&
           activeWorkout.exercises.map((ex, exIndex) => {
             const sets = Array.isArray(ex.sets) ? ex.sets : [];
 
@@ -1420,10 +1176,10 @@ function GymWorkoutScreen({
         }
 
         {/* WARM-DOWN */}
-        {activeWorkout?.warmdown?.length > 0 && (
+        {activeWorkout.warmdown?.length > 0 && (
           <div className="mb-6">
             <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-            {activeWorkout.warmdown.map((w, i) => (
+            {activeWorkout.warmdown.map((w,i)=>(
               <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
                 <p className="text-sm">{w.name}</p>
                 <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1435,20 +1191,18 @@ function GymWorkoutScreen({
         {/* MARK AS DONE */}
         <button
           onClick={() => {
-            setLogs(
-              logs.map((log, idx) => {
-                if (idx === activeWorkout?.logIndex) {
-                  return {
-                    ...log,
-                    completed: true,
-                    date: activeWorkout?.date || new Date()
-                  };
-                }
-                return log;
-              })
-            );
-
-            setActiveTab("workout");   // ⭐ go back
+            setLogs(logs.map((log, idx) => {
+              if (idx === activeWorkout.logIndex) {
+                return {
+                  ...log,
+                  completed: true,
+                  date: activeWorkout.date || new Date()
+                };
+              }
+              return log;
+            }));
+            setActiveWorkout(null);
+            setRestTimer(null);
           }}
           className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
         >
@@ -1460,66 +1214,108 @@ function GymWorkoutScreen({
   );
 }
 
-  /* MAIN RENDER */
-return (
-  <div>
+  function RunWorkoutScreen() {
+  return (
+    <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
 
-    {tab === "home" && <Home />}
-    {tab === "calendar" && <Calendar />}
-    {tab === "settings" && (
-      <SettingsView
-        settings={settings}
-        setSettings={setSettings}
-        goals={goals}
-        updateGoal={updateGoal}
-      />
-    )}
-
-    {tab === "workout" && (
-      <WorkoutTab
-        activeWorkout={activeWorkout}
-        setActiveWorkout={setActiveWorkout}
-        setTab={setTab}
-      />
-    )}
-
-    {tab === "execute" && (
-      activeWorkout?.type === "gym" ? (
-        <GymWorkoutScreen
-          activeWorkout={activeWorkout}
-          setActiveWorkout={setActiveWorkout}
-          setActiveTab={setTab}
-          logs={logs}
-          setLogs={setLogs}
-          handleSetComplete={handleSetComplete}
-        />
-      ) : (
-        <RunWorkoutScreen
-          activeWorkout={activeWorkout}
-          setActiveWorkout={setActiveWorkout}
-          setActiveTab={setTab}
-          logs={logs}
-          setLogs={setLogs}
-        />
-      )
-    )}
-
-    {/* Bottom Navigation */}
-    <div className="fixed bottom-4 inset-x-0 flex justify-center">
-      <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
-        <button onClick={() => setTab("home")}>🏠</button>
-        <button onClick={() => setTab("calendar")}>📅</button>
-        <button onClick={() => setTab("settings")}>⚙️</button>
-        <button onClick={() => setTab("workout")}>💪</button>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-4">
+        <p className="text-lg font-semibold">{activeWorkout.name}</p>
+        <button
+          onClick={() => {
+            setActiveWorkout(null);
+            setRestTimer(null);
+          }}
+          className="text-sm text-gray-400"
+        >
+          Close
+        </button>
       </div>
+
+      {/* RUN TYPE */}
+      <p className="text-xs text-gray-400 mb-4">Type: {activeWorkout.runType}</p>
+
+      {/* WARM-UP */}
+      {activeWorkout.warmup?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
+          {activeWorkout.warmup.map((w,i)=>(
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm">{w.name}</p>
+              <p className="text-xs text-gray-400">{w.reps}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* STRETCHES */}
+      {activeWorkout.stretches?.length > 0 && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 mb-1">Stretches</p>
+          {activeWorkout.stretches.map((w,i)=>(
+            <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
+              <p className="text-sm">{w.name}</p>
+              <p className="text-xs text-gray-400">{w.reps}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* MARK AS DONE */}
+      <button
+        onClick={() => {
+          setLogs(logs.map((log, idx) => {
+            if (idx === activeWorkout.logIndex) {
+              return {
+                ...log,
+                completed: true,
+                date: activeWorkout.date || new Date()
+              };
+            }
+            return log;
+          }));
+          setActiveWorkout(null);
+          setRestTimer(null);
+        }}
+        className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
+      >
+        Mark as Done
+      </button>
+
     </div>
+  );
+}
 
-    {DayPopup}
-    {GymBuilder}
-    {RunBuilder}
+  /* MAIN RENDER */
+  return (
+    <div>
+      {tab==="home" && Home}
+      {tab==="calendar" && Calendar}
+      {tab==="settings" && (
+        <SettingsView
+          settings={settings}
+          setSettings={setSettings}
+          goals={goals}
+          updateGoal={updateGoal}
+        />
+      )}
+      
+      {WorkoutScreen}
 
-  </div>
-);
+      <div className="fixed bottom-4 inset-x-0 flex justify-center">
+        <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
+          <button onClick={()=>setTab("home")}>🏠</button>
+          <button onClick={()=>setTab("calendar")}>📅</button>
+          <button onClick={()=>setTab("settings")}>⚙️</button>
+        </div>
+      </div>
+
+      {DayPopup}
+      {GymBuilder}
+      {RunBuilder}
+    </div>
+  );
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
