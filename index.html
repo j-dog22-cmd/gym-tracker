@@ -1459,30 +1459,21 @@ function GymWorkoutScreen({
     </div>
   );
 }
-  
+
   /* MAIN RENDER */
-/* MAIN RENDER */
-  return (
-    <div>
-  
-      {tab === "home" && <Home />}
-      {tab === "calendar" && <Calendar />}
-      {tab === "settings" && (
-        <SettingsView
-          settings={settings}
-          setSettings={setSettings}
-          goals={goals}
-          updateGoal={updateGoal}
-        />
-      )}
-  
-      {tab === "workout" && (
-        <WorkoutTab
-          activeWorkout={activeWorkout}
-          setActiveWorkout={setActiveWorkout}
-          setTab={setTab}
-        />
-      )}
+return (
+  <div>
+
+    {tab === "home" && <Home />}
+    {tab === "calendar" && <Calendar />}
+    {tab === "settings" && (
+      <SettingsView
+        settings={settings}
+        setSettings={setSettings}
+        goals={goals}
+        updateGoal={updateGoal}
+      />
+    )}
 
     {tab === "workout" && (
       <WorkoutTab
@@ -1493,26 +1484,26 @@ function GymWorkoutScreen({
     )}
 
     {tab === "execute" && (
-    activeWorkout?.type === "gym" ? (
-      <GymWorkoutScreen
-        activeWorkout={activeWorkout}
-        setActiveWorkout={setActiveWorkout}
-        setActiveTab={setTab}
-        logs={logs}
-        setLogs={setLogs}
-        handleSetComplete={handleSetComplete}
-      />
-    ) : (
-      <RunWorkoutScreen
-        activeWorkout={activeWorkout}
-        setActiveWorkout={setActiveWorkout}
-        setActiveTab={setTab}
-        logs={logs}
-        setLogs={setLogs}
-      />
-    )
-  )}
-      
+      activeWorkout?.type === "gym" ? (
+        <GymWorkoutScreen
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          setActiveTab={setTab}
+          logs={logs}
+          setLogs={setLogs}
+          handleSetComplete={handleSetComplete}
+        />
+      ) : (
+        <RunWorkoutScreen
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          setActiveTab={setTab}
+          logs={logs}
+          setLogs={setLogs}
+        />
+      )
+    )}
+
     {/* Bottom Navigation */}
     <div className="fixed bottom-4 inset-x-0 flex justify-center">
       <div className="glass-nav px-6 py-2 rounded-2xl flex gap-8">
