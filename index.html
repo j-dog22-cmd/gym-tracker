@@ -1462,19 +1462,27 @@ function GymWorkoutScreen({
   
   /* MAIN RENDER */
 /* MAIN RENDER */
-return (
-  <div>
-
-    {tab === "home" && <Home />}
-    {tab === "calendar" && <Calendar />}
-    {tab === "settings" && (
-      <SettingsView
-        settings={settings}
-        setSettings={setSettings}
-        goals={goals}
-        updateGoal={updateGoal}
-      />
-    )}
+  return (
+    <div>
+  
+      {tab === "home" && <Home />}
+      {tab === "calendar" && <Calendar />}
+      {tab === "settings" && (
+        <SettingsView
+          settings={settings}
+          setSettings={setSettings}
+          goals={goals}
+          updateGoal={updateGoal}
+        />
+      )}
+  
+      {tab === "workout" && (
+        <WorkoutTab
+          activeWorkout={activeWorkout}
+          setActiveWorkout={setActiveWorkout}
+          setTab={setTab}
+        />
+      )}
 
     {tab === "workout" && (
       <WorkoutTab
