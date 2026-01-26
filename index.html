@@ -1337,7 +1337,7 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
 
       {/* HEADER (fixed) */}
       <div className="p-5 pb-3 flex justify-between items-center">
-        <p className="text-lg font-semibold">{activeWorkout.name}</p>
+        <p className="text-lg font-semibold">{activeWorkout?.name}</p>
         <button
           onClick={() => {
             setActiveWorkout(null);
@@ -1350,21 +1350,22 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
 
       {/* BIG REST TIMER (fixed) */}
       {restEndTime !== null && (
-      <div className="px-5">
-        <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-3">
-          <p className="text-sm text-gray-400">Rest</p>
-          <p className="text-5xl font-bold mt-1">{timeLeft}s</p>
+        <div className="px-5">
+          <div className="p-5 rounded-2xl bg-[#1C1C1E] flex flex-col items-center justify-center mb-3">
+            <p className="text-sm text-gray-400">Rest</p>
+            <p className="text-5xl font-bold mt-1">{timeLeft}s</p>
+          </div>
         </div>
-      </div>
-    )}
+      )}
+
       {/* SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto px-5 pb-10">
 
         {/* WARM-UP */}
-        {activeWorkout.warmup?.length > 0 && (
+        {activeWorkout?.warmup?.length > 0 && (
           <div className="mb-6">
             <p className="text-xs text-gray-400 mb-1">Warm‑up</p>
-            {activeWorkout.warmup.map((w,i)=>(
+            {activeWorkout?.warmup?.map((w, i) => (
               <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
                 <p className="text-sm">{w.name}</p>
                 <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1374,7 +1375,7 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
         )}
 
         {/* EXERCISES + SETS */}
-        {Array.isArray(activeWorkout.exercises) &&
+        {Array.isArray(activeWorkout?.exercises) &&
           activeWorkout.exercises.map((ex, exIndex) => {
             const sets = Array.isArray(ex.sets) ? ex.sets : [];
 
@@ -1411,10 +1412,10 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
         }
 
         {/* WARM-DOWN */}
-        {activeWorkout.warmdown?.length > 0 && (
+        {activeWorkout?.warmdown?.length > 0 && (
           <div className="mb-6">
             <p className="text-xs text-gray-400 mb-1">Warm‑down</p>
-            {activeWorkout.warmdown.map((w,i)=>(
+            {activeWorkout?.warmdown?.map((w, i) => (
               <div key={i} className="p-3 bg-[#1C1C1E] rounded-xl mb-2">
                 <p className="text-sm">{w.name}</p>
                 <p className="text-xs text-gray-400">{w.reps}</p>
@@ -1426,16 +1427,18 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
         {/* MARK AS DONE */}
         <button
           onClick={() => {
-            setLogs(logs.map((log, idx) => {
-              if (idx === activeWorkout.logIndex) {
-                return {
-                  ...log,
-                  completed: true,
-                  date: activeWorkout.date || new Date()
-                };
-              }
-              return log;
-            }));
+            setLogs(
+              logs.map((log, idx) => {
+                if (idx === activeWorkout?.logIndex) {
+                  return {
+                    ...log,
+                    completed: true,
+                    date: activeWorkout?.date || new Date()
+                  };
+                }
+                return log;
+              })
+            );
             setActiveWorkout(null);
           }}
           className="w-full bg-blue-500 py-4 rounded-2xl text-lg font-semibold mt-4"
@@ -1447,7 +1450,6 @@ function GymWorkoutScreen({ activeWorkout, setActiveWorkout, logs, setLogs, hand
     </div>
   );
 }
-
   function RunWorkoutScreen() {
   return (
     <div className="fixed inset-0 bg-black z-50 p-5 overflow-y-auto">
